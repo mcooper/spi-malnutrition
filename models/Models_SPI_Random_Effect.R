@@ -69,34 +69,51 @@ all$hv001 <- as.factor(paste0(all$cc, all$hv001))
 all$whhid <- as.factor(paste0(all$cc, all$whhid))
 all$yearf <- as.factor(all$year)
 
+
+################################
+###DHS Cluster Random Effect
 library(lme4)
-library(lmerTest)
 
-df <- data.frame()
-for (fs in unique(all$FarmSystem)){
-  print(fs)
-  mod <- lmer(hc5~hv009 + wealth + hc27 + hc1 + hc64 + hv219 + hv220 + spi24 + market + year + (1|hv001), data=all[all$FarmSystem==fs, ])
-  summry <- summary(mod)
-  maxspi <- max(all$spi24[all$FarmSystem==fs], na.rm=T)
-  minspi <- min(all$spi24[all$FarmSystem==fs], na.rm=T)
-  meanspi <- mean(all$spi24[all$FarmSystem==fs], na.rm=T)
-  n <- nrow(na.omit(all[all$FarmSystem==fs, c('hc5', 'hv009', 'wealth', 'hc27', 'hc1', 'hc64', 'hv219', 'hv220', 'spi24', 'market', 'year')]))
-  p <- summry$coefficients['spi24', 5]
-  b <- summry$coefficients['spi24', 1]
-  temp <- data.frame(FarmSystem=fs, p=p, b=b, n=n, maxspi=maxspi, minspi=minspi, meanspi=meanspi)
-  df <- bind_rows(df, temp)
-  write.csv(df, 'results/model_results_FarmingSystem.csv', row.names=F)
-}
+mod <- lmer(hc5~hv009 + wealth + hc27 + hc1 + hc64 + hv219 + hv220 + spi24 + market + year + hv025 + (spi24|hv001) + (1|cc) + (1|FarmSystem) +(1|rcode), data=all)
 
-df <- read.csv('results/model_results_FarmingSystem.csv', na.strings = 'NaN')
+dhslocations <- row.names(coef(mod)$hv001)
 
-merged <- merge(all[ , c('FarmSystem', 'LATNUM', 'LONGNUM')] %>% unique, df)
+spiimpact <- coef(mod)$hv001$spi24
 
-library(rgdal)
-fao <- readOGR('data', 'all_farming_systems')
-merged$color <- (!(merged$b > 0 & merged$p < 0.06)) + 2
+spidf <- data.frame(hv001=dhslocations, spiimpact)
 
-merged <- merged[!grepl('Urban', merged$FarmSystem), ]
+latlongdf <- unique(all[all$spi24 < -1, c('hv001', 'LATNUM', 'LONGNUM')])
 
-plot(fao, xlim=c(min(merged$LONGNUM), max(merged$LONGNUM)), ylim=c(min(merged$LATNUM), max(merged$LATNUM)))
-points(merged$LONGNUM, merged$LATNUM, col=merged$color, pch=18, cex=0.25)
+graphdf <- merge(latlongdf, spidf, all.x=T, all.y=F)
+
+library(ggplot2)
+ggplot(graphdf, aes(x=LONGNUM, y=LATNUM, color=spiimpact > 25)) + geom_point(size=0.01)
+
+############################
+###Farm System Random Effect
+mod2 <- lmer(hc5~hv009 + wealth + hc27 + hc1 + hc64 + hv219 + hv220 + spi24 + market + year + hv025 + (spi24|FarmSystem) + (1|cc) +(1|rcode), data=all)
+
+fslocations <- row.names(coef(mod2)$FarmSystem)
+
+spiimpact <- coef(mod2)$FarmSystem$spi24
+
+spidf <- data.frame(FarmSystem=fslocations, spiimpact)
+
+latlongdf <- unique(all[ , c('FarmSystem', 'LATNUM', 'LONGNUM')])
+
+graphdf <- merge(latlongdf, spidf, all.x=T, all.y=F)
+
+ggplot(graphdf, aes(x=LONGNUM, y=LATNUM, color=spiimpact > 5)) + geom_point(size=0.01)
+
+
+
+
+
+
+
+
+
+
+
+
+
