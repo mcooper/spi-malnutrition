@@ -24,10 +24,58 @@ for (f in fs){
   print(f)
 }
 
+for (f in df$KR[df$KR != '']){
+  file <- read.dta(f)
+  if (class(file$hw3) == 'integer'){
+    df$KRheight[df$KR==f] <- TRUE
+  }
+  if (class(file$hw2) == 'integer'){
+    df$KRweight[df$KR==f] <- TRUE
+  }
+  if (class(file$hw1) == 'integer'){
+    df$KRage[df$KR==f] <- TRUE
+  }
+  if (class(file$hw1) == 'integer'){
+    df$KRage[df$KR==f] <- TRUE
+  }
+  if (class(file$hw5) == 'integer'){
+    df$KRhaz[df$KR==f] <- TRUE
+  }
+  if (class(file$hw11) == 'integer'){
+    df$KRwhz[df$KR==f] <- TRUE
+  }
+  print(f)
+}
+
+for (f in df$PR[df$PR != '']){
+  file <- read.dta(f)
+  if (class(file$hc3) == 'integer'){
+    df$PRheight[df$PR==f] <- TRUE
+  }
+  if (class(file$hc2) == 'integer'){
+    df$PRweight[df$PR==f] <- TRUE
+  }
+  if (class(file$hc1) == 'integer'){
+    df$PRage[df$PR==f] <- TRUE
+  }
+  if (class(file$hc1) == 'integer'){
+    df$PRage[df$PR==f] <- TRUE
+  }
+  if (class(file$hc5) == 'integer'){
+    df$PRhaz[df$PR==f] <- TRUE
+  }
+  if (class(file$hc11) == 'integer'){
+    df$PRwhz[df$PR==f] <- TRUE
+  }
+  print(f)
+}
+  
+  
+
 #Only Use Surveys With Geospatial Data
-df <- filter(df, GE != '')
+df$nocoords <- df$GE == ''
 
 #Don't Use Surveys With No Wealth Data ie, < DHS-IV and No WI file
-df <- filter(df, WI != '' | num > 4)
+df$nowealth <- df$WI == '' & df$num < 4
 
-write.csv(df, '../Dissertation/UseFiles.csv', row.names=F)
+write.csv(df, '../../GitHub/spi-malnutrition/scope/UseFiles.csv', row.names=F)
