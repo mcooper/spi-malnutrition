@@ -7,59 +7,23 @@ hh <- read.csv('data/hhvars.csv', stringsAsFactors = F) %>%
          code = paste(cc, num, subversion, hv001, sep='-')) %>%
   select(-num, -subversion, -survey)
 sp <- read.csv('data/Coords&SPI.csv', stringsAsFactors = F) %>%
-  select(code=code.y, month, year, spi6, spi12, spi24, spi36,
-         LATNUM, LONGNUM, survey_code=rcode.x, URBAN_RURA)
-mk <- read.csv('data/MarketDist.csv', stringsAsFactors = F)
-fs <- read.csv('data/FarmingSystems.csv', stringsAsFactors = F) %>%
-  select(code, DESCRIPTIO, ORIG)
+  select(code, month, year, spi6, spi12, spi24, spi36,
+         LATNUM, LONGNUM, survey_code=rcode, URBAN_RURA)
+mkt <- read.csv('data/MarketDist.csv', stringsAsFactors = F)
 
-fsmkt <- merge(fs, mk, by='code', all.x=T, all.y=T)
-spmkt <- merge(sp, fsmkt, by='code', all.x=T, all.y=T)
+spmkt <- merge(sp, mkt, by='code', all.x=T, all.y=T)
 all <- merge(hh, spmkt, by=c('code', 'month', 'year'), all.x=T, all.y=F)
 
-rm(fs)
 rm(hh)
 rm(sp)
-rm(mk)
+rm(mkt)
 rm(spmkt)
-rm(fsmkt)
 
 #Clean records to remove bad values
 all <- all %>%
-  filter(hc5 < 2000 &
-           hc11 < 2000 &
-           hc27 != 9 &
-           hc64 < 99 &
-           !is.infinite(spi12) &
+  filter(!is.infinite(spi12) &
            !is.na(spi24))
 #somehow there were infinite spi values for one location in EG
-
-all$FarmSystem <- paste0(all$ORIG, '-' , all$DESCRIPTIO)
-
-cnd <- all$hv025=='Urban' | all$URBAN_RURA=='U'
-all$FarmSystem[cnd] <- paste0(all$ORIG[cnd], ' - Urban')
-
-
-#Explore range of SPI by livelihood zone
-summry <- all %>%
-  group_by(FarmSystem) %>%
-  summarize(n(),
-            max(spi24),
-            min(spi24))
-
-all <- merge(all, summry)
-
-#only get categories with over a thousand observations
-all <- all %>% filter(`n()` > 1500)
-
-#Recode Factors
-all$hc27 <- ifelse(all$hc27 == 1 | all$hc27 == "male" , "Male", 
-                   ifelse(all$hc27 == 2 | all$hc27 == "female" , "Female", all$hc27))
-all$hv219 <- ifelse(all$hv219 == 1 | all$hv219 == "male" , "Male", 
-                    ifelse(all$hv219 == 2 | all$hv219 == "female" , "Female", all$hv219))
-all$hv025 <- ifelse(all$hv025 == 'rural', 'Rural',
-                    ifelse(all$hv025 == 'urban', 'Urban', all$hv025))
-
 
 #Make factors
 all$hv025 <- as.factor(all$hv025)

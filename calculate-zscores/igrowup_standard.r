@@ -92,7 +92,7 @@ rounde <- function(x,digits=0) {
 calc.zlen<-function(mat,lenanthro){
 
 for(i in 1:length(mat$age.days)) {
-	
+
 	if(!is.na(mat$age.days[i]) & mat$age.days[i]>=0 & mat$age.days[i]<=1856) {
 		
 		l.val<-lenanthro$l[lenanthro$age==mat$age.days[i] & lenanthro$sex==mat$sex[i]]
@@ -501,25 +501,25 @@ mat<-calc.zbmi(mat,bmianthro)
 
 #### rounding the z-scores to two decimals
 
-			mat$zlen<-rounde(mat$zlen,digits=2)
-			mat$zwei<-rounde(mat$zwei,digits=2)
-			mat$zwfl<-rounde(mat$zwfl,digits=2)
-			mat$zbmi<-rounde(mat$zbmi,digits=2)
-			mat$zhc<-rounde(mat$zhc,digits=2)
-			mat$zac<-rounde(mat$zac,digits=2)
-			mat$zts<-rounde(mat$zts,digits=2)
-			mat$zss<-rounde(mat$zss,digits=2)
+			# mat$zlen<-rounde(mat$zlen,digits=2)
+			# mat$zwei<-rounde(mat$zwei,digits=2)
+			# mat$zwfl<-rounde(mat$zwfl,digits=2)
+			# mat$zbmi<-rounde(mat$zbmi,digits=2)
+			# mat$zhc<-rounde(mat$zhc,digits=2)
+			# mat$zac<-rounde(mat$zac,digits=2)
+			# mat$zts<-rounde(mat$zts,digits=2)
+			# mat$zss<-rounde(mat$zss,digits=2)
 
 #### Flagging z-score values for individual indicators
 
-			mat$flen<-ifelse(abs(mat$zlen) > 6,1,0)
-			mat$fwei<-ifelse(mat$zwei > 5 | mat$zwei < (-6),1,0)
-			mat$fwfl<-ifelse(abs(mat$zwfl) > 5,1,0)
-			mat$fbmi<-ifelse(abs(mat$zbmi) > 5,1,0)
-			mat$fhc<-ifelse(abs(mat$zhc) > 5,1,0)
-			mat$fac<-ifelse(abs(mat$zac) > 5,1,0)
-			mat$fts<-ifelse(abs(mat$zts) > 5,1,0)
-			mat$fss<-ifelse(abs(mat$zss) > 5,1,0)
+			# mat$flen<-ifelse(abs(mat$zlen) > 6,1,0)
+			# mat$fwei<-ifelse(mat$zwei > 5 | mat$zwei < (-6),1,0)
+			# mat$fwfl<-ifelse(abs(mat$zwfl) > 5,1,0)
+			# mat$fbmi<-ifelse(abs(mat$zbmi) > 5,1,0)
+			# mat$fhc<-ifelse(abs(mat$zhc) > 5,1,0)
+			# mat$fac<-ifelse(abs(mat$zac) > 5,1,0)
+			# mat$fts<-ifelse(abs(mat$zts) > 5,1,0)
+			# mat$fss<-ifelse(abs(mat$zss) > 5,1,0)
 			
 cat(paste("Z-scores calculated - preparing matrix to be exported...")) 
 

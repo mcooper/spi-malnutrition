@@ -2,9 +2,9 @@ import ee
 import pandas as pd
 import numpy as np
 
-out = pd.read_csv("D:\Documents and Settings\mcooper\Google Drive\Dissertation\sp_export.csv")
+out = pd.read_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\sp_export.csv")
 
-out = out[['code.x', 'LATNUM', 'LONGNUM']].drop_duplicates()
+out = out[['code', 'LATNUM', 'LONGNUM']].drop_duplicates()
 
 ee.Initialize()
 
@@ -12,7 +12,7 @@ points = []
 for row in out.iterrows():
     if not (row[1]['LONGNUM']==0) & (row[1]['LATNUM']==0):
         geom = ee.Geometry.Point(row[1]['LONGNUM'], row[1]['LATNUM'])
-        feat = ee.Feature(geom, {'code':row[1]['code.x']})
+        feat = ee.Feature(geom, {'code':row[1]['code']})
         points.append(feat)
 
 
@@ -46,4 +46,4 @@ for m in mktr:
 #Write
 ##################################
 
-mktaccum.drop_duplicates().to_csv("D:\Documents and Settings\mcooper\Google Drive\Dissertation\MarketDist.csv", index=False)
+mktaccum.to_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\MarketDist.csv", index=False)

@@ -4,7 +4,8 @@ library(foreign)
 library(dplyr)
 library(sp)
 
-usefiles <- read.csv('../Dissertation/UseFiles.csv', stringsAsFactors = F)
+usefiles <- read.csv('../../GitHub/spi-malnutrition/scope/UseFiles.csv', stringsAsFactors = F) %>%
+  filter(PR != '' & !nocoords & !nowealth & PRheight & PRage)
 
 fs <- usefiles$GE
 
@@ -91,7 +92,14 @@ svdata$rcode <- paste(svdata$cc, svdata$num, svdata$subversion, sep='-')
 spdata$rcode <- paste(spdata$cc, spdata$num, spdata$subversion, sep='-')
 
 
-allmerge <- merge(svdata, spdata, by=c('num', 'cc', 'DHSCLUST', 'subversion'), all.x=F, all.y=F)
+allmerge <- merge(svdata, spdata, by=c('num', 'cc', 'DHSCLUST', 'subversion', 'rcode', 'code'), all.x=F, all.y=F)
 
 
-write.csv(allmerge, '../Dissertation/sp_export.csv', row.names = F)
+write.csv(allmerge, '../../GitHub/spi-malnutrition/data/sp_export.csv', row.names = F)
+
+justcoords <- allmerge %>%
+  select(num, cc, DHSCLUST, subversion, rcode, code, LATNUM, LONGNUM) %>% 
+  unique
+
+write.csv(allmerge, '../../GitHub/spi-malnutrition/data/justcoords.csv', row.names = F)
+
