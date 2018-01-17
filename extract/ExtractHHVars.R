@@ -34,7 +34,7 @@ for (f in fs){
   sel$survey <- f
   
   #Keep only children
-  sel <- sel[!is.na(sel$hc5), ]
+  sel <- sel[!is.na(sel$hc3), ]
   df <- bind_rows(df, sel)
   print(f)
 }

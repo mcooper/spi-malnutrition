@@ -26,22 +26,19 @@ for (f in fs){
 
 for (f in df$KR[df$KR != '']){
   file <- read.dta(f)
-  if (class(file$hw3) == 'integer'){
+  if (sum(is.na(file$hw3)) < nrow(file) & !is.null(file$hw3)){
     df$KRheight[df$KR==f] <- TRUE
   }
-  if (class(file$hw2) == 'integer'){
+  if (sum(is.na(file$hw1)) < nrow(file) & !is.null(file$hw1)){
     df$KRweight[df$KR==f] <- TRUE
   }
-  if (class(file$hw1) == 'integer'){
+  if (sum(is.na(file$hw2)) < nrow(file) & !is.null(file$hw2)){
     df$KRage[df$KR==f] <- TRUE
   }
-  if (class(file$hw1) == 'integer'){
-    df$KRage[df$KR==f] <- TRUE
-  }
-  if (class(file$hw5) == 'integer'){
+  if (sum(is.na(file$hw5)) < nrow(file) & !is.null(file$hw5)){
     df$KRhaz[df$KR==f] <- TRUE
   }
-  if (class(file$hw11) == 'integer'){
+  if (sum(is.na(file$hw11)) < nrow(file) & !is.null(file$hw11)){
     df$KRwhz[df$KR==f] <- TRUE
   }
   print(f)
@@ -49,22 +46,19 @@ for (f in df$KR[df$KR != '']){
 
 for (f in df$PR[df$PR != '']){
   file <- read.dta(f)
-  if (class(file$hc3) == 'integer'){
+  if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
     df$PRheight[df$PR==f] <- TRUE
   }
-  if (class(file$hc2) == 'integer'){
+  if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
     df$PRweight[df$PR==f] <- TRUE
   }
-  if (class(file$hc1) == 'integer'){
+  if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
     df$PRage[df$PR==f] <- TRUE
   }
-  if (class(file$hc1) == 'integer'){
-    df$PRage[df$PR==f] <- TRUE
-  }
-  if (class(file$hc5) == 'integer'){
+  if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
     df$PRhaz[df$PR==f] <- TRUE
   }
-  if (class(file$hc11) == 'integer'){
+  if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
     df$PRwhz[df$PR==f] <- TRUE
   }
   print(f)
