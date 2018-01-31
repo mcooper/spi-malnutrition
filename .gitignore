@@ -1,3 +1,4 @@
 data/hhvars.csv
 *.Rhistory
 *~$*.xlsx
+spatial-model/rasters/*

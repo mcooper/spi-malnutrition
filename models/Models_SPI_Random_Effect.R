@@ -67,16 +67,20 @@ all$hhhsex <- as.factor(all$hhhsex)
 ###DHS Cluster Random Effect
 library(lme4)
 
-mod <- lmer(dhshaz~indsex + indage + year + border + hhsize + num_under5 + urbanrural + wealth + hhhsex + hhhage + 
-              market + spi24 + (spi24|dhscode) + (1|country) + (1|survey) + (1|dhscode) + (1|hhid), data=all)
+mod <- lmer(haz~indsex + indage + year + border + hhsize + num_under5 + urbanrural + wealth + hhhsex + hhhage + 
+              market + spi24 + (spi24|dhscode) + (1|country) + (1|survey) + (1|dhscode), data=all[all$spi24 < 1, ])
 
-dhslocations <- row.names(coef(mod)$spi24)
+dhscode <- row.names(coef(mod)$dhscode)
 
 spiimpact <- coef(mod)$dhscode$spi24
 
-spidf <- data.frame(hv001=dhslocations, spiimpact)
+year <- all[all$spi24 < 1, c('year', 'dhscode', 'LATNUM', 'LONGNUM', 'country')]
 
-latlongdf <- unique(all[all$spi24 < -1, c('dhscode', 'LATNUM', 'LONGNUM')])
+spidf <- data.frame(dhscode, spiimpact)
 
-graphdf <- merge(latlongdf, spidf, all.x=T, all.y=F) %>%
-  filter(!is.na(spiimpact))
+spidf <- merge(spidf, year) %>% unique
+
+write.csv(spidf, 'results/random_effect.csv', row.names = F)
+
+##Plot effect sizes
+
