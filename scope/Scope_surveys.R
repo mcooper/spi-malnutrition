@@ -35,12 +35,6 @@ for (f in df$KR[df$KR != '']){
   if (sum(is.na(file$hw2)) < nrow(file) & !is.null(file$hw2)){
     df$KRage[df$KR==f] <- TRUE
   }
-  if (sum(is.na(file$hw5)) < nrow(file) & !is.null(file$hw5)){
-    df$KRhaz[df$KR==f] <- TRUE
-  }
-  if (sum(is.na(file$hw11)) < nrow(file) & !is.null(file$hw11)){
-    df$KRwhz[df$KR==f] <- TRUE
-  }
   print(f)
 }
 
@@ -55,21 +49,13 @@ for (f in df$PR[df$PR != '']){
   if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
     df$PRage[df$PR==f] <- TRUE
   }
-  if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
-    df$PRhaz[df$PR==f] <- TRUE
-  }
-  if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
-    df$PRwhz[df$PR==f] <- TRUE
-  }
   print(f)
 }
-  
-  
 
-#Only Use Surveys With Geospatial Data
-df$nocoords <- df$GE == ''
+#A survey is useable IF 1) Had coords & 2) Has anthropometry in KR OR PR
+df$useable <- df$GE != '' & ((df$KRheight & df$KRweight & df$KRage) | (df$PRheight & df$PRweight & df$PRage))
 
-#Don't Use Surveys With No Wealth Data ie, < DHS-IV and No WI file
-df$nowealth <- df$WI == '' & df$num < 4
+df$PRgood <- df$PRheight & df$PRweight & df$PRage
+df$KRgood <- df$KRheight & df$KRweight & df$KRage
 
 write.csv(df, '../../GitHub/spi-malnutrition/scope/UseFiles.csv', row.names=F)
