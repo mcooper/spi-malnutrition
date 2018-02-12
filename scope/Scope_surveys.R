@@ -3,7 +3,7 @@ setwd('D://Documents and Settings/mcooper/Google Drive/DHS Data/')
 library(foreign)
 library(dplyr)
 
-fs <- list.files(pattern='^..(WI|wi|KR|kr|HR|hr|GE|ge|PR|pr|IR|ir).....(DTA|dta|SHP|shp)$')
+fs <- list.files(pattern='^..(WI|wi|KR|kr|GE|ge|PR|pr).....(DTA|dta|SHP|shp)$')
 
 df <- data.frame()
 
@@ -17,7 +17,7 @@ for (f in fs){
   if (nrow(df[df$num==num & df$cc==cc & df$subversion==subversion, ]) > 0){
     df[df$num==num & df$cc==cc & df$subversion==subversion, toupper(substr(f, 3, 4))] <- f
   }else{
-    temp <- data.frame(num=num, cc=cc, subversion=subversion, WI='', KR='', HR='', GE='', PR='', IR='', stringsAsFactors = F)
+    temp <- data.frame(num=num, cc=cc, subversion=subversion, WI='', KR='', GE='', PR='', stringsAsFactors = F)
     df <- bind_rows(df, temp)
     df[df$num==num & df$cc==cc & df$subversion==subversion, toupper(substr(f, 3, 4))] <- f
   }
