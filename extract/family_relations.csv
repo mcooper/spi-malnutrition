@@ -1,0 +1,50 @@
+3,Son/Daughter
+4,Son/Daughter-in-law
+5,Grandchild
+6,Parent
+7,Parent-in-law
+8,Brother/Sister
+10,Co-Spouse
+11,Other Relative
+12,Adopted/Foster Child
+13,Not Related
+14,Niece/Nephew By Blood
+15,Niece/Nephew By Marriage
+98,NA
+99,NA
+adopted/foster child,Adopted/Foster Child
+Adopted/foster child,Adopted/Foster Child
+adopted/foster child/step child,Adopted/Foster Child
+adopted/foster child/stepchild,Adopted/Foster Child
+adopted/foster/step child,Adopted/Foster Child
+brother or sister-in-law,Niece/Nephew By Marriage
+brother/sister,Brother/Sister
+Brother/sister,Brother/Sister
+dk,NA
+don't know,NA
+Don't know,NA
+grandchild,Grandchild
+Grandchild,Grandchild
+head,Head
+NA,NA
+niece/ nephew by blood,Niece/Nephew By Blood
+niece/ nephew by marriage,Niece/Nephew By Marriage
+niece/nehew by blood,Niece/Nephew By Blood
+niece/nephew by blood,Niece/Nephew By Blood
+niece/nephew by marriage,Niece/Nephew By Marriage
+not related,Not Related
+Not related,Not Related
+other relative,Other Relative
+Other relative,Other Relative
+parent,Parent
+parent-in-law,Parent-in-law
+Parent-in-law,Parent-in-law
+related to house maid,Not Related
+sister brother-in-law,Niece/Nephew By Marriage
+son/daughter,Son/Daughter
+Son/daughter,Son/Daughter
+son/daughter-in-law,Son/Daughter-in-law
+Son/daughter-in-law,Son/Daughter-in-law
+stepson/daughter,Son/Daughter-in-law
+wife or husband,Wife or Husband
+Wife or husband,Wife or Husband

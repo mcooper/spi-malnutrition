@@ -1,0 +1,209 @@
+11,Flush Toilet
+12,Flush Toilet
+13,Flush Toilet
+14,Flush Toilet
+15,Flush Toilet
+21,Flush Toilet
+22,Pit Latrine
+23,Pit Latrine
+24,Pit Latrine
+25,Pit Latrine
+26,Pit Latrine
+31,No Facility
+32,No Facility
+41,Other
+42,Other
+43,Other
+44,Other
+45,Other
+61,Other
+71,Other
+96,NA
+99,NA
+..modern flush toilet,Flush Toilet
+..no facility,No Facility
+..pit toilet\latrine,Pit Latrine
+..traditional with bucket flush,Flush Toilet
+..traditional with tank flush,Flush Toilet
+autre,Other
+avec chasse d'eau,Flush Toilet
+"barrel, tank",Flush Toilet
+basic pit,Pit Latrine
+bucket,Other
+bucket latrine,Other
+bucket toilet,Other
+Bucket toilet,Other
+"bucket, pan",Other
+bucket/pan,Other
+bucket/potty/other container,Other
+composting toilet,Other
+Composting toilet,Other
+composting toilet/arbo loo,Other
+covered hole,Pit Latrine
+covered latrine,Pit Latrine
+dans la nature,No Facility
+field,No Facility
+flush,Flush Toilet
+flush - don't know where,Flush Toilet
+flush - to piped sewer system,Flush Toilet
+flush - to pit latrine,Flush Toilet
+flush - to septic tank,Flush Toilet
+flush - to somewhere else,Flush Toilet
+flush connected to sewer/with septic tank,Flush Toilet
+flush other,Flush Toilet
+flush to latrine,Flush Toilet
+flush to pipe connected to ground water,Flush Toilet
+flush to piped sewer system,Flush Toilet
+Flush to piped sewer system,Flush Toilet
+flush to pit latrine,Flush Toilet
+Flush to pit latrine,Flush Toilet
+flush to septic tank,Flush Toilet
+Flush to septic tank,Flush Toilet
+flush to somewhere else,Flush Toilet
+Flush to somewhere else,Flush Toilet
+flush to vault (bayara),Flush Toilet
+flush toilet,Flush Toilet
+flush unconnected to sewer/without septic tank,Flush Toilet
+"Flush, don't know where",Flush Toilet
+"flush, don't know where",Flush Toilet
+flushed to piped sewer system,Flush Toilet
+flust to pipe connected to canal,Flush Toilet
+fosse etanche,Pit Latrine
+hanging latrine,Other
+hanging toilet/latrine,Other
+Hanging toilet/latrine,Other
+improved (ventilated) pit latrine,Flush Toilet
+improved latrines,Flush Toilet
+indoors: flush to open pit (ditch or river),Flush Toilet
+indoors: flush to piped public system,Flush Toilet
+indoors: flush to septic tank,Flush Toilet
+indoors: latrine to piped public system,Flush Toilet
+indoors: latrine to septic tank,Flush Toilet
+Inside dwelling,Flush Toilet
+inside yard: flush to open pit (ditch or river),Flush Toilet
+inside yard: flush to piped public system,Flush Toilet
+inside yard: flush to septic tank,Flush Toilet
+inside yard: latrine to open pit (ditch or river),Flush Toilet
+inside yard: latrine to piped public system,Flush Toilet
+inside yard: latrine to septic tank,Flush Toilet
+latrine,Pit Latrine
+Latrine (ciego o negro),Pit Latrine
+latrine connected to sewer/with septic tank,Flush Toilet
+Latrine over river/lake,Pit Latrine
+latrine with manual flush,Pit Latrine
+Latrine with manual flush,Pit Latrine
+latrines,Pit Latrine
+modern flush toilet,Flush Toilet
+NA,NA
+no facilities,No Facility
+"no facilities, bush",No Facility
+no facility,No Facility
+"no facility, bush",No Facility
+"no facility, bush, field",No Facility
+"no facility, nature",No Facility
+"no facility,bush",No Facility
+no facility/ bush/ field,No Facility
+"no facility/bush, field",No Facility
+no facility/bush/field,No Facility
+No facility/bush/field,No Facility
+no facility/field,No Facility
+no facility/outdoors/bush,No Facility
+No service,No Facility
+no toilet facility,No Facility
+"no toilet facility, nature",No Facility
+non covered latrine,Pit Latrine
+non-vip pit latrine with slab,Flush Toilet
+non-vip pit latrine without slab,Flush Toilet
+not dejure resident,NA
+open air,No Facility
+open latrine,Pit Latrine
+"open, rudimentary",No Facility
+other,Other
+OTHER,Other
+out of yard: flush to open pit (ditch or river),Pit Latrine
+out of yard: flush to piped public system,Flush Toilet
+out of yard: flush to septic tank,Flush Toilet
+out of yard: latrine to open pit (ditch or river),Pit Latrine
+out of yard: latrine to piped public system,Pit Latrine
+out of yard: latrine to septic tank,Pit Latrine
+Outside dwelling,No Facility
+own flush toilet,Flush Toilet
+own flush toilet outsite/yard,Flush Toilet
+own flust toilet into residence,Flush Toilet
+own pit toilet/latrine,Pit Latrine
+own traditional pit toilet,Pit Latrine
+personal toilet,Flush Toilet
+pit,Pit Latrine
+pit latrine,Pit Latrine
+pit latrine - ventilated improved pit (vip),Pit Latrine
+pit latrine - with slab,Flush Toilet
+pit latrine - without slab / open pit,Pit Latrine
+pit latrine ventilated improved pit latrine,Pit Latrine
+pit latrine with slab,Flush Toilet
+Pit latrine with slab,Flush Toilet
+pit latrine without slab non-wahable,Pit Latrine
+pit latrine without slab/ open pit,Pit Latrine
+pit latrine without slab/open pit,Pit Latrine
+Pit latrine without slab/open pit,Pit Latrine
+pit toilet latrine,Pit Latrine
+"pit toilet, latrine",Pit Latrine
+pit toilet/latrine,Pit Latrine
+pour flush latrine,Pit Latrine
+private flush toilet,Flush Toilet
+public flush toilet,Flush Toilet
+public toilet,Flush Toilet
+puits perdu,Pit Latrine
+river,No Facility
+"River, canal",No Facility
+river/canal,No Facility
+septic hole,Pit Latrine
+septic pit,Pit Latrine
+septic tank/modern toilet,Flush Toilet
+septic tank/toilet,Flush Toilet
+Septic well,Pit Latrine
+share flush toilet into residence,Flush Toilet
+share flush toilet outside/yard,Flush Toilet
+share pit toilet/letrine,Pit Latrine
+shared flush toilet,Flush Toilet
+shared traditional pit toilet,Pit Latrine
+simple latrine,Pit Latrine
+toilet connected to plot/yard,Flush Toilet
+toilet connected to septic well,Flush Toilet
+toilet connected to sewer,Flush Toilet
+toilet in common,Flush Toilet
+toilet inside,Flush Toilet
+toilet outside,Pit Latrine
+"Toilet without flush, don't know where",Pit Latrine
+trad. pit toilet,Pit Latrine
+trad. w bucket flush,Flush Toilet
+trad. w tank flush,Flush Toilet
+traditional bucket flush,Pit Latrine
+traditional latrine,Pit Latrine
+Traditional latrine,Pit Latrine
+traditional pit latrine,Pit Latrine
+traditional pit toil,Pit Latrine
+traditional pit toilet,Pit Latrine
+traditional pit/latrine unconnected to sewer/without septic,Pit Latrine
+traditional tank flush,Pit Latrine
+traditional toilet to sea/river (low tide),Pit Latrine
+unventilated latrine,Pit Latrine
+vent. imp. pit latr.,Flush Toilet
+vent. imp. pit latrine,Flush Toilet
+vent.imp.pit latrine,Flush Toilet
+ventilated improv pt,Flush Toilet
+ventilated improved pit (vip) latrine,Flush Toilet
+ventilated improved pit latrine,Flush Toilet
+ventilated improved pit latrine (vip),Flush Toilet
+Ventilated Improved Pit latrine (VIP),Flush Toilet
+ventilated improved pit/latrine (vip blair toilet),Flush Toilet
+ventilated latrine,Flush Toilet
+Ventilated latrine,Flush Toilet
+ventilated/improved pit latrine,Flush Toilet
+vip latrine,Flush Toilet
+w.c,Flush Toilet
+water sealed/slab la,Flush Toilet
+water sealed/slab latrine,Flush Toilet
+ÿno facility/bush/field,No Facility
+ÿown flush toilet,Flush Toilet
+ÿtraditional pit toilet,Pit Latrine
+ÿventilated improved pit latrine,Flush Toilet

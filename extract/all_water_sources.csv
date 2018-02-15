@@ -1,0 +1,285 @@
+11,Pipe
+12,Pipe
+13,Pipe
+14,Pipe
+21,Tube Well
+22,Tube Well
+23,Tube Well
+24,Tube Well
+25,Tube Well
+31,Tube Well
+32,Tube Well
+33,Tube Well
+34,Tube Well
+35,Tube Well
+36,Tube Well
+41,Tube Well
+42,Surface Water
+43,Surface Water
+44,Surface Water
+45,Surface Water
+46,Surface Water
+51,Surface Water
+61,Purchased
+62,Purchased
+63,Purchased
+71,Purchased
+72,Purchased
+81,Purchased
+82,Purchased
+91,Purchased
+96,Purchased
+97,NA
+99,NA
+....dug - well unprotected,Tube Well
+....dug well - protected,Tube Well
+....piped - public,Pipe
+....piped into dwelling,Pipe
+....piped into yard/plot,Pipe
+....spring water protected,Tube Well
+....spring water unprotected,Tube Well
+....tube well or borehole,Tube Well
+..nile/canals,Surface Water
+..piped into residence,Pipe
+..piped into yard/plot,Pipe
+..public tap,Pipe
+..public well,Tube Well
+..well in residence,Tube Well
+..well in yard/plot,Tube Well
+along the road,Surface Water
+autre,Purchased
+autre vendeur,Purchased
+borehole,Tube Well
+borehole /pump,Tube Well
+borehole ?,Tube Well
+borehole in yard/plot,Tube Well
+borehole or tubewell,Tube Well
+borehole public,Tube Well
+borehole with pump,Tube Well
+Borehole with pump,Tube Well
+borehole with pump in residence,Tube Well
+borehole with pump outside residence,Tube Well
+borne fontaine,Tube Well
+bottled water,Purchased
+Bottled water,Purchased
+"camion, citerne",Surface Water
+canal,Surface Water
+cart with small tank,Purchased
+Cart with small tank,Purchased
+community stand pipe,Pipe
+covered spring,Tube Well
+covered well,Tube Well
+dam,Surface Water
+deet tubewell,Tube Well
+dugout,Tube Well
+eau courante,Pipe
+forage,Surface Water
+gravity flow scheme,Surface Water
+gravity flow water,Surface Water
+improved spring,Tube Well
+improved stream,Surface Water
+in the courtyard,Tube Well
+in the house,Pipe
+lake or stream,Surface Water
+"lake, pond",Surface Water
+lake/pond/river/channel/irrigation channel,Surface Water
+manual pumped water,Pipe
+marigot,Surface Water
+mechanical or manual well,Tube Well
+motorcycle with three wheels,Purchased
+NA,NA
+Neighbor's house,NA
+neighbor's tap,Pipe
+neighbor's tap/standpipe,Pipe
+neighbour's tap,Pipe
+"nile, canal",Surface Water
+non protected well,Tube Well
+not a de jure resident,NA
+not a dejure place of residence,NA
+not a dejure resident,NA
+not a de-jure resident,NA
+not dejure resident,NA
+not in de jure sample,NA
+ocean/lake,Surface Water
+of a neighbor,NA
+open dug well,Tube Well
+open public well,Tube Well
+open spring,Tube Well
+open well,Tube Well
+open well /hole/cesspool in residence,Tube Well
+open well /hole/cesspool outside residence,Tube Well
+open well in dwelling,Tube Well
+open well in dwelling/yard,Tube Well
+open well in yard/plot,Tube Well
+open well with sump pump,Tube Well
+open well without sump pump,Tube Well
+other,Purchased
+Other,Purchased
+other piped,Pipe
+other rainwater,Surface Water
+other spring,Tube Well
+outside house,Tube Well
+piped from the neighbor,Pipe
+piped in dwelling/yard/plot,Pipe
+piped inside dwel.,Pipe
+piped inside dwelling,Pipe
+piped into compound,Pipe
+piped into compound/plot,Pipe
+piped into dwelling,Pipe
+Piped into dwelling,Pipe
+piped into house/yard/plot,Pipe
+"piped into res, yard",Pipe
+piped into residence,Pipe
+piped into someone else's yard/plot,Pipe
+piped into tap in yard/plot,Pipe
+piped into yard,Pipe
+piped into yard /plot,Pipe
+piped into yard/plot,Pipe
+piped into yard/plot/building,Pipe
+piped outside compound,Pipe
+piped outside dwel.,Pipe
+piped outside dwelling,Pipe
+Piped outside dwelling but within buikding,Pipe
+piped outside residence,Pipe
+piped public tap,Pipe
+piped to neighbor,Pipe
+piped to neighbour's house,Pipe
+piped to yard/plot,Pipe
+Piped to yard/plot,Pipe
+piped water elsewhere,Pipe
+piped water from rural system,Pipe
+piped water from utility company,Pipe
+piped water into residence,Pipe
+piped water into residence/yard/compound,Pipe
+pluie,Surface Water
+pond lake,Surface Water
+"pond, lake",Surface Water
+"pond, river, stream",Surface Water
+"pond,lake",Surface Water
+pond/lake,Surface Water
+pond/lake/dam,Surface Water
+pond/tank/lake,Surface Water
+pretected source,Tube Well
+protected dug well,Tube Well
+protected dug well in dwelling/yard/plot,Tube Well
+protected public dug well,Tube Well
+protected public well,Tube Well
+protected public well/spring,Tube Well
+protected source,Tube Well
+protected spring,Tube Well
+Protected spring,Tube Well
+protected well,Tube Well
+Protected well,Tube Well
+protected well in dwelling,Tube Well
+protected well in someone else's yard/plot,Tube Well
+protected well in yard/plot,Tube Well
+protected well/spring in yard/plot,Tube Well
+protected without pump,Tube Well
+public borehole,Tube Well
+public fountain,Tube Well
+public fountain/tank,Tube Well
+public tap,Pipe
+public tap / neighbors house,Pipe
+public tap/standpipe,Pipe
+Public tap/standpipe,Pipe
+public well,Tube Well
+Public well,Tube Well
+public well w /pump,Tube Well
+"public well, cement, covered",Tube Well
+"public well, cement, not covered",Tube Well
+"public well, traditional",Tube Well
+public/neighbor's tubewell,Tube Well
+public/neighbor's well,Tube Well
+public/nieghbor's tap,Pipe
+"puits, forage",Tube Well
+rain water,Surface Water
+rainwater,Surface Water
+Rainwater,Surface Water
+rainwater cistern,Surface Water
+rainwater in a cistern,Surface Water
+resevoir,Surface Water
+river,Surface Water
+"river, lake, sea",Surface Water
+"river, stream",Surface Water
+"river, stream, pond, lake",Surface Water
+"river,spring,pond /ma",Surface Water
+"river,spring,surf. w",Surface Water
+"river,stream",Surface Water
+river/dam/lake/ponds/stream/canal/irirgation channel,Surface Water
+River/dam/lake/ponds/stream/canal/irirgation channel,Surface Water
+river/dam/lake/ponds/stream/canal/irrigation channel,Surface Water
+River/dam/lake/ponds/stream/canal/irrigation channel,Surface Water
+river/irrigation channel,Surface Water
+river/stream,Surface Water
+river/stream not protected,Surface Water
+river/stream/pond/lake,Surface Water
+river/stream/pond/lake/dam,Surface Water
+river/stream/spring,Surface Water
+riviŠre,Surface Water
+sachet water,Purchased
+"sea, lake",Surface Water
+shallow tubewell,Tube Well
+souce not protected,Tube Well
+source,Tube Well
+spring,Tube Well
+Spring,Tube Well
+"spring, not improved",Tube Well
+sprong/kuwa,Tube Well
+stone tap/dhara,Pipe
+surface water (river/dam),Surface Water
+surface water (river/dam/lake/pond/stream/canal/irrigation c,Surface Water
+surface water(river/dam/lake/pond/stream/canal/irrigation ch,Surface Water
+surface well/other well,Surface Water
+surface/other well,Surface Water
+tanker truck,Purchased
+Tanker truck,Purchased
+tanker truck/bowser,Purchased
+tanker truck/water vendor,Purchased
+"tanker,truck,other v",Purchased
+tap in compound,Pipe
+tap in dwelling,Pipe
+tube well,Tube Well
+tube well or borehole,Tube Well
+Tube well or borehole,Tube Well
+tubed/piped public well or bore hole,Tube Well
+tubed/piped well or bore hole in dwelling/yard,Tube Well
+tubewell,Tube Well
+tubewell in yard/plot,Tube Well
+unprotectd well,Tube Well
+unprotected dug well,Tube Well
+unprotected public well/spring,Tube Well
+unprotected spring,Tube Well
+Unprotected spring,Tube Well
+unprotected well,Tube Well
+Unprotected well,Tube Well
+unprotected well/spring in yard/plot,Tube Well
+vendor = cart with small tank,Purchased
+vendor: cart with small tank,Purchased
+water from vendor,Purchased
+water in drums/big cans,Purchased
+water in house,Pipe
+water in plastic bag,Purchased
+water sale by company,Purchased
+water vender,Purchased
+water vendor,Purchased
+well equipped with pump,Tube Well
+well in compound,Tube Well
+well in dwelling,Tube Well
+well in house/yard/plot,Tube Well
+"well in res, yard",Tube Well
+well in residence,Tube Well
+well in residence/yard/compound,Tube Well
+Well inside dwelling,Tube Well
+well into dwelling/yard/plot,Tube Well
+well outside residence,Tube Well
+well with handpump,Tube Well
+well with pump,Tube Well
+well without handpum,Tube Well
+well without hndpump,Tube Well
+ÿpiped into residence,Pipe
+ÿpond/lake,Surface Water
+ÿpublic tap,Pipe
+ÿpublic well,Tube Well
+ÿriver/stream,Surface Water
+ÿspring,Tube Well
+ÿwell in residence/yard/plot,Tube Well
