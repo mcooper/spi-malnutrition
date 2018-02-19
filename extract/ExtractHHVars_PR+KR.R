@@ -86,6 +86,32 @@ for (i in 1:nrow(usefiles)){
     data <- merge(data, wi, all.x=T, all.y=F)
 
   }
+  
+  #Now get spatial data
+  spheadervars <- c('DHSCLUST', 'LATNUM', 'LONGNUM')
+  
+  out <- read.dbf(gsub('.shp', '.dbf', usefiles$GE[i]), as.is=TRUE)
+  if (!all(spheadervars %in% names(out))){
+    cat(usefiles$GE[i], 'is missing necessary column names\n')
+  }else{
+    out <- out[ , spheadervars]
+    out$num <- substr(usefiles$GE[i], 5, 5)
+    out$cc <- toupper(substr(usefiles$GE[i], 1, 2))
+    out$subversion <- ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% as.character(seq(0, 9)), 1,
+                            ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[1:8], 2, 
+                                   ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[9:17], 3, 
+                                          ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[18:26], 4, 99))))
+    out$code <- paste(out$cc, out$num, out$subversion, out$DHSCLUST, sep='-')
+    
+    out <- out %>%
+      select(latitude=LATNUM, longitude=LONGNUM, code=code)
+  }
+  
+  initialsize <- nrow(data)
+  data <- merge(data, out)
+  if (initialsize != nrow(data)){
+    cat("Mismatches in Spatial and Household data.  Initial size:", initialsize, " now:", nrow(data), '\n')
+  }
 
   all <- bind_rows(all, data)
 }
@@ -94,26 +120,24 @@ for (i in 1:nrow(usefiles)){
 #Ad hoc cleaning
 ###################
 
-an <- as.numeric
-
 #age
-all$age <- an(all$age)
+all$age <- as.numeric(all$age)
 
 #birth_order
-all$birth_order <- an(all$birth_order)
+all$birth_order <- as.numeric(all$birth_order)
 all$birth_order[all$birth_order == 99] <- NA
 
 #birth_weight
-all$birth_weight <- an(all$birth_weight)
+all$birth_weight <- as.numeric(all$birth_weight)
 all$birth_weight[all$birth_weight > 9000] <- NA
 
 #birthmonth
 all$birthmonth <- recode(all$birthmonth, `ashad`="6",`aswin`="9",`baisakh`="4",`bhadra`="8",`chaitra`="3",
                    `falgun`="2",`jestha`="5",`kartik`="10",`magh`="1",`mangsir`="11",`poush`="12",`srawan`="7")
-all$birthmonth <- an(all$birthmonth)
+all$birthmonth <- as.numeric(all$birthmonth)
 
 #birthyear
-all$birthyear <- an(all$birthyear)
+all$birthyear <- as.numeric(all$birthyear)
 
 all$birthyear[which(all$birthyear > 80 & all$birthyear < 1000)] <- all$birthyear[which(all$birthyear > 80 & all$birthyear < 1000)] + 1900
 all$birthyear[which(all$birthyear == 0)] <- 2000
@@ -124,7 +148,7 @@ all$birthyear[which(all$birthyear > 2020 & all$birthmonth %in% seq(10, 12))] <- 
 #breast_duration, breastfeeding and ever_breastfed
 all$breast_duration <- recode(all$breast_duration, `ever breastfed, not currently breastfeeding`='93',
                               `never breastfed`='94', `still breastfeeding`='95')
-all$breast_duration <- an(all$breast_duration)
+all$breast_duration <- as.numeric(all$breast_duration)
 all$breast_duration[all$breast_duration %in% c(99, 98, 97, 96) | (all$breast_duration > 60 & all$breast_duration < 90)] <- NA
 
 all$ever_breastfed <- all$breast_duration != 0 & all$breast_duration != 94
@@ -135,10 +159,10 @@ all$breast_duration[all$breast_duration == 94] <- 0
 all$breast_duration[all$breast_duration == 93] <- NA
 
 #dependents and workers
-all$dependents <- an(all$dependents)
+all$dependents <- as.numeric(all$dependents)
 all$dependents[all$dependents == 0] <- NA #How can there be children under 5 but no dependents?
 
-all$workers <- an(all$workers)
+all$workers <- as.numeric(all$workers)
 
 #diarrhea
 all$diarrhea <- recode(all$diarrhea, `0`="No", `1`="2weeks", `2`="24hours", `8`="NA", `9`="NA", `don't know`="NA", `no`="No",
@@ -160,11 +184,11 @@ all$father_alive[all$father_alive %in% c('8', '9', 'dk', 'DK', "don't know", "Do
 all$father_alive <-all$father_alive == '1' | all$father_alive == 'yes' | all$father_alive == 'Yes'
 
 #father_years_ed
-all$father_years_ed <- an(all$father_years_ed)
+all$father_years_ed <- as.numeric(all$father_years_ed)
 all$father_years_ed[all$father_years_ed > 97] <- NA
 
 #fathers_age
-all$father_age <- an(all$father_age)
+all$father_age <- as.numeric(all$father_age)
 all$father_age[all$father_age > 97 | all$father_age < 10] <- NA
 
 #fever
@@ -172,42 +196,42 @@ all$fever[all$fever %in% c('8', '9', 'dk', "don't know")] <- NA
 all$fever <- all$fever == '1' | all$fever == 'yes'
 
 #haz_dhs
-all$haz_dhs <- an(all$haz_dhs)
+all$haz_dhs <- as.numeric(all$haz_dhs)
 all$haz_dhs[all$haz_dhs > 9000] <- NA
 
 #haz_who
-all$haz_who <- an(all$haz_who)
+all$haz_who <- as.numeric(all$haz_who)
 all$haz_who[all$haz_who > 9000] <- NA
 
 #waz_dhs
-all$waz_dhs <- an(all$waz_dhs)
+all$waz_dhs <- as.numeric(all$waz_dhs)
 all$waz_dhs[all$waz_dhs > 9000] <- NA
 
 #waz_who
-all$waz_who <- an(all$waz_who)
+all$waz_who <- as.numeric(all$waz_who)
 all$waz_who[all$waz_who > 9000] <- NA
 
 #whz_dhs
-all$whz_dhs <- an(all$whz_dhs)
+all$whz_dhs <- as.numeric(all$whz_dhs)
 all$whz_dhs[all$whz_dhs > 9000] <- NA
 
 #whz_who
-all$whz_who <- an(all$whz_who)
+all$whz_who <- as.numeric(all$whz_who)
 all$whz_who[all$whz_who > 9000] <- NA
 
 #head_age
-all$head_age <- an(all$head_age)
+all$head_age <- as.numeric(all$head_age)
 all$head_age[all$head_age > 97 | all$head_age < 10] <- NA
 
 #head_sex
 all$head_sex <- recode(all$head_sex, `1`="Male", `2`="Female", `female`="Female", `male`="Male")
 
 #height
-all$height <- an(all$height)
+all$height <- as.numeric(all$height)
 all$height[all$height < 100 | all$height > 2000] <- NA
 
 #hhsize
-all$hhsize <- an(all$hhsize)
+all$hhsize <- as.numeric(all$hhsize)
 
 #how_measured
 all$how_measured <- recode(all$how_measured, `0`="NA", `1`="Lying", `2`="Standing", `3`="NA", `9`="NA", `lying`="Lying",
@@ -219,10 +243,10 @@ all$interview_month <- recode(all$interview_month, `ashad`="6",`aswin`="9",`bais
                          `falgun`="2",`jestha`="5",`kartik`="10",`magh`="1",`mangsir`="11",`poush`="12",`srawan`="7",
                          `March`="3", `May`="5", `november`="11", `october`="10", `september`="9", `july`="7", `July`="7",
                          `june`="6", `June`="6", `February`="2", `April`="4", `august`="8")
-all$interview_month <- an(all$interview_month)  
+all$interview_month <- as.numeric(all$interview_month)  
 
 #interview_year
-all$interview_year <- 1900 + floor((an(all$interview_cmc) - 1)/12)
+all$interview_year <- 1900 + floor((as.numeric(all$interview_cmc) - 1)/12)
 all$interview_year[which(all$interview_year > 2020 & all$interview_month %in% seq(1, 9))] <- all$interview_year[which(all$interview_year > 2020 & all$interview_month %in% seq(1, 9))] - 57
 all$interview_year[which(all$interview_year > 2020 & all$interview_month %in% seq(10, 12))] <- all$interview_year[which(all$interview_year > 2020 & all$interview_month %in% seq(10, 12))] - 56
 
@@ -239,11 +263,11 @@ all$mother_smokes <- all$mother_smokes == "0" | all$mother_smokes == "no"
 
 #mother_years_ed
 all$mother_years_ed[is.na(all$mother_years_ed) | all$mother_years_ed == "98" | all$mother_years_ed == "99"] <- all$parents_years_ed[is.na(all$mother_years_ed) | all$mother_years_ed == "98" | all$mother_years_ed == "99"]
-all$mother_years_ed <- an(all$mother_years_ed)
+all$mother_years_ed <- as.numeric(all$mother_years_ed)
 all$mother_years_ed[all$mother_years_ed > 97] <- NA
 
 #mother_age
-all$mother_age <- an(all$mother_age)
+all$mother_age <- as.numeric(all$mother_age)
 all$mother_age[all$mother_age > 97 | all$mother_age < 10] <- NA
 
 #otherwatersource
@@ -260,7 +284,7 @@ all$parasite_drugs[all$parasite_drugs %in% c('8', '9', 'dk', 'DK', "don't know")
 all$parasite_drugs <- all$parasite_drugs == '1' | all$parasite_drugs == 'yes'
 
 #preceeding_interval
-all$preceeding_interval <- an(all$preceeding_interval)
+all$preceeding_interval <- as.numeric(all$preceeding_interval)
 all$preceeding_interval[all$preceeding_interval > 500] <- NA
 
 #relationship_hhhead
@@ -277,7 +301,7 @@ all$sex <- recode(all$sex, `1`="Male", `2`="Female", `female`="Female", `male`="
 all$sex[all$sex=='9'] <- NA
 
 #suceeding_interval
-all$suceeding_interval <- an(all$suceeding_interval)
+all$suceeding_interval <- as.numeric(all$suceeding_interval)
 all$suceeding_interval[all$suceeding_interval > 500] <- NA
 
 #toilet
@@ -292,12 +316,12 @@ all$newcode <- NULL
 all$urban_rural <- recode(all$urban_rural, `rural`="Rural", `urban`='Urban')
 
 #watersource_dist
-all$watersource_dist <- an(all$watersource_dist)
+all$watersource_dist <- as.numeric(all$watersource_dist)
 all$watersource_dist[all$watersource_dist==996] <- 0
 all$watersource_dist[all$watersource_dist %in% c(998, 999)] <- NA
 
 #wealth_factor
-all$wealth_factor <- an(all$wealth_factor)
+all$wealth_factor <- as.numeric(all$wealth_factor)
 
 #wealth_index
 all$wealth_index <- recode(all$wealth_index, `fourth quintile`="Richer", `highest quintile`="Richest", `second quintile`="Poorer", 
@@ -306,10 +330,15 @@ all$wealth_index <- recode(all$wealth_index, `fourth quintile`="Richer", `highes
                            `lowest`="Poorest", `second`="Poorer")
 
 #weight
-all$weight <- an(all$weight)
+all$weight <- as.numeric(all$weight)
 all$weight[all$weight < 10 | all$weight > 9990] <- NA
 
+#Write coords with dates
+write.csv(all[ , c('latitude', 'longitude', 'code', 'interview_year', 'interview_month')] %>% unique,
+          '../../GitHub/spi-malnutrition/data/sp_export.csv', row.names=F)
 
+#Write all data
+write.csv(all, '../../GitHub/spi-malnutrition/data/hhvars.csv', row.names=F)
 
 
 

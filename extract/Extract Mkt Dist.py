@@ -4,17 +4,16 @@ import numpy as np
 
 out = pd.read_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\sp_export.csv")
 
-out = out[['code', 'LATNUM', 'LONGNUM']].drop_duplicates()
+out = out[['code', 'latitude', 'longitude']].drop_duplicates()
 
 ee.Initialize()
 
 points = []
 for row in out.iterrows():
-    if not (row[1]['LONGNUM']==0) & (row[1]['LATNUM']==0):
-        geom = ee.Geometry.Point(row[1]['LONGNUM'], row[1]['LATNUM'])
+    if not (row[1]['longitude']==0) & (row[1]['latitude']==0):
+        geom = ee.Geometry.Point(row[1]['longitude'], row[1]['latitude'])
         feat = ee.Feature(geom, {'code':row[1]['code']})
         points.append(feat)
-
 
 features = []
 i = 0
