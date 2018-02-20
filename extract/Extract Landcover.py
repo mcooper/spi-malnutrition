@@ -3,7 +3,7 @@ import pandas as pd
 
 out = pd.read_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\sp_export.csv")
 
-out = out[['code', 'latitude', 'longitude']].drop_duplicates()
+out = out[['code', 'latitude', 'longitude', 'interview_year']].drop_duplicates()
 
 ee.Initialize()
 
@@ -20,17 +20,20 @@ def merge_dicts(*dicts):
     return(superdict)
 
 cciaccum = pd.DataFrame()
-for y in out.year.unique():
+for y in out.interview_year.unique():    
+    if (y < 1992) | (y > 2015):
+        continue
+    
     print(y)
     
     cci = ee.Image("users/geflanddegradation/lcov/ESACCI-LC-L4-LCCS-Map-300m-P1Y-" + str(y) + "-v207")
     
-    sel = out[[out['year'] == y]]
+    sel = out.loc[out['interview_year'] == y]
     
     points = []
     for row in sel.iterrows():
         if not (row[1]['longitude']==0) & (row[1]['latitude']==0):
-            geom = ee.Geometry.Point(row[1]['longitude'], row[1]['latitude'])
+            geom = ee.Geometry.Point(row[1]['longitude'], row[1]['latitude']).buffer(15000)
             feat = ee.Feature(geom, {'code':row[1]['code']})
             points.append(feat)
     
@@ -47,9 +50,11 @@ for y in out.year.unique():
     for f in ccir:
         for i in f['features']:
             temp = pd.DataFrame(merge_dicts(rename_dict('cci_', i['properties']['histogram']),
-                                            {'hh_refno': i['properties']['hh_refno']},
-                                            {'year': i['properties']['year']}), index = [0])
+                                            {'code': i['properties']['code']},
+                                            {'interview_year': y}), index = [0])
             cciaccum = cciaccum.append(temp)
 
+cciaccum = cciaccum.fillna(0)
 
+cciaccum.to_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\landcover.csv", index=False)
 

@@ -333,6 +333,17 @@ all$wealth_index <- recode(all$wealth_index, `fourth quintile`="Richer", `highes
 all$weight <- as.numeric(all$weight)
 all$weight[all$weight < 10 | all$weight > 9990] <- NA
 
+#is_visitor
+all$is_visitor[all$is_visitor == 9] <- NA
+all$is_visitor <- all$is_visitor == 'visitor' | all$is_visitor == '2'
+
+#years_in_location
+all$years_in_location <- as.numeric(all$years_in_location)
+
+all$years_in_location[all$years_in_location %in% c(97, 98, 99)] <- NA
+all$years_in_location[all$years_in_location == 96] <- 0
+all$years_in_location[all$years_in_location == 95] <- 50
+
 #Write coords with dates
 write.csv(all[ , c('latitude', 'longitude', 'code', 'interview_year', 'interview_month')] %>% unique,
           '../../GitHub/spi-malnutrition/data/sp_export.csv', row.names=F)
