@@ -26,23 +26,39 @@ while i < len(points):
 ###############################
 #Get market distance
 #############################
-mkt = ee.Image("users/mcooper/access_50k")
+mkt2000 = ee.Image("users/mcooper/access_50k")
+mkt2015 = ee.Image("Oxford/MAP/accessibility_to_cities_2015_v1_0")
 
-mktr = map(lambda(x): mkt.reduceRegions(reducer=ee.Reducer.mean(), collection=x).getInfo(), features)
+mktr2000 = map(lambda(x): mkt2000.reduceRegions(reducer=ee.Reducer.mean(), collection=x).getInfo(), features)
+mktr2015 = map(lambda(x): mkt2015.reduceRegions(reducer=ee.Reducer.mean(), collection=x).getInfo(), features)
 
-mktaccum = pd.DataFrame()
-for m in mktr:
+mkt00accum = pd.DataFrame()   
+for m in mktr2000:
     for i in m['features']:
         if 'mean' in i['properties']:
             temp = pd.DataFrame({'code': i['properties']['code'], 
-                                 'market': i['properties']['mean']}, index=[0])
+                                 'market2000': i['properties']['mean']}, index=[0])
         else:
             temp = pd.DataFrame({'code': i['properties']['code'], 
-                                 'market': np.nan}, index=[0])
-        mktaccum = mktaccum.append(temp)
+                                 'market2000': np.nan}, index=[0])
+        mkt00accum = mkt00accum.append(temp)
+
+mkt15accum = pd.DataFrame()
+for m in mktr2015:
+    for i in m['features']:
+        if 'mean' in i['properties']:
+            temp = pd.DataFrame({'code': i['properties']['code'], 
+                                 'market2015': i['properties']['mean']}, index=[0])
+        else:
+            temp = pd.DataFrame({'code': i['properties']['code'], 
+                                 'market2015': np.nan}, index=[0])
+        mkt15accum = mkt15accum.append(temp)
+
 
 ##################################
 #Write
 ##################################
+
+mktaccum = pd.merge(mkt00accum, mkt15accum)
 
 mktaccum.to_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\MarketDist.csv", index=False)
