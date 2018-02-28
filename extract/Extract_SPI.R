@@ -31,14 +31,24 @@ df <- data.frame()
 for (n in 1:nrow(rll)){
   s <- gdallocationinfo(vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE)
   s <- as.numeric(s)
-  temp <- data.frame(tmpcode=rll$layer[n],
+  interview <- data.frame(tmpcode=rll$layer[n],
              interview_month=month(seq(ymd('1981-01-01'), ymd('2017-09-01'), by='1 month')),
              interview_year=year(seq(ymd('1981-01-01'), ymd('2017-09-01'), by='1 month')),
              spi6=as.numeric(spi(s, 6, na.rm=TRUE)$fitted),
              spi12=as.numeric(spi(s, 12, na.rm=TRUE)$fitted),
              spi24=as.numeric(spi(s, 24, na.rm=TRUE)$fitted),
              spi36=as.numeric(spi(s, 36, na.rm=TRUE)$fitted))
-  sel <- merge(temp, sp@data, all.x=F, all.y=F)
+  birthdate <- data.frame(tmpcode=rll$layer[n],
+             calc_birthmonth=month(seq(ymd('1981-01-01'), ymd('2017-09-01'), by='1 month')),
+             calc_birthyear=year(seq(ymd('1981-01-01'), ymd('2017-09-01'), by='1 month')),
+             birthday_spi9=as.numeric(spi(s, 9, na.rm=TRUE)$fitted))
+  thousanddays <- data.frame(tmpcode=rll$layer[n],
+             thousandday_month=month(seq(ymd('1981-01-01'), ymd('2017-09-01'), by='1 month')),
+             thousandday_year=year(seq(ymd('1981-01-01'), ymd('2017-09-01'), by='1 month')),
+             thousandday_spi33=as.numeric(spi(s, 33, na.rm=TRUE)$fitted))
+  
+  sel <- sp@data[sp@data$tmpcode == rll$layer[n], ]
+  final <- Reduce(function(x, y){merge(x,y,all.x=T,all.y=F)}, list(sel, interview, birthdate, thousanddays))
   df <- bind_rows(sel, df)
   cat(n, round(n/nrow(rll)*100, 4), 'percent done\n') 
 }

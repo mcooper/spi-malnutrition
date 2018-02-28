@@ -1,20 +1,22 @@
-setwd('D://Documents and Settings/mcooper/Google Drive/DHS Data/')
+setwd('D://Documents and Settings/mcooper/GitHub/spi-malnutrition/')
 
 library(foreign)
 library(dplyr)
 
-usefiles <- read.csv('../../GitHub/spi-malnutrition/scope/UseFiles.csv', stringsAsFactors = F) %>%
+usefiles <- read.csv('scope/UseFiles.csv', stringsAsFactors = F) %>%
   filter(useable)
 
-surveyvars <- read.csv('../../GitHub/spi-malnutrition/extract/headervars.csv',
+surveyvars <- read.csv('extract/headervars.csv',
                        stringsAsFactors = FALSE)
 
-source('../../GitHub/spi-malnutrition/extract/Utils.R')
+source('extract/Utils.R')
+
+setwd('G://My Drive/DHS Data/')
 
 all <- data.frame()
 for (i in 1:nrow(usefiles)){
   cat(i, ':', usefiles$cc[i], usefiles$num[i], usefiles$subversion[i], nrow(all), '\n')
-
+  
   #For surveys with only PR Files
   if (usefiles$PRgood[i] & is.na(usefiles$KRgood[i])){
     prfile <- usefiles$PR[i]
@@ -44,7 +46,7 @@ for (i in 1:nrow(usefiles)){
     
     krdata <- process_kr(krfile, surveyvars, c(res[[2]], 'v002', 'v001', 'b16'))
     krdata$fromKR <- TRUE
-
+    
     initialsize <- nrow(prdata)
     #Have to find a way to merge these, use clusterid and hhno
     data <- merge(prdata, krdata, all.x=T, all.y=F)
@@ -60,10 +62,10 @@ for (i in 1:nrow(usefiles)){
   if (usefiles$WI[i] != ''){
     wi <- read.dta(usefiles$WI[i])
     names(wi) <- c('hhid', 'wealth_factor', 'wealth_index')
-
+    
     wi$wealth_factor <- as.character(wi$wealth_factor)
     wi$wealth_index <- as.character(wi$wealth_index)
-
+    
     if (sum(!data$hhid %in% wi$hhid) > 0){
       #If hhid doesnt match, try it with just hhno and clusterid
       padws <- function(vect, n=0){
@@ -71,20 +73,20 @@ for (i in 1:nrow(usefiles)){
         padded <- paste0("     ", vect)
         substr(padded, nchar(padded) - (len - 1), nchar(padded))
       }
-    
+      
       data$hhid <- paste0(padws(data$clusterid), padws(data$householdno))
       idlen <- nchar(data$hhid)[1]
       data$hhid <- paste0(paste0(rep(" ", 12-idlen), collapse=''), data$hhid)
       
     }
-
+    
     if (sum(!data$hhid %in% wi$hhid) > 0){
       #Check again for matching, if not, cat error
       cat('Mismatches in wealth data for ', usefiles$cc[i], usefiles$num[i], usefiles$subversion[i], '\n') 
     }
-      
+    
     data <- merge(data, wi, all.x=T, all.y=F)
-
+    
   }
   
   #Now get spatial data
@@ -98,9 +100,9 @@ for (i in 1:nrow(usefiles)){
     out$num <- substr(usefiles$GE[i], 5, 5)
     out$cc <- toupper(substr(usefiles$GE[i], 1, 2))
     out$subversion <- ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% as.character(seq(0, 9)), 1,
-                            ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[1:8], 2, 
-                                   ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[9:17], 3, 
-                                          ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[18:26], 4, 99))))
+                             ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[1:8], 2, 
+                                    ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[9:17], 3, 
+                                           ifelse(toupper(substr(usefiles$GE[i], 6, 6)) %in% LETTERS[18:26], 4, 99))))
     out$code <- paste(out$cc, out$num, out$subversion, out$DHSCLUST, sep='-')
     
     out <- out %>%
@@ -112,13 +114,14 @@ for (i in 1:nrow(usefiles)){
   if (initialsize != nrow(data)){
     cat("Mismatches in Spatial and Household data.  Initial size:", initialsize, " now:", nrow(data), '\n')
   }
-
+  
   all <- bind_rows(all, data)
 }
 
 ###################
 #Ad hoc cleaning
 ###################
+setwd('D://Documents and Settings/mcooper/GitHub/spi-malnutrition/')
 
 #age
 all$age <- as.numeric(all$age)
@@ -133,7 +136,7 @@ all$birth_weight[all$birth_weight > 9000] <- NA
 
 #birthmonth
 all$birthmonth <- recode(all$birthmonth, `ashad`="6",`aswin`="9",`baisakh`="4",`bhadra`="8",`chaitra`="3",
-                   `falgun`="2",`jestha`="5",`kartik`="10",`magh`="1",`mangsir`="11",`poush`="12",`srawan`="7")
+                         `falgun`="2",`jestha`="5",`kartik`="10",`magh`="1",`mangsir`="11",`poush`="12",`srawan`="7")
 all$birthmonth <- as.numeric(all$birthmonth)
 
 #birthyear
@@ -172,7 +175,7 @@ all$diarrhea <- all$diarrhea != "No"
 
 #drinkwatersource
 #based on categores in Table 6 of supplement to Diarrhea & Forests Paper
-watersources <- read.csv('../../GitHub/spi-malnutrition/extract/all_water_sources.csv', header=F, col.names=c('drinkwatersource', 'newcode'))
+watersources <- read.csv('extract/all_water_sources.csv', header=F, col.names=c('drinkwatersource', 'newcode'))
 
 all <- merge(all, watersources, all.x=T, all.y=F)
 
@@ -240,9 +243,9 @@ all$how_measured[all$how_measured=="NA"] <- NA
 
 #interview_month  
 all$interview_month <- recode(all$interview_month, `ashad`="6",`aswin`="9",`baisakh`="4",`bhadra`="8",`chaitra`="3",
-                         `falgun`="2",`jestha`="5",`kartik`="10",`magh`="1",`mangsir`="11",`poush`="12",`srawan`="7",
-                         `March`="3", `May`="5", `november`="11", `october`="10", `september`="9", `july`="7", `July`="7",
-                         `june`="6", `June`="6", `February`="2", `April`="4", `august`="8")
+                              `falgun`="2",`jestha`="5",`kartik`="10",`magh`="1",`mangsir`="11",`poush`="12",`srawan`="7",
+                              `March`="3", `May`="5", `november`="11", `october`="10", `september`="9", `july`="7", `July`="7",
+                              `june`="6", `June`="6", `February`="2", `April`="4", `august`="8")
 all$interview_month <- as.numeric(all$interview_month)  
 
 #interview_year
@@ -272,7 +275,7 @@ all$mother_age[all$mother_age > 97 | all$mother_age < 10] <- NA
 
 #otherwatersource
 #based on categores in Table 6 of supplement to Diarrhea & Forests Paper
-watersources <- read.csv('../../GitHub/spi-malnutrition/extract/all_water_sources.csv', header=F, col.names=c('otherwatersource', 'newcode'))
+watersources <- read.csv('extract/all_water_sources.csv', header=F, col.names=c('otherwatersource', 'newcode'))
 
 all <- merge(all, watersources, all.x=T, all.y=F)
 
@@ -288,7 +291,7 @@ all$preceeding_interval <- as.numeric(all$preceeding_interval)
 all$preceeding_interval[all$preceeding_interval > 500] <- NA
 
 #relationship_hhhead
-family_relations <- read.csv('../../GitHub/spi-malnutrition/extract/family_relations.csv', header=FALSE, col.names = c("relationship_hhhead", "newcode"))
+family_relations <- read.csv('extract/family_relations.csv', header=FALSE, col.names = c("relationship_hhhead", "newcode"))
 
 all <- merge(all, family_relations, all.x=T, all.y=F)
 all$relationship_hhhead <- all$newcode
@@ -306,7 +309,7 @@ all$suceeding_interval[all$suceeding_interval > 500] <- NA
 
 #toilet
 #based on categores in Table 6 of supplement to Diarrhea & Forests Paper
-toilets <- read.csv('../../GitHub/spi-malnutrition/extract/toiletcodes.csv', header=F, col.names=c('toilet', 'newcode'))
+toilets <- read.csv('extract/toiletcodes.csv', header=F, col.names=c('toilet', 'newcode'))
 
 all <- merge(all, toilets, all.x=T, all.y=F)
 all$toilet <- all$newcode
@@ -344,12 +347,30 @@ all$years_in_location[all$years_in_location %in% c(97, 98, 99)] <- NA
 all$years_in_location[all$years_in_location == 96] <- 0
 all$years_in_location[all$years_in_location == 95] <- 50
 
+
+###Calculate birthmonth and thousandday month/year
+library(lubridate)
+
+makedate <- function(year, month){
+  ymd(paste(year, month, '15', sep='-'))
+}
+
+all$calc_birthmonth <- month(makedate(all$interview_year, all$interview_month) - months(all$age))
+all$calc_birthyear <- year(makedate(all$interview_year, all$interview_month) - months(all$age))
+
+all$thousandday_month <- month(makedate(all$calc_birthyear, all$calc_birthmonth) + months(24))
+all$thousandday_year <- year(makedate(all$calc_birthyear, all$calc_birthmonth) + months(24))
+
+all$thousandday_month[makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)] <- NA
+all$thousandday_year[makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)] <- NA
+
 #Write coords with dates
-write.csv(all[ , c('latitude', 'longitude', 'code', 'interview_year', 'interview_month')] %>% unique,
-          '../../GitHub/spi-malnutrition/data/sp_export.csv', row.names=F)
+write.csv(all[ , c('latitude', 'longitude', 'code', 'interview_year', 'interview_month',
+                   'calc_birthyear', 'calc_birthmonth', 'thousandday_month', 'thousandday_year')] %>% unique,
+          'data/sp_export.csv', row.names=F)
 
 #Write all data
-write.csv(all, '../../GitHub/spi-malnutrition/data/hhvars.csv', row.names=F)
+write.csv(all, 'data/hhvars.csv', row.names=F)
 
 
 
