@@ -1,4 +1,4 @@
-data/*
+data/
 *.Rhistory
 *~$*.xlsx
 spatial-model/rasters/*
