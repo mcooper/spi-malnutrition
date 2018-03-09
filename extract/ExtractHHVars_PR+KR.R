@@ -365,12 +365,15 @@ all$thousandday_month[makedate(all$thousandday_year, all$thousandday_month) > ma
 all$thousandday_year[makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)] <- NA
 
 #Write coords with dates
+
+setwd('G://My Drive/DHS Processed/')
+
 write.csv(all[ , c('latitude', 'longitude', 'code', 'interview_year', 'interview_month',
                    'calc_birthyear', 'calc_birthmonth', 'thousandday_month', 'thousandday_year')] %>% unique,
-          'data/sp_export.csv', row.names=F)
+          'sp_export.csv', row.names=F)
 
 #Write all data
-write.csv(all, 'data/hhvars.csv', row.names=F)
+write.csv(all, 'hhvars.csv', row.names=F)
 
 
 

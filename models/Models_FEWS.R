@@ -1,13 +1,13 @@
-setwd('D://Documents and Settings/mcooper/GitHub/spi-malnutrition/')
+setwd('G://My Drive/DHS Processed/')
 
 library(dplyr)
 
-hh <- read.csv('data/hhvars.csv', stringsAsFactors = F)
-sp <- read.csv('data/Coords&SPI.csv', stringsAsFactors = F) %>%
+hh <- read.csv('hhvars.csv', stringsAsFactors = F)
+sp <- read.csv('Coords&SPI.csv', stringsAsFactors = F) %>%
   mutate(hv001=DHSCLUST, code=code.y)
-mk <- read.csv('data/MarketDist.csv', stringsAsFactors = F) %>%
+mk <- read.csv('MarketDist.csv', stringsAsFactors = F) %>%
   unique()
-fews <- read.csv('data/FEWS_Zones.csv', stringsAsFactors = F) %>%
+fews <- read.csv('FEWS_Zones.csv', stringsAsFactors = F) %>%
   select(code=code.y, COUNTRY, LZCODE, LZNAMEEN, CLASS) %>%
   unique()
 
