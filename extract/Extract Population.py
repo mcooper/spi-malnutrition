@@ -2,7 +2,7 @@ import ee
 import pandas as pd
 import numpy as np
 
-out = pd.read_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\sp_export.csv")
+out = pd.read_csv("G:\\My Drive\DHS Processed\sp_export.csv")
 
 out = out[['code', 'latitude', 'longitude']].drop_duplicates()
 
@@ -88,4 +88,4 @@ from functools import reduce
 
 popaccum = reduce(pd.merge, [pop00accum, pop05accum, pop10accum, pop15accum])
 
-popaccum.to_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\PopPer100sqkm.csv", index=False)
+popaccum.to_csv("G:\\My Drive\DHS Processed\PopPer100sqkm.csv", index=False)

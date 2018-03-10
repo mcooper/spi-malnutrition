@@ -1,7 +1,7 @@
 import ee
 import pandas as pd
 
-out = pd.read_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\sp_export.csv")
+out = pd.read_csv("G:\\My Drive\DHS Processed\sp_export.csv")
 
 out = out[['code', 'latitude', 'longitude', 'interview_year']].drop_duplicates()
 
@@ -56,5 +56,5 @@ for y in out.interview_year.unique():
 
 cciaccum = cciaccum.fillna(0)
 
-cciaccum.to_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\landcover.csv", index=False)
+cciaccum.to_csv("G:\\My Drive\DHS Processed\landcover.csv", index=False)
 

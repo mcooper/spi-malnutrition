@@ -2,7 +2,7 @@ import ee
 import pandas as pd
 import numpy as np
 
-out = pd.read_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\sp_export.csv")
+out = pd.read_csv("G:\\My Drive\DHS Processed\sp_export.csv")
 
 out = out[['code', 'latitude', 'longitude']].drop_duplicates()
 
@@ -61,4 +61,4 @@ for m in mktr2015:
 
 mktaccum = pd.merge(mkt00accum, mkt15accum)
 
-mktaccum.to_csv("D:\Documents and Settings\mcooper\Github\spi-malnutrition\data\MarketDist.csv", index=False)
+mktaccum.to_csv("G:\\My Drive\DHS Processed\MarketDist.csv", index=False)

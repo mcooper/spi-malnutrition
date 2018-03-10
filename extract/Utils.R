@@ -94,7 +94,6 @@ process_pr <- function(prfile, surveyvars){
   list(pr, trykr)
 }
 
-
 process_kr <- function(krfile, surveyvars, vars){
   suppressWarnings(kr <- read.dta(krfile) %>%
     filter(!is.na(hw1)))
@@ -133,4 +132,133 @@ process_kr <- function(krfile, surveyvars, vars){
   kr$code <- paste(cc, num, subversion, kr$clusterid, sep='-')
   
   kr
+}
+
+rounde <- function(x,digits=0) {
+  expo<-10^digits
+  return(ifelse(abs(x*expo) - floor(abs(x*expo)) < 0.5, sign(x*expo) * floor(abs(x*expo)), sign(x*expo) * (floor(abs(x*expo)) + 1))/expo)
+}
+
+getHAZ <- function(age, sex, height, how_measured, lenanthro){
+  if (is.na(age) | is.na(sex) | is.na(height)){
+    return(NA)
+  }
+  
+  age.days <- rounde(age*30.4375)
+  
+  if (!is.na(how_measured) & how_measured == "Standing" & age.days < 731){
+    height <- height + 0.7
+  }
+  if(!is.na(how_measured) & how_measured == "Lying" & age.days >= 731){
+    height <- height - 0.7
+  }
+  
+  sex <- (sex == "Female") + 1
+  
+  sel <- lenanthro[lenanthro$sex == sex & lenanthro$age == age.days, ]
+
+  m <- sel$m
+  s <- sel$s
+  l <- sel$l
+  
+  haz <- (((height/m)^l) - 1)/(s*l)
+  
+  return(haz)
+}
+
+getWAZ <- function(age, sex, weight, weianthro){
+  if (is.na(age) | is.na(sex) | is.na(weight)){
+    return(NA)
+  }
+  
+  age.days <- rounde(age*30.4375)
+  
+  sex <- (sex == "Female") + 1
+  
+  sel <- weianthro[weianthro$sex == sex & weianthro$age == age.days, ]
+  
+  m <- sel$m
+  s <- sel$s
+  l <- sel$l
+  
+  waz <- (((weight/m)^l) - 1)/(s*l)
+  
+  if(waz > 3) {
+    sd3pos <- m*((1 + l*s*3)^(1/l))
+    sd23pos <- sd3pos - m*((1 + l*s*2)^(1/l))
+    waz <- 3 + ((weight - sd3pos) / sd23pos)
+  }
+  if(waz < -3) {
+    sd3neg <- m*((1 + l*s*(-3))**(1/l))
+    sd23neg <- m*((1 + l*s*(-2))**(1/l)) - sd3neg
+    waz <- (-3) + ((weight - sd3neg) / sd23neg)
+  }
+  
+  return(waz)
+}
+
+getWHZ <- function(age, sex, height, weight, how_measured, wflanthro, wfhanthro){
+  if (is.na(age) | is.na(sex) | is.na(height) | is.na(weight)){
+    return(NA)
+  }
+  
+  age.days <- rounde(age*30.4375)
+  
+  if (!is.na(how_measured) & how_measured == "Standing" & age.days < 731){
+    height <- height + 0.7
+  }
+  if(!is.na(how_measured) & how_measured == "Lying" & age.days >= 731){
+    height <- height - 0.7
+  }
+  
+  sex <- (sex == "Female") + 1
+  
+  low.len <- trunc(height * 10)/10
+  upp.len <- trunc(height * 10 + 1)/10
+  dif.len <- (height - low.len)/0.1
+  
+  if(age.days < 731){
+    
+    sel.low <- wflanthro[wflanthro$length == low.len & wflanthro$sex==sex, ]
+    sel.upp <- wflanthro[wflanthro$length == upp.len & wflanthro$sex==sex, ]
+      
+  } else{
+      
+    sel.low <- wfhanthro[wfhanthro$height == low.len & wfhanthro$sex==sex, ]
+    sel.upp <- wfhanthro[wfhanthro$height == upp.len & wfhanthro$sex==sex, ]
+
+  }
+  
+  if(dif.len > 0){
+    
+    l <- sel.low$l + dif.len*(sel.upp$l - sel.low$l)
+    m <- sel.low$m + dif.len*(sel.upp$m - sel.low$m)
+    s <- sel.low$s + dif.len*(sel.upp$s - sel.low$s)
+    
+  } else{
+    
+    l <- sel.low$l
+    m <- sel.low$m
+    s <- sel.low$s
+    
+  }
+  
+  if (nrow(sel.low) == 0){
+    return(NA)  
+  }
+  
+  whz <- (((weight/m)^l)-1)/(s*l)
+  
+  if(whz > 3) {
+    sd3pos <- m*((1 + l*s*3)^(1/l))
+    sd23pos <- sd3pos - m*((1 + l*s*2)^(1/l))
+    whz <- 3 + ((weight - sd3pos) / sd23pos)
+  }
+  if(whz < -3) {
+    sd3neg <- m*((1 + l*s*-3)**(1/l))
+    sd23neg <- m*((1 + l*s*-2)**(1/l)) - sd3neg
+    whz <- -3 + ((weight - sd3neg) / sd23neg)
+  }
+  
+  return(whz)
 }

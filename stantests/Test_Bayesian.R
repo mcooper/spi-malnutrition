@@ -138,17 +138,23 @@ fit = stan(model_code=stanmodelcode, data=dat, iter=12000,
 N_tot <- 1000
 N_mis <- 150
 N_obs <- N_tot - N_mis
+k <- 3
 
-x <- rnorm(N_tot, 100, 10)
+covariates <- replicate(k, rnorm(N_tot, 100, 10))
+colnames(covariates) = c('X1', 'X2', 'X3')
 
-intercept <- rnorm(N_tot, -10000, 10000)
+covariates[sample(seq(1, N_tot*k), N_mis*k)] <- NA
 
-y <- intercept + 1000*x
 
-x[sample(seq(1, N_tot), N_mis)] <-NA
+# create the model matrix with intercept
+X = cbind(Intercept=1, covariates)
 
-x_ii_mis <- which(is.na(x))
-x_ii_obs <- which(!is.na(x))
+intercept <- rnorm(N_tot, -10000, 1000)
+
+y <- intercept + X %*% c(5000,200,-1500,900)
+
+x_ii_mis_arr <- which(is.na(X), arr.ind=TRUE)
+x_ii_obs_arr <- which(!is.na(X), arr.ind=TRUE)
 
 x_obs <- x[x_ii_obs]
 

@@ -12,11 +12,27 @@ dat <- read.csv('sp_export.csv')
 sp <- SpatialPointsDataFrame(coords=dat[ c('longitude', 'latitude')], data = dat)
 
 r <- raster('CHIRPS/chirps-v2.0.1981.01.tif')
-r <- raster(matrix(seq(1, ncell(r)), nrow=nrow(r), ncol=ncol(r)), xmx=xmax(r), xmn=xmin(r), ymx=ymax(r), ymn=ymin(r))
+codes <- raster(matrix(seq(1, ncell(r)), nrow=nrow(r), ncol=ncol(r)), xmx=xmax(r), xmn=xmin(r), ymx=ymax(r), ymn=ymin(r))
 
-sp@data$tmpcode <- extract(r, sp)
+codes[r==-9999] <- NA
 
-rll <- rasterToPoints(r) %>% data.frame
+sp@data$tmpcode <- extract(codes, sp)
+
+#Deal with points near a coast, coming up NA
+spna <- sp[is.na(sp@data$tmpcode) , ]
+spna$tmpcode <- NULL
+
+badcoords <- unique(spna@coords)
+
+tmpcode <- apply(X = badcoords, MARGIN = 1, FUN = function(xy) codes@data@values[which.min(replace(distanceFromPoints(codes, xy), is.na(codes), NA))])
+
+badcoords <- cbind.data.frame(badcoords, tmpcode)
+
+spna <- merge(spna@data, badcoords)
+
+sp <- bind_rows(spna, sp@data[!is.na(sp@data$tmpcode), ])
+
+rll <- rasterToPoints(codes) %>% data.frame
 rll <- rll[rll$layer %in% sp@data$tmpcode, ]
 
 in_folder <- '/home/mw_coop_r/CHIRPS/'
@@ -25,8 +41,7 @@ vrt_file <- extension(rasterTmpFile(), 'ivrt')
 
 files <- list.files('CHIRPS', pattern='tif$')
 
-gdalbuildvrt(paste0(in_folder, files), vrt_file, separate=TRUE, verbose=T,
-             overwrite=TRUE)
+gdalbuildvrt(paste0(in_folder, files), vrt_file, separate=TRUE, verbose=T, overwrite=TRUE)
 
 rollfun <- function(nums){
   if (length(nums) != 17){
@@ -57,7 +72,7 @@ for (n in 1:nrow(rll)){
                              thousandday_spi33=as.numeric(spi(s, 33, na.rm=TRUE)$fitted))
   meanannual <- data.frame(tmpcode=rll$layer[n],
                            mean_annual_precip=mean(s[1:240], na.rm=T)*12)
-  sel <- sp@data[sp@data$tmpcode == rll$layer[n], ]
+  sel <- sp[sp$tmpcode == rll$layer[n], ]
   sel <- Reduce(function(x, y){merge(x,y,all.x=T,all.y=F)}, list(sel, interview, birthdate, thousanddays, meanannual))
   df <- bind_rows(sel, df)
   cat(n, round(n/nrow(rll)*100, 4), 'percent done\n') 

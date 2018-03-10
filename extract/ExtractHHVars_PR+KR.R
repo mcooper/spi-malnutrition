@@ -229,10 +229,6 @@ all$head_age[all$head_age > 97 | all$head_age < 10] <- NA
 #head_sex
 all$head_sex <- recode(all$head_sex, `1`="Male", `2`="Female", `female`="Female", `male`="Male")
 
-#height
-all$height <- as.numeric(all$height)
-all$height[all$height < 100 | all$height > 2000] <- NA
-
 #hhsize
 all$hhsize <- as.numeric(all$hhsize)
 
@@ -332,10 +328,6 @@ all$wealth_index <- recode(all$wealth_index, `fourth quintile`="Richer", `highes
                            `richer`="Richer", `highest`="Richest", `poorest`="Poorest", `poorer`="Poorer", `fourth`="Richer", 
                            `lowest`="Poorest", `second`="Poorer")
 
-#weight
-all$weight <- as.numeric(all$weight)
-all$weight[all$weight < 10 | all$weight > 9990] <- NA
-
 #is_visitor
 all$is_visitor[all$is_visitor == 9] <- NA
 all$is_visitor <- all$is_visitor == 'visitor' | all$is_visitor == '2'
@@ -346,6 +338,16 @@ all$years_in_location <- as.numeric(all$years_in_location)
 all$years_in_location[all$years_in_location %in% c(97, 98, 99)] <- NA
 all$years_in_location[all$years_in_location == 96] <- 0
 all$years_in_location[all$years_in_location == 95] <- 50
+
+#weight
+all$weight <- as.numeric(all$weight)
+all$weight[all$weight < 10 | all$weight > 320] <- NA
+all$weight <- all$weight/10 #convert to kg
+
+#height
+all$height <- as.numeric(all$height)
+all$height[all$height < 250 | all$height > 1300] <- NA
+all$height <- all$height/10 #Convert to cm
 
 
 ###Calculate birthmonth and thousandday month/year
@@ -363,6 +365,24 @@ all$thousandday_year <- year(makedate(all$calc_birthyear, all$calc_birthmonth) +
 
 all$thousandday_month[makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)] <- NA
 all$thousandday_year[makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)] <- NA
+
+#Make country just CC for future merging
+all$country <- substr(all$country, 1, 2)
+
+#Remove any with latitude == 0 | longitude == 0
+all <- all %>%
+  filter(latitude != 0 & longitude != 0)
+
+#Calculate my own haz, whz and waz
+# Based on scripts and WHO reference tables from the Vital Signs project
+lenanthro <- read.table("lenanthro.txt", header=T)
+weianthro <- read.table("weianthro.txt", header=T)
+wfhanthro <- read.table("wfhanthro.txt", header=T)
+wflanthro <- read.table("wflanthro.txt", header=T)
+
+all$haz <- mapply(FUN=getHAZ, age=all$age, height=all$height, sex=all$sex, how_measured=all$how_measured, MoreArgs = list(lenanthro))
+all$waz <- mapply(FUN=getWAZ, age=all$age, weight=all$weight, sex=all$sex, MoreArgs = list(weianthro))
+all$whz <- mapply(FUN=getWHZ, age=all$age, weight=all$weight, height=all$height, sex=all$sex, how_measured=all$how_measured, MoreArgs = list(wflanthro, wfhanthro))
 
 #Write coords with dates
 
