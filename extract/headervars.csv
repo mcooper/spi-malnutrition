@@ -25,14 +25,13 @@ how_measured,hc15,hw15
 interview_cmc,hv008,v008
 interview_month,hv006,v006
 interview_year,hv007,v007
+is_visitor,v135,v135
 istwin,b0,b0
 mother_alive,hv111,
 mother_line,hv112,v003
 mother_smokes,v463z,v463z
 otherwatersource,hv202,v113
 parasite_drugs,h43,h43
-parent_level_ed,v106,v106
-parent_highest_year,v107,v107
 parents_years_ed,v133,v133
 preceeding_interval,hc63,b11
 relationship_hhhead,hv101,
@@ -49,5 +48,4 @@ wealth_index,hv270,v190
 weight,hc2,hw2
 whz_dhs,hc11,hw11
 whz_who,hc72,hw72
-is_visitor,v135,v135
 years_in_location,v104,v104

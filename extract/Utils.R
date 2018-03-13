@@ -42,9 +42,15 @@ process_pr <- function(prfile, surveyvars){
     
     if (sum(is.na(pr$mother_line)) < nrow(pr) & !is.null(pr$mother_line)){
       prpm <- prp %>%
-        select(hhid, mother_line=hvidx, mother_level_ed=hv106, mother_highest_year=hv107, mother_years_ed=hv108, mother_age=hv105) %>%
-        mutate(mother_line = as.character(mother_line), mother_level_ed=as.character(mother_level_ed),
-               mother_highest_year = as.character(mother_highest_year), mother_years_ed = as.character(mother_years_ed),
+        select(hhid, mother_line=hvidx, 
+               #mother_level_ed=hv106,
+               #mother_highest_year=hv107, 
+               mother_years_ed=hv108, 
+               mother_age=hv105) %>%
+        mutate(mother_line = as.character(mother_line),
+               # mother_level_ed=as.character(mother_level_ed),
+               # mother_highest_year = as.character(mother_highest_year), 
+               mother_years_ed = as.character(mother_years_ed),
                mother_age=as.character(mother_age))
   
       pr <- merge(pr, prpm, all.x=T, all.y=F)
@@ -56,9 +62,16 @@ process_pr <- function(prfile, surveyvars){
   
     if (sum(is.na(pr$father_line)) < nrow(pr) & !is.null(pr$father_line)){
       prpf <- prp %>%
-        select(hhid, father_line=hvidx, father_level_ed=hv106, father_highest_year=hv107, father_years_ed=hv108, father_age=hv105) %>%
-        mutate(father_line = as.character(father_line), father_level_ed=as.character(father_level_ed),
-               father_highest_year = as.character(father_highest_year), father_years_ed = as.character(father_years_ed),
+        select(hhid, 
+               father_line=hvidx, 
+               #father_level_ed=hv106, 
+               #father_highest_year=hv107, 
+               father_years_ed=hv108, 
+               father_age=hv105) %>%
+        mutate(father_line = as.character(father_line), 
+               #father_level_ed=as.character(father_level_ed),
+               #father_highest_year = as.character(father_highest_year), 
+               father_years_ed = as.character(father_years_ed),
                father_age=as.character(father_age))
       
       pr <- merge(pr, prpf, all.x=T, all.y=F)
