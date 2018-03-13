@@ -33,7 +33,7 @@ spna <- merge(spna@data, badcoords)
 sp <- bind_rows(spna, sp@data[!is.na(sp@data$tmpcode), ])
 
 rll <- rasterToPoints(codes) %>% data.frame
-rll <- rll[rll$layer %in% sp@data$tmpcode, ]
+rll <- rll[rll$layer %in% sp$tmpcode, ]
 
 in_folder <- '/home/mw_coop_r/CHIRPS/'
 tifs <- dir(in_folder, pattern='.tif$')

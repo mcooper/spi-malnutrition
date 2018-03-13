@@ -369,9 +369,9 @@ all$thousandday_year[makedate(all$thousandday_year, all$thousandday_month) > mak
 #Make country just CC for future merging
 all$country <- substr(all$country, 1, 2)
 
-#Remove any with latitude == 0 | longitude == 0
+#Remove any with latitude == 0 | longitude == 0, there are also some weird super small coordinates
 all <- all %>%
-  filter(latitude != 0 & longitude != 0)
+  filter(longitude < 1 & longitude > -1 & latitude < 1 & latitude > -1)
 
 #Calculate my own haz, whz and waz
 # Based on scripts and WHO reference tables from the Vital Signs project

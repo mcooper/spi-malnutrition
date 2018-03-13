@@ -72,7 +72,7 @@ for (i in names(all)){
 
 df %>% arrange(NAs)
 
-df <- df %>% filter(NAs < 0.20)
+df <- df %>% filter(NAs < 0.20) #determine what fraction of NAs to remove for now
 
 all <- all[ , c(df$name, 'thousandday_spi33')] %>% na.omit
 
@@ -80,18 +80,32 @@ all <- all[ , c(df$name, 'thousandday_spi33')] %>% na.omit
 #Run model
 ###################
 
-library(lme4)
+#Get a quick summary by country-year
+su <- all %>% group_by(country, interview_year) %>% summarize(haz=mean(haz))
 
-mod <- (haz~
+#look at distribution of year coefficients varying by country
+mod <- lmer(haz ~ toilet + drinkwatersource + age + birth_order + head_age + head_sex + hhsize + mother_alive + sex + 
+            watersource_dist + wealth_index + mother_years_ed + workers + natural + md + 
+            mean_annual_precip + interview_year + (interview_year|country),
+          data=all[all$urban_rural=='Rural', ])
+co <- coef(mod)$country$interview_year #Not much variation
 
+#Run again per country
+df <- data.frame()
+for (c in all$country %>% unique){
+  mod <- lm(haz ~ toilet + drinkwatersource + age + birth_order + head_age + head_sex + hhsize + mother_alive + sex + 
+          watersource_dist + wealth_index + mother_years_ed + workers + natural + md + 
+          mean_annual_precip + interview_year,
+        data=all[all$country==c & all$urban_rural=='Rural', ])
+  df <- bind_rows(df, data.frame(country=c, coef=coef(mod)[['interview_year']],
+                                 count=max(all[all$country==c, 'interview_year']) - min(all[all$country==c, 'interview_year'])))
+}
 
+#It looks like Haiti, Benin, and Namibia have a decrease in HAZ per year over a decently wide
+#range of time, after controlling for other relevant factors
 
-
-
-
-
-
-
+#Haiti being the posterchild for land degradation, it would be interesting to look at in relation to stunting
+#maybe just look within Haiti, or maybe compare to DR?
 
 
 
