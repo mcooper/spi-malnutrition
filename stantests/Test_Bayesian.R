@@ -135,26 +135,21 @@ fit = stan(model_code=stanmodelcode, data=dat, iter=12000,
 #########################
 
 
+
 N_tot <- 1000
 N_mis <- 150
 N_obs <- N_tot - N_mis
-k <- 3
 
-covariates <- replicate(k, rnorm(N_tot, 100, 10))
-colnames(covariates) = c('X1', 'X2', 'X3')
+x <- rnorm(N_tot, 100, 10)
 
-covariates[sample(seq(1, N_tot*k), N_mis*k)] <- NA
+intercept <- rnorm(N_tot, -10000, 10000)
 
+y <- intercept + 1000*x
 
-# create the model matrix with intercept
-X = cbind(Intercept=1, covariates)
+x[sample(seq(1, N_tot), N_mis)] <-NA
 
-intercept <- rnorm(N_tot, -10000, 1000)
-
-y <- intercept + X %*% c(5000,200,-1500,900)
-
-x_ii_mis_arr <- which(is.na(X), arr.ind=TRUE)
-x_ii_obs_arr <- which(!is.na(X), arr.ind=TRUE)
+x_ii_mis <- which(is.na(x))
+x_ii_obs <- which(!is.na(x))
 
 x_obs <- x[x_ii_obs]
 
@@ -162,31 +157,30 @@ dat <- list(N_tot, N_mis, N_obs, x_obs, y, x_ii_mis, x_ii_obs)
 
 stanmodelcode <- "
 data {
-  int<lower=0> N_tot;
-  int<lower=0> N_mis;
-  int<lower=0> N_obs;
-  int<lower=1, upper = N_tot> x_ii_obs[N_obs];
-  int<lower=1, upper = N_tot> x_ii_mis[N_mis];
-  
-  real x_obs[N_obs];
-  real y[N_tot];
+int<lower=0> N_tot;
+int<lower=0> N_mis;
+int<lower=0> N_obs;
+int<lower=1, upper = N_tot> x_ii_obs[N_obs];
+int<lower=1, upper = N_tot> x_ii_mis[N_mis];
+
+real x_obs[N_obs];
+real y[N_tot];
 }
 parameters {
-  real x_mis[N_mis];
-  real<lower=0> sigma;
-  
-  real beta0;
-  real beta1;
+real x_mis[N_mis];
+real<lower=0> sigma;
+
+real beta0;
+real beta1;
 }
 transformed parameters {
-  real x[N_tot];
-  x[x_ii_obs] = x_obs;
-  x[x_ii_mis] = x_mis;
+real x[N_tot];
+x[x_ii_obs] = x_obs;
+x[x_ii_mis] = x_mis;
 }
-
 model {
-  sigma ~ gamma(1, 1);
-  y ~ normal(beta0 + beta1 * to_vector(x), sigma);
+sigma ~ gamma(1, 1);
+y ~ normal(beta0 + beta1 * to_vector(x), sigma);
 }
 "
 

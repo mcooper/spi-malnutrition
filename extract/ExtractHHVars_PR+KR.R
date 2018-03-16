@@ -154,8 +154,8 @@ all$breast_duration <- recode(all$breast_duration, `ever breastfed, not currentl
 all$breast_duration <- as.numeric(all$breast_duration)
 all$breast_duration[all$breast_duration %in% c(99, 98, 97, 96) | (all$breast_duration > 60 & all$breast_duration < 90)] <- NA
 
-all$ever_breastfed <- all$breast_duration != 0 & all$breast_duration != 94
-all$breastfeeding <- all$breast_duration != 0 & all$breast_duration != 94 & all$breast_duration != 93
+all$ever_breastfed <- as.integer(all$breast_duration != 0 & all$breast_duration != 94)
+all$breastfeeding <- as.integer(all$breast_duration != 0 & all$breast_duration != 94 & all$breast_duration != 93)
 
 all$breast_duration[which(all$breast_duration == 95)] <- all$age[which(all$breast_duration == 95)]
 all$breast_duration[all$breast_duration == 94] <- 0
@@ -171,7 +171,7 @@ all$workers <- as.numeric(all$workers)
 all$diarrhea <- recode(all$diarrhea, `0`="No", `1`="2weeks", `2`="24hours", `8`="NA", `9`="NA", `don't know`="NA", `no`="No",
                        `yes, last 2-14 days`="2weeks", `yes, last 24 hours`="24hours", `yes, last two weeks`="2weeks")
 all$diarrhea[all$diarrhea=="NA"] <- NA
-all$diarrhea <- all$diarrhea != "No"
+all$diarrhea <- as.integer(all$diarrhea != "No")
 
 #drinkwatersource
 #based on categores in Table 6 of supplement to Diarrhea & Forests Paper
@@ -184,7 +184,7 @@ all$newcode <- NULL
 
 #father_alive
 all$father_alive[all$father_alive %in% c('8', '9', 'dk', 'DK', "don't know", "Don't know")] <- NA
-all$father_alive <-all$father_alive == '1' | all$father_alive == 'yes' | all$father_alive == 'Yes'
+all$father_alive <- as.integer(all$father_alive == '1' | all$father_alive == 'yes' | all$father_alive == 'Yes')
 
 #father_years_ed
 all$father_years_ed <- as.numeric(all$father_years_ed)
@@ -196,7 +196,7 @@ all$father_age[all$father_age > 97 | all$father_age < 10] <- NA
 
 #fever
 all$fever[all$fever %in% c('8', '9', 'dk', "don't know")] <- NA
-all$fever <- all$fever == '1' | all$fever == 'yes'
+all$fever <- as.integer(all$fever == '1' | all$fever == 'yes')
 
 #haz_dhs
 all$haz_dhs <- as.numeric(all$haz_dhs)
@@ -250,15 +250,15 @@ all$interview_year[which(all$interview_year > 2020 & all$interview_month %in% se
 all$interview_year[which(all$interview_year > 2020 & all$interview_month %in% seq(10, 12))] <- all$interview_year[which(all$interview_year > 2020 & all$interview_month %in% seq(10, 12))] - 56
 
 #istwin
-all$istwin <- all$istwin != "single birth"
+all$istwin <- as.integer(all$istwin != "single birth")
 
 #mother_alive
 all$mother_alive[all$mother_alive %in% c('8', '9', 'dk', 'DK', "don't know", "Don't know")] <- NA
-all$mother_alive <-all$mother_alive == '1' | all$mother_alive == 'yes' | all$mother_alive == 'Yes'
+all$mother_alive <- as.integer(all$mother_alive == '1' | all$mother_alive == 'yes' | all$mother_alive == 'Yes')
 
 #mother_smokes
 all$mother_smokes[all$mother_smokes == "9"] <- NA
-all$mother_smokes <- all$mother_smokes == "0" | all$mother_smokes == "no"
+all$mother_smokes <- as.integer(all$mother_smokes == "0" | all$mother_smokes == "no")
 
 #mother_years_ed
 all$mother_years_ed[is.na(all$mother_years_ed) | all$mother_years_ed == "98" | all$mother_years_ed == "99"] <- all$parents_years_ed[is.na(all$mother_years_ed) | all$mother_years_ed == "98" | all$mother_years_ed == "99"]
@@ -280,7 +280,7 @@ all$newcode <- NULL
 
 #parasite_drugs
 all$parasite_drugs[all$parasite_drugs %in% c('8', '9', 'dk', 'DK', "don't know")] <- NA
-all$parasite_drugs <- all$parasite_drugs == '1' | all$parasite_drugs == 'yes'
+all$parasite_drugs <- as.integer(all$parasite_drugs == '1' | all$parasite_drugs == 'yes')
 
 #preceeding_interval
 all$preceeding_interval <- as.numeric(all$preceeding_interval)
@@ -293,7 +293,7 @@ all <- merge(all, family_relations, all.x=T, all.y=F)
 all$relationship_hhhead <- all$newcode
 all$newcode <- NULL
 
-all$relationship_hhhead[all$relationship_hhhead %in% c("Head", "Parent", "Parent-in-law", "Wife or Husband")] <- NA
+all$relationship_hhhead[all$relationship_hhhead %in% c("Head", "Parent", "Parent-in-law", "Wife or Husband", "Co-Spouse")] <- NA
 
 #sex
 all$sex <- recode(all$sex, `1`="Male", `2`="Female", `female`="Female", `male`="Male")
@@ -330,7 +330,7 @@ all$wealth_index <- recode(all$wealth_index, `fourth quintile`="Richer", `highes
 
 #is_visitor
 all$is_visitor[all$is_visitor == 9] <- NA
-all$is_visitor <- all$is_visitor == 'visitor' | all$is_visitor == '2'
+all$is_visitor <- as.integer(all$is_visitor == 'visitor' | all$is_visitor == '2')
 
 #years_in_location
 all$years_in_location <- as.numeric(all$years_in_location)
@@ -363,18 +363,22 @@ all$calc_birthyear <- year(makedate(all$interview_year, all$interview_month) - m
 all$thousandday_month <- month(makedate(all$calc_birthyear, all$calc_birthmonth) + months(24))
 all$thousandday_year <- year(makedate(all$calc_birthyear, all$calc_birthmonth) + months(24))
 
-all$thousandday_month[makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)] <- NA
-all$thousandday_year[makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)] <- NA
+under2_ind <- makedate(all$thousandday_year, all$thousandday_month) > makedate(all$interview_year, all$interview_month)
+all$thousandday_month[under2_ind] <- NA
+all$thousandday_year[under2_ind] <- NA
 
 #Make country just CC for future merging
 all$country <- substr(all$country, 1, 2)
 
 #Remove any with latitude == 0 | longitude == 0, there are also some weird super small coordinates
 all <- all %>%
-  filter(longitude < 1 & longitude > -1 & latitude < 1 & latitude > -1)
+  filter(!(longitude < 1 & longitude > -1 & latitude < 1 & latitude > -1))
 
 #Calculate my own haz, whz and waz
 # Based on scripts and WHO reference tables from the Vital Signs project
+
+setwd('G://My Drive/DHS Processed/')
+
 lenanthro <- read.table("lenanthro.txt", header=T)
 weianthro <- read.table("weianthro.txt", header=T)
 wfhanthro <- read.table("wfhanthro.txt", header=T)
@@ -385,8 +389,6 @@ all$waz <- mapply(FUN=getWAZ, age=all$age, weight=all$weight, sex=all$sex, MoreA
 all$whz <- mapply(FUN=getWHZ, age=all$age, weight=all$weight, height=all$height, sex=all$sex, how_measured=all$how_measured, MoreArgs = list(wflanthro, wfhanthro))
 
 #Write coords with dates
-
-setwd('G://My Drive/DHS Processed/')
 
 write.csv(all[ , c('latitude', 'longitude', 'code', 'interview_year', 'interview_month',
                    'calc_birthyear', 'calc_birthmonth', 'thousandday_month', 'thousandday_year')] %>% unique,
