@@ -18,6 +18,9 @@ spi <- read.csv('Coords&SPI.csv')
 human <- paste0('cci_', c('10', '11', '12', '20', '30', '190', '200', '201', '202', '220'))
 natural <- paste0('cci_', c('40', '50', '60', '61', '62', '70', '71', '80', '90', '100', '110', '120', '121', '122',
                             '130', '140', '150', '152', '153', '160', '170', '180', '210'))
+nat_water <- 'cci_210'
+nat_grass <- paste0('cci_', c('110', '120', '121', '122', '130', '140', '150', '152', '153', '180'))
+nat_trees <- paste0('cci_', c('40', '50', '60', '61', '62', '70', '71', '80', '90', '100', '160', '170'))
 
 getPercetCover <- function(selcols, allcolmatch, df){
   if(length(selcols) > 1){
@@ -31,9 +34,12 @@ getPercetCover <- function(selcols, allcolmatch, df){
 
 lc$human <- getPercetCover(human, 'cci_', lc)
 lc$natural <- getPercetCover(natural, 'cci_', lc)
+lc$nat_water <- getPercetCover(nat_water, 'cci_', lc)
+lc$nat_grass <- getPercetCover(nat_grass, 'cci_', lc)
+lc$nat_trees <- getPercetCover(nat_trees, 'cci_', lc)
 
 lc <- lc %>%
-  select(human, natural, interview_year, code)
+  select(human, natural, interview_year, code, nat_water, nat_grass, nat_trees)
 
 #################################
 #Process pop and market dist data
@@ -67,6 +73,11 @@ all <- all %>% filter(!(haz < -7 | haz > 5)) #first filter extreme HAZs
 
 all <- all %>% filter(urban_rural == 'Rural') #Lets just look at rural hhs
 
+all$md <- all$md/24
+all$gdp <- all$gdp/1000
+all$mean_annual_precip <- all$mean_annual_precip/1000
+all$pop <- all$pop/100
+
 #Drop variables that will not be used in regression
 all <- all %>%
   select(-interview_month, -interview_cmc, -calc_birthmonth, -calc_birthyear, -thousandday_month, -thousandday_year, 
@@ -82,7 +93,8 @@ all <- all %>%
          -fromKR, -filesource, 
          -waz, -whz, 
          -continent, -farm_system, -human, 
-         -spi6, -spi12, -spi36, -birthday_9monthtotal, -birthday_spi9,
+         -spi6, -spi12, -spi36, 
+         -birthday_9monthtotal, -birthday_spi9,
          -preceeding_interval, -suceeding_interval #Need to figure out missing data vs Not Applicable
          )
 
@@ -97,32 +109,33 @@ all <- all %>%
 all$related_hhhead <- all$relationship_hhhead == "Not Related"
 
 na_summary <- colSums(is.na(all))/nrow(all)
-na_summary[order(na_summary)]
 
 library(lme4)
 
 all$spi24sq <- all$spi24^2
 
+spimod <- lm(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + pop + spi24 + spi24sq + mean_annual_precip +
+                 head_age + md + wealth_index + mother_years_ed + workers + related_hhhead +
+                 istwin + diarrhea + fever + country, data = all)
 
-spimod <- lm(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + pop + spi24 + spi24sq + mean_annual_precip + 
-                 head_age + md + wealth_index + mother_years_ed + workers + related_hhhead + 
-                 istwin + diarrhea + fever + country + code, data = all)
-# natmod <- lm(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + pop + natural + mean_annual_precip + 
-#                head_age + wealth_index + md + mother_years_ed + workers + related_hhhead + 
-#                istwin + diarrhea + fever + country + code, data = all)
+natmod <- lm(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + spi24 + spi24sq + pop + mean_annual_precip +
+               head_age + wealth_index + md + mother_years_ed + workers + related_hhhead +
+               istwin + diarrhea + fever + nat_water + nat_grass + nat_trees + country, data = all)
 
 ###Purty Graphs
 library(ggplot2)
 library(broom)
 
 labels <- as.data.frame(matrix(c('age', 'Age', 'interview_year', 'Year', 'head_sexMale', 'Male HH Head',
-                              'hhsize', 'HH Size', 'sexMale', 'Male Child', 'gdp', 'GDP', 'pop', 'Pop Density',
-                              'spi24', '24-Month SPI', 'spi24sq', '24-Month SPI^2', 'mean_annual_precip', 'Annual Precip',
-                              'head_age', 'HH Head Age', 'md', 'Market Distance', 'wealth_indexMiddle', '3rd Quintile',
+                              'hhsize', 'HH Size', 'sexMale', 'Male Child', 'gdp', 'GDP 1000$', 'pop', 'Pop Density (pp/sqkm)',
+                              'spi24', '24-Month SPI', 'spi24sq', '24-Month SPI^2', 'mean_annual_precip', 'Annual Precip (1000mm/yr)',
+                              'head_age', 'HH Head Age', 'md', 'Market Distance (Days)', 'wealth_indexMiddle', '3rd Quintile',
                               'wealth_indexPoorer', '2nd Quintile', 'wealth_indexRicher', '4th Quintile', 'wealth_indexRichest',
                               '5th Quintile', 'mother_years_ed', 'Mother Ed Years', 'workers', 'HH Workers', 'related_hhheadTRUE',
                               'Related HH Head', 'istwin', 'Is Twin', 'diarrhea', 'Diarrhea', 'fever', 'Fever',
-                              '(Intercept)', 'Intercept'),
+                              '(Intercept)', 'Intercept', 'nat_water', 'Water Bodies', 'nat_grass', 'Shrub and Grassland', 
+                              'nat_trees', 'Forestland', "natural:spi24", 'Natural Areas * SPI', 'natural', 'Natural Areas',
+                              "natural:spi24sq", 'Natural Areas * SPI', "nat_grass:spi24", "nat_grass:spi24", "nat_water:spi24", "nat_water:spi24"),
                             ncol=2, byrow=T))
 names(labels) <- c('term', 'label')
 
@@ -131,9 +144,27 @@ spidf <- tidy(spimod, conf.int=TRUE) %>%
   merge(labels, all.x=T)
 
 ggplot(spidf, aes(estimate, label)) + 
-  geom_point() + 
   geom_errorbarh(aes(xmin=conf.low, xmax=conf.high)) + 
   geom_vline(xintercept = 0) + 
-  ylab('') + 
+  ylab('') + xlab('Estimate') + 
   theme_bw()
   
+natdf <- tidy(natmod, conf.int=TRUE) %>% 
+  filter(!grepl('country', term) & term != '(Intercept)') %>%
+  merge(labels, all.x=T)
+
+ggplot(natdf, aes(estimate, label)) + 
+  geom_errorbarh(aes(xmin=conf.low, xmax=conf.high)) + 
+  geom_vline(xintercept = 0) + 
+  ylab('') + xlab('Estimate') + 
+  theme_bw()
+
+combdf <- tidy(combmod, conf.int=TRUE) %>% 
+  filter(!grepl('country', term) & term != '(Intercept)') %>%
+  merge(labels, all.x=T)
+
+ggplot(combdf, aes(estimate, label)) + 
+  geom_errorbarh(aes(xmin=conf.low, xmax=conf.high)) + 
+  geom_vline(xintercept = 0) + 
+  ylab('') + xlab('Estimate') + 
+  theme_bw()
