@@ -70,12 +70,35 @@ pred <- function(natural, spi24){
 data$prediction <- mapply(pred, natural=data$natural, spi24=data$spi24)/100
 data$natural <- data$natural*100
 
+sel <- sel %>%
+  filter(spi24 > -2.5 & spi24 < 2.5)
+
 ggplot(data, aes(x=natural, y=spi24)) + 
   geom_tile(aes(fill=prediction)) + 
+  geom_point(data=sel, aes(x=natural*100, y=spi24), size=0.1) + 
   #geom_text(aes(label=signif(prediction, 3))) + 
-  scale_fill_gradient2(low = "red", high = "green", mid="white", guide = "colourbar", midpoint=mean(data$prediction, na.rm=T)) +
+  scale_fill_gradient2(low = "red", high = "green", mid="white", 
+                       guide = "colourbar", midpoint=mean(data$prediction, na.rm=T),
+                       name='Z-Score') +
   xlim(0, 1) + ylim(-2.5, 2.5) + 
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
-  xlab("Fraction of Nearby Land With Natural Cover") +
-  ylab("24-Month Standardized Precipitation Index")
+  labs(title="HAZ Scores Across Gradients in SPI and Land Cover",
+       subtitle='Modeled with a 2nd-Degree Polynomial Loess with alpha=0.75',
+       x="Fraction of Nearby Land With Natural Cover",
+       y="24-Month Standardized Precipitation Index",
+       caption="Source: DHS; CHIRPS; ESA-CCI Landcover; n=52,653") +
+  theme(plot.title = element_text(hjust = 0.5, face="bold"),
+        plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0),
+        axis.title = element_text(face="bold"))
+        
+
+ggsave('G:/My Drive/Dissertation/Visualizations/SPIvsNatural points.png', 
+       width=10, height=8)
+
+
+
+
+
+

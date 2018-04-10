@@ -1,5 +1,7 @@
 setwd('G://My Drive/DHS Processed')
 
+library(broom)
+library(ggplot2)
 library(dplyr)
 
 hh <- read.csv('hhvars.csv')
@@ -111,79 +113,77 @@ all$related_hhhead <- all$relationship_hhhead == "Not Related"
 na_summary <- colSums(is.na(all))/nrow(all)
 
 library(lme4)
-library(lmerTest)
 
 all$spi24sq <- all$spi24^2
+all$surveycode <- substr(all$code, 1, 6)
 
 spimod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + pop + spi24 + spi24sq + mean_annual_precip +
                  head_age + md + wealth_index + mother_years_ed + workers + related_hhhead +
-                 istwin + diarrhea + fever + (wealth_index|country) + (1|country) + (1|code), data = all)
+                 istwin + diarrhea + fever + (wealth_index|surveycode) + (1|country) + (1|surveycode) + (1|code), data = all)
 
 natmod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + spi24 + spi24sq + pop + mean_annual_precip +
                head_age + wealth_index + md + mother_years_ed + workers + related_hhhead +
-               istwin + diarrhea + fever + nat_water + nat_grass + nat_trees + (wealth_index|country) + (1|country) + (1|code), data = all)
+               istwin + diarrhea + fever + nat_water + nat_grass + nat_trees + (wealth_index|surveycode) + (1|country) + (1|surveycode) + (1|code), data = all)
 
 combmod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + spi24 + spi24sq + pop + mean_annual_precip +
                head_age + wealth_index + md + mother_years_ed + workers + related_hhhead +
-               istwin + diarrhea + fever + natural + natural*spi24 + natural*spi24sq + (wealth_index|country) + (1|country) + (1|code), data = all)
+               istwin + diarrhea + fever + natural + natural*spi24 + (wealth_index|surveycode) + (1|country) + (1|surveycode) + (1|code), data = all)
 
 
 ###Purty Graphs
-library(ggplot2)
-library(broom)
-
 setwd("G:/My Drive/Dissertation/Visualizations/")
 
-labels <- as.data.frame(matrix(c('age', 'Age', 
-                                 'interview_year', 'Year', 
-                                 'head_sexMale', 'Male HH Head',
-                                 'hhsize', 'HH Size', 
-                                 'sexMale', 'Male Child', 
-                                 'gdp', 'GDP 1000$', 
-                                 'pop', 'Pop Density (pp/sqkm)',
-                                 'spi24', '24-Month SPI', 
-                                 'spi24sq', '24-Month SPI^2', 
-                                 'mean_annual_precip', 'Annual Precip (1000mm/yr)',
-                                 'head_age', 'HH Head Age', 
-                                 'md', 'Market Distance (Days)', 
-                                 'wealth_indexMiddle', '3rd Wealth Quintile',
-                                 'wealth_indexPoorer', '2nd Wealth Quintile', 
-                                 'wealth_indexRicher', '4th Wealth Quintile', 
-                                 'wealth_indexRichest', '5th Wealth Quintile', 
-                                 'mother_years_ed', 'Mother Education (Years)', 
-                                 'workers', 'Number HH Workers', 
-                                 'related_hhheadTRUE', 'Related HH Head', 
-                                 'istwin', 'Is Twin', 
-                                 'diarrhea', 'Diarrhea', 
-                                 'fever', 'Fever',
-                                 '(Intercept)', 'Intercept', 
-                                 'nat_water', 'Water Bodies', 
-                                 'nat_grass', 'Shrub and Grassland', 
-                                 'nat_trees', 'Forestland', 
-                                 "natural:spi24", 'Natural Areas * SPI', 
-                                 'natural', 'Natural Areas',
-                                 "natural:spi24sq", 'Natural Areas * SPI', 
-                                 "nat_grass:spi24", "nat_grass:spi24", 
-                                 "nat_water:spi24", "nat_water:spi24"),
-                               ncol=2, byrow=T))
-names(labels) <- c('term', 'label')
+labels <- data.frame(matrix(c('age', 'Child\'s Age', 1, 
+                                 'sexMale', 'Child is Male', 2,
+                                 'istwin', 'Child is Twin', 3,
+                                 'diarrhea', 'Child had Diarrhea', 4,
+                                 'fever', 'Child had Fever', 5, 
+                                 'related_hhheadTRUE', 'Child Related HH Head', 6,
+                                 'mother_years_ed', 'Mother Education (Years)', 7,
+                                 'head_sexMale', 'HH Head is Male', 8, 
+                                 'head_age', 'HH Head Age', 9,
+                                 'hhsize', 'HH Size', 10, 
+                                 'workers', 'Number HH Workers', 11,
+                                 'wealth_indexPoorer', 'HH 2nd Wealth Quintile', 12,
+                                 'wealth_indexMiddle', 'HH 3rd Wealth Quintile',13,
+                                 'wealth_indexRicher', 'HH 4th Wealth Quintile', 14,
+                                 'wealth_indexRichest', 'HH 5th Wealth Quintile', 15,
+                                 'md', 'Market Distance (Days)', 16,
+                                 'gdp', 'GDP (1000$)', 17,
+                                 'pop', 'Population Density (pp/sqkm)', 18,
+                                 'interview_year', 'Year', 19,
+                                 'mean_annual_precip', 'Annual Precip (1000mm/yr)', 20,
+                                 'spi24', '24-Month SPI', 21,
+                                 'spi24sq', '24-Month SPI^2', 22, 
+                                 '(Intercept)', 'Intercept', 23,
+                                 'nat_water', 'Water Bodies', 24,
+                                 'nat_grass', 'Shrub and Grassland', 25,
+                                 'nat_trees', 'Forestland', 26,
+                                 'natural', 'Natural Areas', 27,
+                                 "spi24:natural", "SPI*Natural Areas", 30,
+                                 "spi24sq:natural", "SPI*Natural Areas", 31),
+                               ncol=3, byrow=T))
+names(labels) <- c('term', 'label', 'rank')
+
+labels$label <- factor(labels$label, levels=unique(labels$label[rev(order(as.numeric(as.character(labels$rank))))]), ordered=T)
 
 spidf <- tidy(spimod, conf.int=TRUE) %>% 
   filter(!grepl('country', term) & term != '(Intercept)') %>%
-  merge(labels, all.x=T)
+  merge(labels, all.x=T) %>%
+  na.omit
 
 ggplot(spidf, aes(estimate, label)) + 
   geom_errorbarh(aes(xmin=conf.low, xmax=conf.high)) + 
   geom_vline(xintercept = 0) + 
   ylab('') + xlab('Estimate') + 
-  xlim(
   ggtitle('Impacts of 24-Month SPI on HAZ Scores') + 
   theme_bw()
 ggsave('Impacts of 24-Month SPI on HAZ Scores.png', width = 7, height=5)
   
 natdf <- tidy(natmod, conf.int=TRUE) %>% 
   filter(!grepl('country', term) & term != '(Intercept)') %>%
-  merge(labels, all.x=T)
+  merge(labels, all.x=T) %>%
+  na.omit
 
 ggplot(natdf, aes(estimate, label)) + 
   geom_errorbarh(aes(xmin=conf.low, xmax=conf.high)) + 
@@ -195,10 +195,12 @@ ggsave('Impacts of Natural Land Cover on HAZ Scores.png', width = 7, height=5)
 
 combdf <- tidy(combmod, conf.int=TRUE) %>% 
   filter(!grepl('country', term) & term != '(Intercept)') %>%
-  merge(labels, all.x=T)
+  merge(labels, all.x=T) %>%
+  na.omit
 
 ggplot(combdf, aes(estimate, label)) + 
   geom_errorbarh(aes(xmin=conf.low, xmax=conf.high)) + 
   geom_vline(xintercept = 0) + 
   ylab('') + xlab('Estimate') + 
-  theme_bw()
+  theme_bw() + 
+  ggtitle('Interactive Effocts of Natural Land Cover and SPI on HAZ Scores')

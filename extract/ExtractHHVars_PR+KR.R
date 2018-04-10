@@ -374,6 +374,9 @@ all$country <- substr(all$country, 1, 2)
 all <- all %>%
   filter(!(longitude < 1 & longitude > -1 & latitude < 1 & latitude > -1))
 
+#Get the survey code
+all$surveycode <- substr(all$code, 1, 6)
+
 #Calculate my own haz, whz and waz
 # Based on scripts and WHO reference tables from the Vital Signs project
 
