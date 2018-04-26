@@ -59,11 +59,13 @@ md15 <- merge(select(md, code, md=market2015), data.frame(interview_year=seq(200
 
 md <- Reduce(bind_rows, list(md00, md15))
 
+regions <- read.csv('regions.csv')
+
 ################################
 #Combine and clear workspace
 ################################
 all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
-              list(hh, gdp, farm, lc, md, pop, spi))
+              list(hh, gdp, farm, lc, md, pop, spi, regions))
 
 #rm(list=setdiff(ls(), "all")) #remove everything but our data
 
@@ -74,6 +76,8 @@ all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
 all <- all %>% filter(!(haz < -7 | haz > 5)) #first filter extreme HAZs
 
 all <- all %>% filter(urban_rural == 'Rural') #Lets just look at rural hhs
+
+#all <- all %>% filter(region == 'ssa')
 
 all$md <- all$md/24
 all$gdp <- all$gdp/1000
@@ -93,7 +97,7 @@ all <- all %>%
          -wealth_factor, -dependents, -caseid, 
          -birthyear, -birthmonth, -birthday_cmc, 
          -fromKR, -filesource, 
-         -waz, -whz, 
+         -waz, #-whz 
          -continent, -farm_system, -human, 
          -spi6, -spi12, -spi36, 
          -birthday_9monthtotal, -birthday_spi9,
@@ -112,22 +116,32 @@ all$related_hhhead <- all$relationship_hhhead == "Not Related"
 
 na_summary <- colSums(is.na(all))/nrow(all)
 
+#all <- all %>% filter(country=='BF')
+
 library(lme4)
 
 all$spi24sq <- all$spi24^2
 all$surveycode <- substr(all$code, 1, 6)
 
-spimod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + pop + spi24 + spi24sq + mean_annual_precip +
-                 head_age + md + wealth_index + mother_years_ed + workers + related_hhhead +
-                 istwin + diarrhea + fever + (wealth_index|surveycode) + (1|country) + (1|surveycode) + (1|code), data = all)
+spimod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + pop + mean_annual_precip +
+                 head_age + md + wealth_index + mother_years_ed + workers + related_hhhead + spi24sq + spi24 + 
+                 istwin + diarrhea + fever + (1|surveycode) + (1|code), 
+               data = all)
+summary(spimod)
 
-natmod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + spi24 + spi24sq + pop + mean_annual_precip +
-               head_age + wealth_index + md + mother_years_ed + workers + related_hhhead +
-               istwin + diarrhea + fever + nat_water + nat_grass + nat_trees + (wealth_index|surveycode) + (1|country) + (1|surveycode) + (1|code), data = all)
+natmod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + pop + mean_annual_precip +
+                 head_age + md + wealth_index + mother_years_ed + workers + related_hhhead + spi24sq + 
+                 istwin + diarrhea + fever + natural + (1|country) + (1|surveycode) + (1|code), 
+               data = all)
+summary(natmod)
 
-combmod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + spi24 + spi24sq + pop + mean_annual_precip +
-               head_age + wealth_index + md + mother_years_ed + workers + related_hhhead +
-               istwin + diarrhea + fever + natural + natural*spi24 + (wealth_index|surveycode) + (1|country) + (1|surveycode) + (1|code), data = all)
+all$spi_pos <- all$spi24 + - min(all$spi24)
+all$natural_center <- all$natural - 0.5
+all$nat_grass_center <- all$nat_grass - 0.5
+all$nat_water_center <- all$nat_water - 0.5
+combmod <- lmer(haz ~ age + interview_year + head_sex + hhsize + sex + gdp + spi_pos + pop + mean_annual_precip +
+               head_age + md + mother_years_ed + workers + related_hhhead + wealth_index + 
+               istwin + diarrhea + fever + natural_center + natural_center*spi_pos + (wealth_index|surveycode) + (1|surveycode) + (1|code), data = all)
 
 
 ###Purty Graphs
@@ -161,7 +175,10 @@ labels <- data.frame(matrix(c('age', 'Child\'s Age', 1,
                                  'nat_trees', 'Forestland', 26,
                                  'natural', 'Natural Areas', 27,
                                  "spi24:natural", "SPI*Natural Areas", 30,
-                                 "spi24sq:natural", "SPI*Natural Areas", 31),
+                                 "spi24sq:natural", "SPI*Natural Areas", 31,
+                                 "spi_pos", "24-Month SPI", 21,
+                                 "natural_center", "Natural Areas", 27,
+                                 "spi_pos:natural_center", "SPI-Natural Interaction", 32),
                                ncol=3, byrow=T))
 names(labels) <- c('term', 'label', 'rank')
 
@@ -176,9 +193,9 @@ ggplot(spidf, aes(estimate, label)) +
   geom_errorbarh(aes(xmin=conf.low, xmax=conf.high)) + 
   geom_vline(xintercept = 0) + 
   ylab('') + xlab('Estimate') + 
-  ggtitle('Impacts of 24-Month SPI on HAZ Scores') + 
+  ggtitle('Impacts of 24-Month SPI^2 on HAZ Scores in Africa') + 
   theme_bw()
-ggsave('Impacts of 24-Month SPI on HAZ Scores.png', width = 7, height=5)
+ggsave('Impacts of 24-Month SPI^2 on HAZ Scores (Committee).png', width = 7, height=5)
   
 natdf <- tidy(natmod, conf.int=TRUE) %>% 
   filter(!grepl('country', term) & term != '(Intercept)') %>%
@@ -190,8 +207,8 @@ ggplot(natdf, aes(estimate, label)) +
   geom_vline(xintercept = 0) + 
   ylab('') + xlab('Estimate') + 
   theme_bw() + 
-  ggtitle('Impacts of Natural Land Cover on HAZ Scores')
-ggsave('Impacts of Natural Land Cover on HAZ Scores.png', width = 7, height=5)
+  ggtitle('Impacts of Natural Land Cover on HAZ Scores in Africa')
+ggsave('Impacts of Natural Land Cover on HAZ Scores (Committee).png', width = 7, height=5)
 
 combdf <- tidy(combmod, conf.int=TRUE) %>% 
   filter(!grepl('country', term) & term != '(Intercept)') %>%
@@ -204,3 +221,6 @@ ggplot(combdf, aes(estimate, label)) +
   ylab('') + xlab('Estimate') + 
   theme_bw() + 
   ggtitle('Interactive Effocts of Natural Land Cover and SPI on HAZ Scores')
+ggsave('Interactive Effocts of Natural Land Cover and SPI on HAZ Score.png', width = 7, height=5)
+
+

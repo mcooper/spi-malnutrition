@@ -33,7 +33,8 @@ lc <- lc %>%
   select(code, interview_year, human, natural)
 
 spi <- read.csv('Coords&SPI.csv') %>%
-  select(code, spi24, spi6, spi12, spi36, interview_month, interview_year) %>%
+  select(code, spi24, spi6, spi12, spi36, interview_month, interview_year,
+         mean_annual_precip) %>%
   unique
 
 hh <- read.csv('hhvars.csv') %>%
@@ -46,7 +47,7 @@ all <- all %>%
   filter(spi24 > -3 & spi24 < 3 & urban_rural=='Rural')
 
 sel <- all %>%
-  filter(md > 24*14 & md < 24*31)
+  filter(md > 24*4)# & mean_annual_precip < 1000 & mean_annual_precip > 100)
 
 #http://polisci.msu.edu/jacoby/icpsr/regress3/lectures/week4/16.MultiLoess.pdf
 
@@ -67,24 +68,24 @@ pred <- function(natural, spi24){
   predict(mod.loess, newdata=data.frame(natural=natural, spi24=spi24))
 }
 
-data$prediction <- mapply(pred, natural=data$natural, spi24=data$spi24)/100
+data$prediction <- mapply(pred, natural=data$natural, spi24=data$spi24)
 data$natural <- data$natural*100
 
 sel <- sel %>%
-  filter(spi24 > -2.5 & spi24 < 2.5)
+  filter(spi24 > -3 & spi24 < 3)
 
 ggplot(data, aes(x=natural, y=spi24)) + 
   geom_tile(aes(fill=prediction)) + 
-  geom_point(data=sel, aes(x=natural*100, y=spi24), size=0.1) + 
+  geom_point(data=sel, aes(x=natural*100, y=spi24), size=0.05) + 
   #geom_text(aes(label=signif(prediction, 3))) + 
   scale_fill_gradient2(low = "red", high = "green", mid="white", 
                        guide = "colourbar", midpoint=mean(data$prediction, na.rm=T),
                        name='Z-Score') +
-  xlim(0, 1) + ylim(-2.5, 2.5) + 
+  #xlim(0, 1) + ylim(-2.5, 2.5) + 
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_continuous(expand = c(0, 0)) +
-  labs(title="HAZ Scores Across Gradients in SPI and Land Cover",
-       subtitle='Modeled with a 2nd-Degree Polynomial Loess with alpha=0.75',
+  labs(title="HAZ Scores Across Gradients in SPI and Natural Land Cover",
+       subtitle=expression('Modeled with a 2nd-Degree Polynomial Loess with '*alpha*'=0.75'),
        x="Fraction of Nearby Land With Natural Cover",
        y="24-Month Standardized Precipitation Index",
        caption="Source: DHS; CHIRPS; ESA-CCI Landcover; n=52,653") +
@@ -94,8 +95,8 @@ ggplot(data, aes(x=natural, y=spi24)) +
         axis.title = element_text(face="bold"))
         
 
-ggsave('G:/My Drive/Dissertation/Visualizations/SPIvsNatural points.png', 
-       width=10, height=8)
+ggsave('G:/My Drive/Dissertation/Visualizations/SPIvsNatural.png', 
+       width=8, height=6)
 
 
 

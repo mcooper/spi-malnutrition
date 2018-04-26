@@ -1,8 +1,8 @@
-setwd('D://Documents and Settings/mcooper/Google Drive/Dissertation/Rasters/')
+setwd('G:/My Drive/Dissertation/Rasters')
 
 library(raster)
 
-data <- read.csv('../../../GitHub/spi-malnutrition/spatial-model/re_covariate.csv')
+data <- read.csv('D:/Documents and Settings/mcooper/GitHub/spi-malnutrition/spatial-model/re_covariate.csv')
 
 
 gdp <- raster('GDP/gpd2015.tif')

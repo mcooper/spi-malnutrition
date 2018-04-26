@@ -27,13 +27,23 @@ labels <- read.csv('landcover_mapping.csv')
 lca <- merge(labels, lca)
 
 lca <- lca %>% group_by(class, code) %>%
-  summarize(percent = sum(percent)) %>%
+  summarize(percent = sum(percent))
+
+lcanz <- lca %>%
+  filter(percent != 0)
+
+ggplot(lcanz) + 
+  geom_histogram(aes(x=percent, fill=class))
+
+
+lca2 <- lca %>%
   group_by(class) %>%
   summarize(Percent = mean(percent))
 
-lca$Percent <- lca$Percent*100
+lca2$Percent <- lca2$Percent*100
 
-ggplot(lca) + 
+
+ggplot(lca2) + 
   geom_bar(aes(x=class, y=Percent, fill=class), stat='Identity') + 
   xlab('') + 
   coord_flip() + 

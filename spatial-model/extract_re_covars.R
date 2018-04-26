@@ -1,14 +1,14 @@
-setwd('D://Documents and Settings/mcooper/Google Drive/Dissertation/Rasters/')
+setwd('G:/My Drive/Dissertation/Rasters')
 
 library(raster)
 library(dplyr)
 library(maptools)
 library(foreach)
 
-data <- read.csv('../../../GitHub/spi-malnutrition/results/random_effect.csv')
+data <- read.csv('D:/Documents and Settings/mcooper/GitHub/GitHub/spi-malnutrition/results/random_effect.csv')
 
 #Get GDP
-gdp <- read.csv('../../../GitHub/spi-malnutrition/data/country_gdp_all.csv')
+gdp <- read.csv('D:/Documents and Settings/mcooper/GitHub/GitHub/spi-malnutrition/data/country_gdp_all.csv')
 
 data <- merge(data, gdp)
 
@@ -43,14 +43,19 @@ spd <- extract(p, spd, sp=TRUE)
 #population density
 pop1990 <- raster('Population/gpw_v1_population_count_rev10_1990_2pt5_min.tif')
 names(pop1990) <- 'population'
+pop1990[is.na(pop1990)] <- 0
 pop2000 <- raster('Population/gpw_v4_population_count_rev10_2000_2pt5_min.tif')
 names(pop2000) <- 'population'
+pop2000[is.na(pop2000)] <- 0
 pop2005 <- raster('Population/gpw_v4_population_count_rev10_2005_2pt5_min.tif')
 names(pop2005) <- 'population'
+pop2005[is.na(pop2005)] <- 0
 pop2010 <- raster('Population/gpw_v4_population_count_rev10_2010_2pt5_min.tif')
 names(pop2010) <- 'population'
+pop2010[is.na(pop2010)] <- 0
 pop2015 <- raster('Population/gpw_v4_population_count_rev10_2015_2pt5_min.tif')
 names(pop2015) <- 'population'
+pop2015[is.na(pop2015)] <- 0
 
 spd1990 <- extract(pop1990, spd[spd$year < 1996, ], sp=TRUE)
 spd2000 <- extract(pop2000, spd[spd$year < 2003 & spd$year >= 1996,], sp=TRUE)
@@ -90,7 +95,7 @@ for (i in unique(spd$year)){
 
 spd <- Reduce(spRbind, spdlist)
 
-write.csv(spd@data, '../../../GitHub/spi-malnutrition/spatial-model/re_covariate.csv', row.names=F)
+write.csv(spd@data, 'D:/Documents and Settings/mcooper/GitHub/GitHub/spi-malnutrition/spatial-model/re_covariate.csv', row.names=F)
 
 
 
