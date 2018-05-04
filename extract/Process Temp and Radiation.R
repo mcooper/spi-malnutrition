@@ -1,4 +1,5 @@
-
+library(raster)
+library(lubridate)
 
 ################################
 #Process radiation data
@@ -48,7 +49,9 @@ foreach(f=list.files(pattern = '.nc$'), .packages=c('raster', 'lubridate')) %dop
 
   r <- stack(f)
   
-  print(f)
+  r <- crop(r, extent(0, 360, -60, 90))
+  
+  r <- setExtent(r, extent(-180, 180, -60, 90))
   
   val <- substr(f, 1, 4)
 
