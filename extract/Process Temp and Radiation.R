@@ -43,15 +43,13 @@ setwd('precip')
 library(foreach)
 library(doParallel)
 
-cl <- makeCluster(7)
+cl <- makeCluster(7, outfile = '')
 registerDoParallel(cl)
 foreach(f=list.files(pattern = '.nc$'), .packages=c('raster', 'lubridate')) %dopar% {
 
+  print(f)
+  
   r <- stack(f)
-  
-  r <- crop(r, extent(0, 360, -60, 90))
-  
-  r <- setExtent(r, extent(-180, 180, -60, 90))
   
   val <- substr(f, 1, 4)
 
@@ -64,10 +62,13 @@ foreach(f=list.files(pattern = '.nc$'), .packages=c('raster', 'lubridate')) %dop
     sel <- r[[which(month(indices)==i)]]
     out <- calc(sel, fun=mean)
     
+    out <- crop(out, extent(0, 360, -60, 90))
+    out <- rotate(out)  
+    
     name <- paste0(val, year, substr(100 + i, 2, 3), '.tif')
     print(name)
     
-    writeRaster(out, name, format='GTiff')
+    writeRaster(out, name, format='GTiff', overwrite=T)
   }
 }
 
