@@ -87,7 +87,7 @@ df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridat
   birthdate <- data.frame(tmpcode=rll$layer[n],
                           calc_birthmonth=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
                           calc_birthyear=year(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-                          birthday_9monthtotal=rollapply(s, width=17, FUN=rollfun, partial=TRUE),
+                          birthday_9monthtotal=rollapply(precip, width=17, FUN=rollfun, partial=TRUE),
                           birthday_spei9=as.numeric(spei(s, 9, na.rm=TRUE)$fitted))
   thousanddays <- data.frame(tmpcode=rll$layer[n],
                              thousandday_month=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
