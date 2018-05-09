@@ -4,7 +4,9 @@
 sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
 sudo apt update 
 sudo apt install gdal-bin python-gdal python3-gdal
+Y
 sudo apt-get install libgdal1-dev libproj-dev
+Y
 
 #Install R
 sudo echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | sudo tee -a /etc/apt/sources.list
@@ -12,6 +14,7 @@ gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 gpg -a --export E084DAB9 | sudo apt-key add -
 sudo apt-get update
 sudo apt-get install r-base r-base-dev
+Y
 
 #Install stan https://github.com/stan-dev/rstan/wiki/Installing-RStan-on-Mac-or-Linux
 sudo apt-get install libssl-dev
@@ -26,7 +29,12 @@ cat("\nCXXFLAGS+=-flto -Wno-unused-local-typedefs",  file = M, sep = "\n", appen
 cat(readLines(M), sep = "\n")
 M <- file.path(file.path(Sys.getenv("HOME"), ".R"), "Makevars");
 file.exists(M) #Should be TRUE
-install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies=TRUE) #This takes awhile
 #You might be missing some package, like RCurl, rsconnect, or shinystan
+install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies=TRUE) #This takes awhile
 
 q()
+
+#Install RStudio Server
+sudo apt-get install gdebi-core
+wget https://download2.rstudio.org/rstudio-server-1.1.447-amd64.deb
+sudo gdebi rstudio-server-1.1.447-amd64.deb
