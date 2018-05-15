@@ -61,35 +61,32 @@ cl <- makeCluster(7, outfile = '')
 registerDoParallel(cl)
 
 df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridate', 'gdalUtils', 'SPEI', 'dplyr', 'zoo')) %dopar% {
-  
-  
-  
 
-precip <- gdallocationinfo(precip_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
-  as.numeric
-
-tmax <- gdallocationinfo(tmax_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
-  as.numeric
-
-tmin <- gdallocationinfo(tmin_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
-  as.numeric
+  precip <- gdallocationinfo(precip_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
   
-PET <- hargreaves(tmin-273.15, tmax-273.15, lat=rll$y[n], Pre=precip) %>%
-  as.vector
-
-s <- precip - PET
+  tmax <- gdallocationinfo(tmax_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
   
-interview <- data.frame(tmpcode=rll$layer[n],
-                        interview_month=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-                        interview_year=year(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-                        spei6=as.numeric(spei(s, 6, na.rm=TRUE)$fitted),
-                        spei12=as.numeric(spei(s, 12, na.rm=TRUE)$fitted),
-                        spei24=as.numeric(spei(s, 24, na.rm=TRUE)$fitted),
-                        spei36=as.numeric(spei(s, 36, na.rm=TRUE)$fitted),
-                        spi6=as.numeric(spi(precip, 6, na.rm=TRUE)$fitted),
-                        spi12=as.numeric(spi(precip, 12, na.rm=TRUE)$fitted),
-                        spi24=as.numeric(spi(precip, 24, na.rm=TRUE)$fitted),
-                        spi36=as.numeric(spi(precip, 36, na.rm=TRUE)$fitted))
+  tmin <- gdallocationinfo(tmin_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+    
+  PET <- hargreaves(tmin-273.15, tmax-273.15, lat=rll$y[n], Pre=precip) %>%
+    as.vector
+  
+  s <- precip - PET
+    
+  interview <- data.frame(tmpcode=rll$layer[n],
+                          interview_month=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
+                          interview_year=year(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
+                          spei6=as.numeric(spei(s, 6, na.rm=TRUE)$fitted),
+                          spei12=as.numeric(spei(s, 12, na.rm=TRUE)$fitted),
+                          spei24=as.numeric(spei(s, 24, na.rm=TRUE)$fitted),
+                          spei36=as.numeric(spei(s, 36, na.rm=TRUE)$fitted),
+                          spi6=as.numeric(spi(precip, 6, na.rm=TRUE)$fitted),
+                          spi12=as.numeric(spi(precip, 12, na.rm=TRUE)$fitted),
+                          spi24=as.numeric(spi(precip, 24, na.rm=TRUE)$fitted),
+                          spi36=as.numeric(spi(precip, 36, na.rm=TRUE)$fitted))
 
   birthdate <- data.frame(tmpcode=rll$layer[n],
                           calc_birthmonth=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
