@@ -182,6 +182,9 @@ all <- merge(all, watersources, all.x=T, all.y=F)
 all$drinkwatersource <- all$newcode
 all$newcode <- NULL
 
+#parents_years_ed
+all$parents_years_ed[all$parents_years_ed > 30] <- NA
+
 #father_alive
 all$father_alive[all$father_alive %in% c('8', '9', 'dk', 'DK', "don't know", "Don't know")] <- NA
 all$father_alive <- as.integer(all$father_alive == '1' | all$father_alive == 'yes' | all$father_alive == 'Yes')

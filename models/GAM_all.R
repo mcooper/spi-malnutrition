@@ -97,57 +97,57 @@ extras <- c('no_extra', 'extra')
 df <- expand.grid(basis, precip, dep_var, extras, stringsAsFactors = F)
 
 for (i in 1:nrow(df)){
-  print(i)
-  
-  if (df$Var4[i] == "no_extra"){
-    extra <- ""
-  }else{
-    extra <- ' + fever + diarrhea + related_hhhead + istwin'
-  }
+print(i)
 
-  expression <- as.formula(paste0(df$Var3[i], " ~ s(", df$Var2[i], ", bs='", df$Var1[i], "') + age + head_sex + hhsize + sex + gdp + pop + interview_year + head_age + md + wealth_index + mother_years_ed + workers + country + mean_annual_precip", extra))
+if (df$Var4[i] == "no_extra"){
+extra <- ""
+}else{
+extra <- ' + fever + diarrhea + related_hhhead + istwin'
+}
 
-  mod <- gam(expression, data=all)  
+expression <- as.formula(paste0(df$Var3[i], " ~ s(", df$Var2[i], ", bs='", df$Var1[i], "') + age + head_sex + hhsize + sex + gdp + pop + interview_year + head_age + md + wealth_index + mother_years_ed + workers + country + mean_annual_precip", extra))
 
-  moddata = data.frame(age = mean(all$age, na.rm=T),
-                      interview_year = 2007,
-                      head_sex = 'Male',
-                      hhsize = mean(all$hhsize, na.rm=T),
-                      sex = "Male",
-                      gdp = mean(all$gdp, na.rm=T),
-                      pop = mean(all$pop, na.rm=T),
-                      head_age = mean(all$head_age, na.rm=T),
-                      md = mean(all$md, na.rm=T),
-                      wealth_index = "Middle", 
-                      mother_years_ed = mean(all$mother_years_ed, na.rm=T),
-                      workers = mean(all$workers, na.rm=T),
-                      related_hhhead = TRUE,
-                      istwin = mean(all$istwin, na.rm=T),
-                      diarrhea = mean(all$diarrhea, na.rm=T),
-                      fever = mean(all$fever, na.rm=T),
-                      country = 'SN', 
-                      mean_annual_precip=mean(all$mean_annual_precip, na.rm=T),
-                      precip=seq(-3, 3, 0.1))
-  
-  names(moddata)[names(moddata)=='precip'] <- df$Var2[i]
-  
-  sm <- summary(mod)
-  AIC <- AIC(mod)
-  n <- sm$n
-  pval <- sm$s.table[, 4]
-  
-  fits = predict(mod, moddata, type='response', se=T)
-  predicts = data.frame(moddata, fits) %>% 
-  mutate(lower = fit - 1.96*se.fit,
-         upper = fit + 1.96*se.fit)
+mod <- gam(expression, data=all)  
 
-  ggplot(aes_string(x=df$Var2[i],y='fit'), data=predicts) +
-    geom_ribbon(aes(ymin = lower, ymax=upper), fill='gray90') +
-    geom_line(color='#1e90ff') + 
-    ggtitle(paste0("AIC:", AIC, " n:", n, " pval:", pval)) +
-    theme_bw()
-  
-  ggsave(paste0("GAMResults/", paste(df[i, ], collapse='-'), "-numyear.png"), height=4, width=5)
+moddata = data.frame(age = mean(all$age, na.rm=T),
+              interview_year = 2007,
+              head_sex = 'Male',
+              hhsize = mean(all$hhsize, na.rm=T),
+              sex = "Male",
+              gdp = mean(all$gdp, na.rm=T),
+              pop = mean(all$pop, na.rm=T),
+              head_age = mean(all$head_age, na.rm=T),
+              md = mean(all$md, na.rm=T),
+              wealth_index = "Middle", 
+              mother_years_ed = mean(all$mother_years_ed, na.rm=T),
+              workers = mean(all$workers, na.rm=T),
+              related_hhhead = TRUE,
+              istwin = mean(all$istwin, na.rm=T),
+              diarrhea = mean(all$diarrhea, na.rm=T),
+              fever = mean(all$fever, na.rm=T),
+              country = 'SN', 
+              mean_annual_precip=mean(all$mean_annual_precip, na.rm=T),
+              precip=seq(-3, 3, 0.1))
+
+names(moddata)[names(moddata)=='precip'] <- df$Var2[i]
+
+sm <- summary(mod)
+AIC <- AIC(mod)
+n <- sm$n
+pval <- sm$s.table[, 4]
+
+fits = predict(mod, moddata, type='response', se=T)
+predicts = data.frame(moddata, fits) %>% 
+mutate(lower = fit - 1.96*se.fit,
+ upper = fit + 1.96*se.fit)
+
+ggplot(aes_string(x=df$Var2[i],y='fit'), data=predicts) +
+geom_ribbon(aes(ymin = lower, ymax=upper), fill='gray90') +
+geom_line(color='#1e90ff') + 
+ggtitle(paste0("AIC:", AIC, " n:", n, " pval:", pval)) +
+theme_bw()
+
+ggsave(paste0("GAMResults/", paste(df[i, ], collapse='-'), "-numyear.png"), height=4, width=5)
 }
 
 all$interview_year <- as.factor(all$interview_year)
