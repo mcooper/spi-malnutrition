@@ -7,41 +7,12 @@ library(dplyr)
 hh <- read.csv('hhvars.csv')
 gdp <- read.csv('country_gdp.csv')
 farm <- read.csv('FarmingSystems.csv')
-lc <- read.csv('landcover.csv')
 md <- read.csv('MarketDist.csv')
 pop <- read.csv('PopPer100sqkm.csv')
-spi <- read.csv('Coords&SPI.csv')
+spi <- read.csv('Coords&Precip.csv')
+regions <- read.csv('regions.csv')
 
 #Look at including World Governance Indicators at: http://info.worldbank.org/governance/wgi/#home
-
-##############################
-#Process landcover data
-#################################
-human <- paste0('cci_', c('10', '11', '12', '20', '30', '190', '200', '201', '202', '220'))
-natural <- paste0('cci_', c('40', '50', '60', '61', '62', '70', '71', '80', '90', '100', '110', '120', '121', '122',
-                            '130', '140', '150', '152', '153', '160', '170', '180', '210'))
-nat_water <- 'cci_210'
-nat_grass <- paste0('cci_', c('110', '120', '121', '122', '130', '140', '150', '152', '153', '180'))
-nat_trees <- paste0('cci_', c('40', '50', '60', '61', '62', '70', '71', '80', '90', '100', '160', '170'))
-
-getPercetCover <- function(selcols, allcolmatch, df){
-  if(length(selcols) > 1){
-    selcolsum <- rowSums(df[ , selcols[selcols %in% names(df)]], na.rm=T)
-  } else{
-    selcolsum <- df[ , selcols]
-  }
-  allcolsum <- rowSums(df[ , grepl(allcolmatch, names(df))], na.rm=T)
-  return(selcolsum/allcolsum)
-}
-
-lc$human <- getPercetCover(human, 'cci_', lc)
-lc$natural <- getPercetCover(natural, 'cci_', lc)
-lc$nat_water <- getPercetCover(nat_water, 'cci_', lc)
-lc$nat_grass <- getPercetCover(nat_grass, 'cci_', lc)
-lc$nat_trees <- getPercetCover(nat_trees, 'cci_', lc)
-
-lc <- lc %>%
-  select(human, natural, interview_year, code, nat_water, nat_grass, nat_trees)
 
 #################################
 #Process pop and market dist data
@@ -59,13 +30,11 @@ md15 <- merge(select(md, code, md=market2015), data.frame(interview_year=seq(200
 
 md <- Reduce(bind_rows, list(md00, md15))
 
-regions <- read.csv('regions.csv')
-
 ################################
 #Combine and clear workspace
 ################################
 all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
-              list(hh, gdp, farm, lc, md, pop, spi, regions))
+              list(hh, gdp, farm, md, pop, spi, regions))
 
 #rm(list=setdiff(ls(), "all")) #remove everything but our data
 
@@ -84,25 +53,6 @@ all$gdp <- all$gdp/1000
 all$mean_annual_precip <- all$mean_annual_precip/1000
 all$pop <- all$pop/100
 
-#Drop variables that will not be used in regression
-all <- all %>%
-  select(-interview_month, -interview_cmc, -calc_birthmonth, -calc_birthyear, -thousandday_month, -thousandday_year, 
-         -latitude, -longitude, 
-         -hhid, -householdno, -clusterid, 
-         -father_line, -mother_line, -child_line_num, 
-         -haz_dhs, -waz_dhs, -whz_dhs, 
-         -haz_who, -waz_who, -whz_who, 
-         -height, -weight, -how_measured, 
-         -sampweight, -urban_rural, -parents_years_ed, 
-         -wealth_factor, -dependents, -caseid, 
-         -birthyear, -birthmonth, -birthday_cmc, 
-         -fromKR, -filesource, 
-         -waz, #-whz 
-         -continent, -farm_system, -human, 
-         -spi6, -spi12, -spi36, 
-         -birthday_9monthtotal, -birthday_spi9,
-         -preceeding_interval, -suceeding_interval #Need to figure out missing data vs Not Applicable
-         )
 
 #Relevel factors
 all <- all %>%
@@ -114,9 +64,7 @@ all <- all %>%
 
 all$related_hhhead <- all$relationship_hhhead == "Not Related"
 
-na_summary <- colSums(is.na(all))/nrow(all)
-
-#all <- all %>% filter(country=='BF')
+#na_summary <- colSums(is.na(all))/nrow(all)
 
 library(lme4)
 

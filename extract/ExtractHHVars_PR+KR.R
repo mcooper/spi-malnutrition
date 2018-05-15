@@ -300,8 +300,8 @@ all$sex <- recode(all$sex, `1`="Male", `2`="Female", `female`="Female", `male`="
 all$sex[all$sex=='9'] <- NA
 
 #suceeding_interval
-all$suceeding_interval <- as.numeric(all$suceeding_interval)
-all$suceeding_interval[all$suceeding_interval > 500] <- NA
+all$succeeding_interval <- as.numeric(all$succeeding_interval)
+all$succeeding_interval[all$succeeding_interval > 500] <- NA
 
 #toilet
 #based on categores in Table 6 of supplement to Diarrhea & Forests Paper
@@ -348,6 +348,26 @@ all$weight <- all$weight/10 #convert to kg
 all$height <- as.numeric(all$height)
 all$height[all$height < 250 | all$height > 1300] <- NA
 all$height <- all$height/10 #Convert to cm
+
+#mother_height
+all$mother_height <- as.numeric(all$mother_height)
+all$mother_height <- all$mother_height/10
+all$mother_height[all$mother_height > 300] <- NA
+
+#mother_haz
+all$mother_haz <- as.numeric(all$mother_haz)
+all$mother_haz <- all$mother_haz/100
+all$mother_haz[all$mother_haz > 20] <- NA
+
+#father_height
+all$father_height <- as.numeric(all$father_height)
+all$father_height <- all$father_height/10
+all$father_height[all$father_height > 300] <- NA
+
+#father_haz
+all$father_haz <- as.numeric(all$father_haz)
+all$father_haz <- all$father_haz/100
+all$father_haz[all$father_haz > 20] <- NA
 
 
 ###Calculate birthmonth and thousandday month/year
