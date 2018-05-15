@@ -12,7 +12,7 @@ country,hv000,v000
 diarrhea,h11,h11
 drinkwatersource,hv201,
 father_alive,hv113,
-father_line,hv114,v034
+father_line,hv114,
 fever,h22,h22
 haz_dhs,hc5,hw5
 haz_who,hc70,hw70
@@ -28,7 +28,7 @@ interview_year,hv007,v007
 is_visitor,v135,v135
 istwin,b0,b0
 mother_alive,hv111,
-mother_line,hv112,v003
+mother_line,hv112,
 mother_smokes,v463z,v463z
 otherwatersource,hv202,v113
 parasite_drugs,h43,h43
@@ -37,7 +37,7 @@ preceeding_interval,hc63,b11
 relationship_hhhead,hv101,
 sampweight,hv005,v005
 sex,hc27,b4
-suceeding_interval,b12,b12
+succeeding_interval,b12,b12
 toilet,hv205,v116
 urban_rural,hv025,v025
 watersource_dist,hv204,v115

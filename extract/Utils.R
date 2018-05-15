@@ -25,74 +25,72 @@ process_pr <- function(prfile, surveyvars){
     
   }
   
-  prp <- pr
-  
+  dep_cp <- pr
+  mother_cp <- pr
+  father_cp <- pr
   pr <- pr %>%
     filter(!is.na(hc1)) %>%
     .[ , prvars]
   
-  #Collect parent and household data from PR file, then merge back
-  if (!all(c('hhid', 'hv108', 'hv106', 'hv107', 'hv105') %in% names(prp))){
-    cat("PR file is missing age or education or hhid in", prfile)
-  }else{
-    prp <- prp %>%
-      select(hhid, hvidx, hv108, hv105, hv106, hv107)
-    
-    initialrownums <- nrow(pr)
-    
-    if (sum(is.na(pr$mother_line)) < nrow(pr) & !is.null(pr$mother_line)){
-      prpm <- prp %>%
-        select(hhid, mother_line=hvidx, 
-               #mother_level_ed=hv106,
-               #mother_highest_year=hv107, 
-               mother_years_ed=hv108, 
-               mother_age=hv105) %>%
-        mutate(mother_line = as.character(mother_line),
-               # mother_level_ed=as.character(mother_level_ed),
-               # mother_highest_year = as.character(mother_highest_year), 
-               mother_years_ed = as.character(mother_years_ed),
-               mother_age=as.character(mother_age))
   
-      pr <- merge(pr, prpm, all.x=T, all.y=F)
-      
-      if (nrow(pr) != initialrownums){
-        stop("Bad merge on mothers line in ", prfile)
-      }
-    }
+  #Collect all parent vars
+  mother_vars <- data.frame(newcode=c('hhid', 'mother_line', 'mother_age', 'mother_years_ed', 'mother_height', 'mother_haz'),
+                            pr=c('hhid', 'hvidx', 'hv105', 'hv108', 'ha3', 'ha5'),
+                            stringsAsFactors = F)
+  father_vars <- data.frame(newcode=c('hhid', 'father_line', 'father_age', 'father_years_ed', 'father_height', 'father_haz'),
+                            pr=c('hhid', 'hvidx', 'hv105', 'hv108', 'hb3', 'hb5'),
+                            stringsAsFactors = F)
   
-    if (sum(is.na(pr$father_line)) < nrow(pr) & !is.null(pr$father_line)){
-      prpf <- prp %>%
-        select(hhid, 
-               father_line=hvidx, 
-               #father_level_ed=hv106, 
-               #father_highest_year=hv107, 
-               father_years_ed=hv108, 
-               father_age=hv105) %>%
-        mutate(father_line = as.character(father_line), 
-               #father_level_ed=as.character(father_level_ed),
-               #father_highest_year = as.character(father_highest_year), 
-               father_years_ed = as.character(father_years_ed),
-               father_age=as.character(father_age))
-      
-      pr <- merge(pr, prpf, all.x=T, all.y=F)
-      
-      if (nrow(pr) != initialrownums){
-        stop("Bad merge on fathers line in ", prfile)
-      }
-    }
+  #mother
+  mvars <- NULL
+  for (i in 1:nrow(mother_vars)){
+    var <- mother_vars$pr[i]
     
-    if (sum(is.na(prp$hv105)) < nrow(prp) & !is.null(prp$hv105)){
-      dr <- prp %>%
-        group_by(hhid) %>%
-        summarize(workers = sum(hv105 > 14 & hv105 < 66, na.rm=T),
-                  dependents = sum(hv105 < 15 | hv105 > 65, na.rm=T))
-      
-      pr <- merge(pr, dr, all.x=T, all.y=F)
-      
-      if (nrow(pr) != initialrownums){
-        stop("Bad merge on dependents in ", prfile)
-      }
+    if (!var %in% names(mother_cp)){
+      next  
     }
+    if (sum(is.na(mother_cp[ , var])) == nrow(mother_cp)){
+      next
+    }
+    newcode <- mother_vars$newcode[i]
+    mvars <- c(mvars, newcode)
+    mother_cp[ , newcode] <- as.character(mother_cp[ , var])
+  }
+  mother_cp <- mother_cp[ , mvars]
+  
+  if ('mother_line' %in% names(pr)){
+    pr <- merge(pr, mother_cp, all.x=T, all.y=F)
+  }
+  
+  #Father
+  fvars <- NULL
+  for (i in 1:nrow(father_vars)){
+    var <- father_vars$pr[i]
+    
+    if (!var %in% names(father_cp)){
+      next
+    }
+    if (sum(is.na(father_cp[ , var])) == nrow(father_cp)){
+      next
+    }
+    newcode <- father_vars$newcode[i]
+    fvars <- c(fvars, newcode)
+    father_cp[ , newcode] <- as.character(father_cp[ , var])
+  }
+  father_cp <- father_cp[ , fvars]
+  
+  if ('father_line' %in% names(pr)){
+    pr <- merge(pr, father_cp, all.x=T, all.y=F)
+  }
+    
+  #Get dependants
+  if (sum(is.na(dep_cp$hv105)) < nrow(dep_cp) & !is.null(dep_cp$hv105)){
+    dr <- dep_cp %>%
+      group_by(hhid) %>%
+      summarize(workers = sum(hv105 > 14 & hv105 < 66, na.rm=T),
+                dependents = sum(hv105 < 15 | hv105 > 65, na.rm=T))
+    
+    pr <- merge(pr, dr, all.x=T, all.y=F)
   }
   
   num <- substr(prfile, 5, 5)
