@@ -7,21 +7,29 @@ sc <- createAzureContext(tenantID = az$tenantid,
                          clientID = az$appid,
                          authKey = az$authkey)
 
-az_csv <- function(csv){
+az_read_csv <- function(csv, container="dhsprocessed"){
   read.csv(text=azureGetBlob(sc, 
                             storageAccount=az$storage_acct, 
-                            container="dhsprocessed",
+                            container=container,
                             blob=csv,
                             type="text",
                             storageKey = az$storageKey))
 }
 
-hh <- az_csv('hhvars.csv')
-gdp <- az_csv('country_gdp.csv')
-farm <- az_csv('FarmingSystems.csv')
-md <- az_csv('MarketDist.csv')
-pop <- az_csv('PopPer100sqkm.csv')
-spi <- az_csv('Coords&Precip.csv')
+az_write_blob <- function(blob, blobname, container='stan-models'){
+  file <- paste0(blobname, '.Rdata')
+  save(blob, file=file)
+  system(paste0("az storage blob upload --container-name ", container, " --file ", file, " --name ", file,
+                " --account-name ", az$storage_acct, " --account-key ", az$storageKey))
+  system(paste0("rm ", file))
+}
+
+hh <- az_read_csv('hhvars.csv')
+gdp <- az_read_csv('country_gdp.csv')
+farm <- az_read_csv('FarmingSystems.csv')
+md <- az_read_csv('MarketDist.csv')
+pop <- az_read_csv('PopPer100sqkm.csv')
+spi <- az_read_csv('Coords&Precip.csv')
 
 #################################
 #Process pop and market dist data
@@ -150,7 +158,10 @@ names(init) <- gsub(' ', '', names(init))
 init <- as.list(init)
 init <- list(chain1=init, chain2=init, chain3=init, chain4=init)
 
-codemap <- drought %>% select(code) %>% mutate(code_number=as.numeric(as.factor(as.character(code))))
+codemap <- drought %>% 
+  mutate(code_number=as.numeric(as.factor(as.character(code)))) %>%
+  group_by(code, code_number, latitude, longitude, urban_rural) %>% 
+  summarize(size=n())
 
 stanDat <- list()
 stanDat[["N"]] <- nrow(drought)
@@ -268,7 +279,7 @@ model {
   real mu;
 
   //priors
-  L_code ~ lkj_corr_cholesky(2.0);
+  L_code ~ lkj_corr_cholesky(0.5);  //read about this parameter here: http://www.psychstatistics.com/2014/12/27/d-lkj-priors/
   to_vector(z_code) ~ normal(0,1);
 
   //likelihood
@@ -281,18 +292,28 @@ model {
 "
 
 
-initmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
+stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
                 iter = 2000, chains = 4, init=init)
 
+az_write_blob(stanDat, '2018-05-16-cholesky0.5-data')
+az_write_blob(drought_stan_code, '2018-05-16-initial-code')
+az_write_blob(stanmod, '2018-05-16-initial-results')
 
 
+sum <- summary(initmod)$summary
 
+w1 <- sum[grepl('w[1', row.names(sum), fixed=T), 'mean']
+w2 <- sum[grepl('w[2', row.names(sum), fixed=T), 'mean']
 
+codemap$w2 <- w2
+codemap$w1 <- w1
 
+sel <- sum[ , 'mean']
 
+re <- codemap[stanDat[['code']], ]
 
+pred <- sel['intercept'] + re$w1 + re$w2*stanDat[['spei24']] + sel['toiletFlushToilet_beta'] * stanDat[['toiletFlushToilet']] + sel['toiletOther_beta'] * stanDat[['toiletOther']] + sel['toiletPitLatrine_beta'] * stanDat[['toiletPitLatrine']] + sel['relationship_hhheadNotRelated_beta'] * stanDat[['relationship_hhheadNotRelated']] + sel['relationship_hhheadRelative_beta'] * stanDat[['relationship_hhheadRelative']] + sel['age_beta'] * stanDat[['age']] + sel['birth_order_beta'] * stanDat[['birth_order']] + sel['head_age_beta'] * stanDat[['head_age']] + sel['head_sexMale_beta'] * stanDat[['head_sexMale']] + sel['sexMale_beta'] * stanDat[['sexMale']] + sel['wealth_indexMiddle_beta'] * stanDat[['wealth_indexMiddle']] + sel['wealth_indexPoorer_beta'] * stanDat[['wealth_indexPoorer']] + sel['wealth_indexRicher_beta'] * stanDat[['wealth_indexRicher']] + sel['wealth_indexRichest_beta'] * stanDat[['wealth_indexRichest']] + sel['hhsize_beta'] * stanDat[['hhsize']] + sel['diarrhea_beta'] * stanDat[['diarrhea']] + sel['fever_beta'] * stanDat[['fever']] + sel['breast_duration_beta'] * stanDat[['breast_duration']] + sel['urban_ruralRural_beta'] * stanDat[['urban_ruralRural']] + sel['parents_years_ed_beta'] * stanDat[['parents_years_ed']] + sel['gdp_beta'] * stanDat[['gdp']] + sel['md_beta'] * stanDat[['md']] + sel['pop_beta'] * stanDat[['pop']] + sel['mean_annual_precip_beta'] * stanDat[['mean_annual_precip']] + sel['spei24_beta'] * stanDat[['spei24']]
 
-
-
+resid <- stanDat[['haz_dhs']] - pred
 
 
