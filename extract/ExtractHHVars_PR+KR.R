@@ -355,7 +355,7 @@ all$height <- all$height/10 #Convert to cm
 #mother_height
 all$mother_height <- as.numeric(all$mother_height)
 all$mother_height <- all$mother_height/10
-all$mother_height[all$mother_height > 300] <- NA
+all$mother_height[all$father_height > 250 | all$father_height < 100] <- NA
 
 #mother_haz
 all$mother_haz <- as.numeric(all$mother_haz)
@@ -365,7 +365,7 @@ all$mother_haz[all$mother_haz > 20] <- NA
 #father_height
 all$father_height <- as.numeric(all$father_height)
 all$father_height <- all$father_height/10
-all$father_height[all$father_height > 300] <- NA
+all$father_height[all$father_height > 250 | all$father_height < 100] <- NA
 
 #father_haz
 all$father_haz <- as.numeric(all$father_haz)
