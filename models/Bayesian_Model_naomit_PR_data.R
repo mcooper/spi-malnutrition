@@ -71,10 +71,12 @@ all <- all %>%
 
 all$related_hhhead <- all$relationship_hhhead == "Not Related"
 
+na_summary <- colSums(is.na(all))/nrow(all)
+
 sel <- all %>%
-  select(code, surveycode, country, interview_year, toilet, relationship_hhhead, age, birth_order, haz_dhs, head_age, head_sex, hhsize,
-         sex, wealth_index, diarrhea, fever, breast_duration, urban_rural,
-         parents_years_ed, gdp, farm_system, md, pop, spei24, mean_annual_precip, latitude, longitude) %>%
+  select(code, surveycode, country, interview_year, toilet, age, birth_order, haz_dhs, head_age, head_sex, hhsize,
+         sex, wealth_index, urban_rural,
+         mother_years_ed, gdp, farm_system, md, pop, spei24, mean_annual_precip, latitude, longitude) %>%
   na.omit
 
 ###################################################
@@ -84,8 +86,8 @@ sel <- all %>%
 library(mgcv)
 library(ggplot2)
 
-mod <- gam(haz_dhs ~ s(spei24, bs='cr') + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-             breast_duration + urban_rural + parents_years_ed + gdp + md + pop + mean_annual_precip + surveycode, data=sel)  
+mod <- gam(haz_dhs ~ s(spei24, bs='cr') + toilet + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + 
+             urban_rural + mother_years_ed + surveycode, data=sel)  
 
 moddata = data.frame(age = mean(sel$age, na.rm=T),
                      interview_year = 2007,
@@ -109,7 +111,7 @@ moddata = data.frame(age = mean(sel$age, na.rm=T),
                      birth_order=3,
                      breast_duration=16,
                      urban_rural="Rural",
-                     parents_years_ed=4)
+                     mother_years_ed=4)
 
 fits = predict(mod, moddata, type='response', se=T)
 predicts = data.frame(moddata, fits) %>% 
@@ -130,26 +132,18 @@ library(lme4)
 drought <- sel %>% 
   filter(spei24 < -0.45)
 
-dsum <- drought %>%
-  group_by(code) %>%
-  summarize(size=n()) %>%
-  filter(size > 4)
-
-drought <- drought %>%
-  filter(code %in% dsum$code)
-
-#plot(drought$longitude, drought$latitude, pch=16, cex=0.2)
+plot(drought$longitude, drought$latitude, pch=16, cex=0.2)
 
 flood <- sel %>%
   filter(spei24 > 1.25)
 
-#plot(flood$longitude, flood$latitude, pch=16, cex=0.2)
+plot(flood$longitude, flood$latitude, pch=16, cex=0.2)
 
-mod_d <- lmer(haz_dhs ~ spei24 + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-               breast_duration + urban_rural + parents_years_ed + gdp + md + pop + mean_annual_precip + (1 | code) + (spei24|code), data=drought)
+mod_d <- lmer(haz_dhs ~ spei24 + toilet + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + 
+               urban_rural + mother_years_ed + (1 | code) + (spei24|code), data=drought)
 
-mod_f <- lmer(haz_dhs ~ spei24  + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-               breast_duration + urban_rural + parents_years_ed + gdp + md + pop + mean_annual_precip + (1 | code) + (spei24|code), data=flood)
+mod_f <- lmer(haz_dhs ~ spei24  + toilet +  age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + 
+               urban_rural + mother_years_ed + (1 | code) + (spei24|code), data=flood)
 
 ############################################
 #Stan-tastic models
@@ -177,8 +171,8 @@ stanDat[["haz_dhs"]] <- drought$haz_dhs
 stanDat[["toiletFlushToilet"]] <- drought$toilet == "Flush Toilet"
 stanDat[["toiletOther"]] <- drought$toilet == "Other"
 stanDat[["toiletPitLatrine"]] <- drought$toilet == "Pit Latrine"
-stanDat[["relationship_hhheadNotRelated"]] <- drought$relationship_hhhead == "Not Related"
-stanDat[["relationship_hhheadRelative"]] <- drought$relationship_hhhead == "Relative"
+#stanDat[["relationship_hhheadNotRelated"]] <- drought$relationship_hhhead == "Not Related"
+#stanDat[["relationship_hhheadRelative"]] <- drought$relationship_hhhead == "Relative"
 stanDat[["age"]] <- drought$age
 stanDat[["birth_order"]] <- drought$birth_order
 stanDat[["head_age"]] <- drought$head_age
@@ -189,15 +183,15 @@ stanDat[["wealth_indexPoorer"]] <- drought$wealth_index == "Poorer"
 stanDat[["wealth_indexRicher"]] <- drought$wealth_index == "Richer"
 stanDat[["wealth_indexRichest"]] <- drought$wealth_index == "Richest"
 stanDat[["hhsize"]] <- drought$hhsize
-stanDat[["diarrhea"]] <- drought$diarrhea
-stanDat[["fever"]] <- drought$fever
-stanDat[["breast_duration"]] <- drought$breast_duration
+#stanDat[["diarrhea"]] <- drought$diarrhea
+#stanDat[["fever"]] <- drought$fever
+#stanDat[["breast_duration"]] <- drought$breast_duration
 stanDat[["urban_ruralRural"]] <- drought$urban_rural == "Rural"
-stanDat[["parents_years_ed"]] <- drought$parents_years_ed
-stanDat[["gdp"]] <- drought$gdp
-stanDat[["md"]] <- drought$md
-stanDat[["pop"]] <- drought$pop
-stanDat[["mean_annual_precip"]] <- drought$mean_annual_precip
+stanDat[["mother_years_ed"]] <- drought$mother_years_ed
+#stanDat[["gdp"]] <- drought$gdp
+#stanDat[["md"]] <- drought$md
+#stanDat[["pop"]] <- drought$pop
+#stanDat[["mean_annual_precip"]] <- drought$mean_annual_precip
 stanDat[["spei24"]] <- drought$spei24
 
 stanDat[["code_N"]] <- length(unique(drought$code))
@@ -212,23 +206,23 @@ data {
   int<lower=0, upper=1> toiletFlushToilet[N];
   int<lower=0, upper=1> toiletOther[N];
   int<lower=0, upper=1> toiletPitLatrine[N];
-  int<lower=0, upper=1> relationship_hhheadNotRelated[N];
-  int<lower=0, upper=1> relationship_hhheadRelative[N];
+  //int<lower=0, upper=1> relationship_hhheadNotRelated[N];
+  //int<lower=0, upper=1> relationship_hhheadRelative[N];
   int<lower=0, upper=59> age[N];
   int<lower=0, upper=18> birth_order[N];
-  int<lower=14, upper=97> head_age[N];
+  int<lower=12, upper=97> head_age[N];
   int<lower=0, upper=1> head_sexMale[N];
   int<lower=0, upper=1> sexMale[N];
   int<lower=0, upper=1> wealth_indexMiddle[N];
   int<lower=0, upper=1> wealth_indexPoorer[N];
   int<lower=0, upper=1> wealth_indexRicher[N];
   int<lower=0, upper=1> wealth_indexRichest[N];
-  int<lower=2, upper=53> hhsize[N];
-  int<lower=0, upper=1> diarrhea[N];
-  int<lower=0, upper=1> fever[N];
-  int<lower=0, upper=59> breast_duration[N];
+  int<lower=1, upper=74> hhsize[N];
+  //int<lower=0, upper=1> diarrhea[N];
+  //int<lower=0, upper=1> fever[N];
+  //int<lower=0, upper=59> breast_duration[N];
   int<lower=0, upper=1> urban_ruralRural[N];
-  int<lower=0, upper=23> parents_years_ed[N];
+  int<lower=0, upper=24> mother_years_ed[N];
   //real<lower=0, upper=10> gdp[N];
   //real<lower=0, upper=200> md[N];
   //real<lower=0, upper=40000> pop[N];
@@ -246,8 +240,8 @@ parameters {
   real toiletFlushToilet_beta;
   real toiletOther_beta;
   real toiletPitLatrine_beta;
-  real relationship_hhheadNotRelated_beta;
-  real relationship_hhheadRelative_beta;
+  //real relationship_hhheadNotRelated_beta;
+  //real relationship_hhheadRelative_beta;
   real age_beta;
   real birth_order_beta;
   real head_age_beta;
@@ -258,11 +252,11 @@ parameters {
   real wealth_indexRicher_beta;
   real wealth_indexRichest_beta;
   real hhsize_beta;
-  real diarrhea_beta;
-  real fever_beta;
-  real breast_duration_beta;
+  //real diarrhea_beta;
+  //real fever_beta;
+  //real breast_duration_beta;
   real urban_ruralRural_beta;
-  real parents_years_ed_beta;
+  real mother_years_ed_beta;
   //real gdp_beta;
   //real md_beta;
   //real pop_beta;
@@ -292,7 +286,7 @@ model {
 
   //likelihood
   for (i in 1:N){
-    mu = intercept + w[1,code[i]] + (spei24_beta + w[2, code[i]]) * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
+    mu = intercept + w[1,code[i]] + (spei24_beta + w[2, code[i]]) * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + urban_ruralRural_beta*urban_ruralRural[i] + mother_years_ed_beta*mother_years_ed[i];
 
     haz_dhs[i] ~ normal(mu, sigma_e);
   }
@@ -303,9 +297,9 @@ model {
 stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
                 iter = 2000, chains = 4, init=init)
 
-az_write_blob(stanDat, '2018-05-18-OnlyLargeSites-data')
-az_write_blob(drought_stan_code, '2018-05-18-OnlyLargeSites-code')
-az_write_blob(stanmod, '2018-05-18-OnlyLargeSites-results')
+az_write_blob(stanDat, '2018-05-17-PRvars-data')
+az_write_blob(drought_stan_code, '2018-05-17-PRvars-code')
+az_write_blob(stanmod, '2018-05-17-PRvars-results')
 
 
 sum <- summary(stanmod)$summary
