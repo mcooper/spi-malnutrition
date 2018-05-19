@@ -5,10 +5,13 @@ library(dplyr)
 library(maptools)
 library(foreach)
 
-data <- read.csv('D:/Documents and Settings/mcooper/GitHub/GitHub/spi-malnutrition/results/random_effect.csv')
+data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
+  select(latitude, longitude, code, interview_year) %>%
+  mutate(country = substr(code, 1, 2)) %>%
+  unique
 
 #Get GDP
-gdp <- read.csv('D:/Documents and Settings/mcooper/GitHub/GitHub/spi-malnutrition/data/country_gdp_all.csv')
+gdp <- read.csv('G://My Drive/DHS Processed/country_gdp.csv')
 
 data <- merge(data, gdp)
 
