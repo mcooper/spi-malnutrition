@@ -130,13 +130,13 @@ library(lme4)
 drought <- sel %>% 
   filter(spei24 < -0.45)
 
-dsum <- drought %>%
-  group_by(code) %>%
-  summarize(size=n()) %>%
-  filter(size > 4)
+# dsum <- drought %>%
+#   group_by(code) %>%
+#   summarize(size=n()) %>%
+#   filter(size > 4)
 
-drought <- drought %>%
-  filter(code %in% dsum$code)
+# drought <- drought %>%
+#   filter(code %in% dsum$code)
 
 #plot(drought$longitude, drought$latitude, pch=16, cex=0.2)
 
@@ -267,7 +267,6 @@ parameters {
   //real md_beta;
   //real pop_beta;
   //real mean_annual_precip_beta;
-  real spei24_beta;
 
   real<lower=0> sigma_e; //error sd
 
@@ -288,11 +287,11 @@ model {
 
   //priors
   L_code ~ lkj_corr_cholesky(0.5);  //read about this parameter here: http://www.psychstatistics.com/2014/12/27/d-lkj-priors/
-  to_vector(z_code) ~ normal(0,1);
+  to_vector(z_code) ~ normal(0, 100);
 
   //likelihood
   for (i in 1:N){
-    mu = intercept + w[1,code[i]] + (spei24_beta + w[2, code[i]]) * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
+    mu = intercept + w[1,code[i]] + w[2, code[i]] * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
 
     haz_dhs[i] ~ normal(mu, sigma_e);
   }
@@ -303,9 +302,9 @@ model {
 stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
                 iter = 2000, chains = 4, init=init)
 
-az_write_blob(stanDat, '2018-05-18-OnlyLargeSites-data')
-az_write_blob(drought_stan_code, '2018-05-18-OnlyLargeSites-code')
-az_write_blob(stanmod, '2018-05-18-OnlyLargeSites-results')
+az_write_blob(stanDat, '2018-05-19-ZcodeSd100-data')
+az_write_blob(drought_stan_code, '2018-05-19-ZcodeSd100-code')
+az_write_blob(stanmod, '2018-05-19-ZcodeSd100-results')
 
 
 sum <- summary(stanmod)$summary
