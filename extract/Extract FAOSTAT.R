@@ -91,18 +91,5 @@ for (field in c("Cereals", "RootsandTubers")){
 }
 
 
-#########TODO:
-
-#These countries dont have pop data:
-#-They arent necessary to have yearly (thank god) bc they are not in DHS.  But you will need to find estimates for 2016
-# in order to get yield per cap
-
-French Guiana
-Occupied Palestinian Territory
-China, Taiwan Province of
-Kuwait
-Eritrea
-
-
 
 
