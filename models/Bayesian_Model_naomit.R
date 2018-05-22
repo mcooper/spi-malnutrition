@@ -74,7 +74,7 @@ all$related_hhhead <- all$relationship_hhhead == "Not Related"
 sel <- all %>%
   select(code, surveycode, country, interview_year, toilet, relationship_hhhead, age, birth_order, haz_dhs, head_age, head_sex, hhsize,
          sex, wealth_index, diarrhea, fever, breast_duration, urban_rural,
-         parents_years_ed, gdp, farm_system, md, pop, spei24, mean_annual_precip, latitude, longitude) %>%
+         parents_years_ed, spei24, latitude, longitude) %>%
   na.omit
 
 ###################################################
@@ -85,24 +85,20 @@ library(mgcv)
 library(ggplot2)
 
 mod <- gam(haz_dhs ~ s(spei24, bs='cr') + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-             breast_duration + urban_rural + parents_years_ed + gdp + md + pop + mean_annual_precip + surveycode, data=sel)  
+             breast_duration + urban_rural + parents_years_ed + surveycode, data=sel)
 
 moddata = data.frame(age = mean(sel$age, na.rm=T),
                      interview_year = 2007,
                      head_sex = 'Male',
                      hhsize = mean(sel$hhsize, na.rm=T),
                      sex = "Male",
-                     gdp = mean(sel$gdp, na.rm=T),
-                     pop = mean(sel$pop, na.rm=T),
                      head_age = mean(sel$head_age, na.rm=T),
-                     md = mean(sel$md, na.rm=T),
                      wealth_index = "Middle", 
                      related_hhhead = TRUE,
                      diarrhea = mean(sel$diarrhea, na.rm=T),
                      fever = mean(sel$fever, na.rm=T),
                      country = 'SN', 
                      surveycode = 'SN-4-2',
-                     mean_annual_precip=mean(sel$mean_annual_precip, na.rm=T),
                      spei24=seq(-2.5, 2.5, 0.05),
                      toilet="Pit Latrine",
                      relationship_hhhead="Immediate Family",
@@ -146,10 +142,10 @@ flood <- sel %>%
 #plot(flood$longitude, flood$latitude, pch=16, cex=0.2)
 
 mod_d <- lmer(haz_dhs ~ spei24 + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-               breast_duration + urban_rural + parents_years_ed + gdp + md + pop + mean_annual_precip + (1 | code) + (spei24|code), data=drought)
+               breast_duration + urban_rural + parents_years_ed + (1 | code), data=drought)
 
 mod_f <- lmer(haz_dhs ~ spei24  + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-               breast_duration + urban_rural + parents_years_ed + gdp + md + pop + mean_annual_precip + (1 | code) + (spei24|code), data=flood)
+               breast_duration + urban_rural + parents_years_ed + (1 | code), data=flood)
 
 ############################################
 #Stan-tastic models
@@ -167,8 +163,9 @@ init <- as.list(init)
 init <- list(chain1=init, chain2=init, chain3=init, chain4=init)
 
 codemap <- drought %>% 
-  mutate(code_number=as.numeric(as.factor(as.character(code)))) %>%
-  group_by(code, code_number, latitude, longitude, urban_rural) %>% 
+  mutate(code_number=as.numeric(as.factor(as.character(code))),
+         surveycode_number=as.numeric(as.factor(as.character(surveycode)))) %>%
+  group_by(surveycode, surveycode_number, code, code_number, latitude, longitude, urban_rural) %>% 
   summarize(size=n())
 
 stanDat <- list()
@@ -194,12 +191,10 @@ stanDat[["fever"]] <- drought$fever
 stanDat[["breast_duration"]] <- drought$breast_duration
 stanDat[["urban_ruralRural"]] <- drought$urban_rural == "Rural"
 stanDat[["parents_years_ed"]] <- drought$parents_years_ed
-stanDat[["gdp"]] <- drought$gdp
-stanDat[["md"]] <- drought$md
-stanDat[["pop"]] <- drought$pop
-stanDat[["mean_annual_precip"]] <- drought$mean_annual_precip
 stanDat[["spei24"]] <- drought$spei24
 
+stanDat[["surveycode"]] <- length(unique(drought$surveycode))
+stanDat[["surveycode_N"]] <- as.numeric(as.factor(as.character(drought$surveycode)))
 stanDat[["code_N"]] <- length(unique(drought$code))
 stanDat[["code"]] <- as.numeric(as.factor(as.character(drought$code)))
 
@@ -263,35 +258,30 @@ parameters {
   real breast_duration_beta;
   real urban_ruralRural_beta;
   real parents_years_ed_beta;
-  //real gdp_beta;
-  //real md_beta;
-  //real pop_beta;
-  //real mean_annual_precip_beta;
-
   real<lower=0> sigma_e; //error sd
 
-  vector<lower=0>[2] sigma_code; //code sd
-  cholesky_factor_corr[2] L_code;
-  matrix[2, code_N] z_code;
-}
+  vector<lower=0>[code_N] re_spei24_beta;
+  vector[code_N] re_intercept;
 
-transformed parameters {
-  matrix[2, code_N] w;
+  real<lower=0> re_intercept_sigma;
+  real<lower=0> re_spei24_df;
 
-  w = diag_pre_multiply(sigma_code, L_code) * z_code; //site random effects
 }
 
 
 model {
   real mu;
 
-  //priors
-  L_code ~ lkj_corr_cholesky(0.5);  //read about this parameter here: http://www.psychstatistics.com/2014/12/27/d-lkj-priors/
-  to_vector(z_code) ~ normal(0, 100);
+  sigma_e ~ cauchy(0, 2);
+  re_intercept_sigma ~ cauchy(0, 1);
+  re_spei24_df ~ cauchy(0, 1);
+  
+  re_intercept ~ normal(0, re_intercept_sigma);
+  re_spei24_beta ~ chi_square(re_spei24_df);
 
-  //likelihood
+
   for (i in 1:N){
-    mu = intercept + w[1,code[i]] + w[2, code[i]] * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
+    mu = intercept + re_intercept[code[i]] + re_spei24_beta[code[i]] * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
 
     haz_dhs[i] ~ normal(mu, sigma_e);
   }
@@ -302,9 +292,9 @@ model {
 stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
                 iter = 2000, chains = 4, init=init)
 
-az_write_blob(stanDat, '2018-05-19-ZcodeSd100-data')
-az_write_blob(drought_stan_code, '2018-05-19-ZcodeSd100-code')
-az_write_blob(stanmod, '2018-05-19-ZcodeSd100-results')
+az_write_blob(stanDat, '2018-05-21-ChiSqRE-data')
+az_write_blob(drought_stan_code, '2018-05-21-ChiSqRE-code')
+az_write_blob(stanmod, '2018-05-21-ChiSqRE-results')
 
 
 sum <- summary(stanmod)$summary
