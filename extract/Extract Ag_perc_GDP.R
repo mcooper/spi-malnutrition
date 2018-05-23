@@ -34,7 +34,7 @@ data$iso3c <- countrycode(data$Country.or.Area, 'country.name', 'iso3c')
 all <- merge(data, ag, all.x=T, all.y=F) %>%
   select(interview_year, latitude, longitude, code, ag_pct_gdp, ag_pct_gdp_interpolated)
 
-write.csv(all, '../../DHS Processed/WorldGovernanceIndicators.csv', row.names=F)
+write.csv(all, '../../DHS Processed/Ag_Pct_GDP.csv', row.names=F)
 
 #################
 #Now make raster

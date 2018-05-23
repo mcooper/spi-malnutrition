@@ -49,33 +49,55 @@ tmin_vrt_file <- extension(rasterTmpFile(), 'ivrt')
 tmin_files <- list.files(tmin_in_folder, pattern='^tmin.*tif$')
 gdalbuildvrt(paste0(tmin_in_folder, tmin_files), tmin_vrt_file, separate=TRUE, verbose=T, overwrite=TRUE)
 
-
-rollfun <- function(nums){
-  if (length(nums) != 17){
-    return(NA)
-  }
-  return(sum(nums[1:9]))
+extract_neighbors <- function(vrt, x, y){
+  
+  m <- gdallocationinfo(vrt, x, y, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  u <- gdallocationinfo(vrt, x, y + 0.05, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  b <- gdallocationinfo(vrt, x, y - 0.05, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  l <- gdallocationinfo(vrt, x - 0.05, y, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  r <- gdallocationinfo(vrt, x + 0.05, y, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  ul <- gdallocationinfo(vrt, x - 0.05, y + 0.05, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  ur <- gdallocationinfo(vrt, x + 0.05, y + 0.05, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  bl <- gdallocationinfo(vrt, x - 0.05, y - 0.05, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  br <- gdallocationinfo(vrt, x + 0.05, y - 0.05, wgs84=TRUE, valonly=TRUE) %>%
+    as.numeric
+  
+  return(rowMeans(cbind(m, u, b, l, r, ul, ur, bl, br), na.rm=T))
+  
 }
 
 cl <- makeCluster(7, outfile = '')
 registerDoParallel(cl)
 
 df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridate', 'gdalUtils', 'SPEI', 'dplyr', 'zoo')) %dopar% {
-
-  precip <- gdallocationinfo(precip_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
-    as.numeric
   
-  tmax <- gdallocationinfo(tmax_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
-    as.numeric
+  precip <- extract_neighbors(precip_vrt_file, rll$x[n], rll$y[n])
   
-  tmin <- gdallocationinfo(tmin_vrt_file, rll$x[n], rll$y[n], wgs84=TRUE, valonly=TRUE) %>%
-    as.numeric
-    
+  tmax <- extract_neighbors(tmax_vrt_file, rll$x[n], rll$y[n])
+  
+  tmin <- extract_neighbors(tmin_vrt_file, rll$x[n], rll$y[n])
+  
   PET <- hargreaves(tmin-273.15, tmax-273.15, lat=rll$y[n], Pre=precip) %>%
     as.vector
   
   s <- precip - PET
-    
+  
   interview <- data.frame(tmpcode=rll$layer[n],
                           interview_month=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
                           interview_year=year(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
@@ -86,12 +108,15 @@ df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridat
                           spi6=as.numeric(spi(precip, 6, na.rm=TRUE)$fitted),
                           spi12=as.numeric(spi(precip, 12, na.rm=TRUE)$fitted),
                           spi24=as.numeric(spi(precip, 24, na.rm=TRUE)$fitted),
-                          spi36=as.numeric(spi(precip, 36, na.rm=TRUE)$fitted))
-
+                          spi36=as.numeric(spi(precip, 36, na.rm=TRUE)$fitted),
+                          precip_10yr_mean=rollapply(precip, width=12*10, FUN=mean, partial=TRUE, align='right'),
+                          tmin_10yr_mean=rollapply(tmax, width=12*10, FUN=mean, partial=TRUE, align='right'),
+                          tmax_10yr_mean=rollapply(tmin, width=12*10, FUN=mean, partial=TRUE, align='right'))
+  
   birthdate <- data.frame(tmpcode=rll$layer[n],
                           calc_birthmonth=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
                           calc_birthyear=year(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-                          birthday_9monthtotal=rollapply(precip, width=17, FUN=rollfun, partial=TRUE),
+                          birthday_9monthtotal=rollapply(precip, width=9, FUN=sum, partial=TRUE, align='right'),
                           birthday_spei9=as.numeric(spei(s, 9, na.rm=TRUE)$fitted),
                           birthday_spi9=as.numeric(spi(precip, 9, na.rm=TRUE)$fitted))
   
