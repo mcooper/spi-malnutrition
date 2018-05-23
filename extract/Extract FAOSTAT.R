@@ -20,9 +20,19 @@ d <- read.csv('FAOSTAT_data_5-20-2018.csv') %>%
   mutate(Country.Code=countrycode(Area, origin='country.name', destination='iso3c')) %>%
   filter(!is.na(Country.Code))
 
+eg <- expand.grid(seq(1988, 2016), unique(d$Country.Code))
+names(eg) <- c("Year", "Country.Code")
+
+d <- merge(d, eg, all=T)
+
+d <- d %>%
+  arrange(Year) %>%
+  group_by(Country.Code) %>%
+  fill(`Cereals,Total`, `Roots and Tubers,Total`)
+
 #Population data from world bank
 e <- read.csv('../Population/API_SP.POP.TOTL_DS2_en_csv_v2_9908626.csv', skip = 4) %>%
-  select(-Country.Code, -Indicator.Name, -Indicator.Code, -X) %>%
+  dplyr::select(-Country.Code, -Indicator.Name, -Indicator.Code, -X) %>%
   gather(Year, population, -Country.Name) %>%
   mutate(Year=as.numeric(gsub('X', '', Year))) %>%
   filter(Year >= 1988) %>%
@@ -37,7 +47,7 @@ comb <- comb %>%
          interview_year=Year)
          
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
-  select(latitude, longitude, code, interview_year) %>%
+  dplyr::select(latitude, longitude, code, interview_year) %>%
   mutate(country = substr(code, 1, 2)) %>%
   unique
 
@@ -48,7 +58,7 @@ data <- merge(data, dhscountries, all.x=T, all.y=F)
 all <- merge(data, comb, all.x=T, all.y=F)
 
 all <- all %>%
-  select(latitude, longitude, country, code, interview_year, Cereals,  RootsandTubers)
+  dplyr::select(latitude, longitude, country, code, interview_year, Cereals,  RootsandTubers)
 
 write.csv(all, '../../DHS Processed/FAOSTAT_TonnesPerCap.csv', row.names=F)
 
@@ -62,7 +72,7 @@ library(raster)
 
 comb <- comb %>%
   filter(Year == 2016) %>%
-  select(SOVEREIGNT_ISO_3C=Country.Code, Area, Cereals, `Cereals,Total`, `Roots and Tubers,Total`,
+  dplyr::select(SOVEREIGNT_ISO_3C=Country.Code, Area, Cereals, `Cereals,Total`, `Roots and Tubers,Total`,
          RootsandTubers, population)
 
 #Deal with issues with Taiwan and China
@@ -82,13 +92,15 @@ sp$SOVEREIGNT_ISO_3C <- countrycode(sp$SOVEREIGNT, origin='country.name', destin
 
 sp <- sp::merge(sp, comb)
 
+sp$Cereals[is.na(sp$Cereals)] <- 0
+sp$RootsandTubers[is.na(sp$RootsandTubers)] <- 0
 
 #Need to decide on scale and make a template raster
-r <- raster('templateRaster.tif')
+r <- raster('../Irrigation/gmia_v5_aei_pct.asc')
 
-for (field in c("Cereals", "RootsandTubers")){
-  rasterize(sp, r, field=field, fun='mean')
-}
+rasterize(sp, r, field="Cereals", fun='mean', na.rm=TRUE, filename='../Final Rasters/Cereals.tif', driver='GTiff')
+rasterize(sp, r, field="RootsandTubers", fun='mean', na.rm=TRUE, filename='../Final Rasters/RootsandTubers.tif', driver='GTiff')
+
 
 
 

@@ -55,14 +55,17 @@ sp <- sp::merge(sp, ag)
 sp$ag_pct_gdp[sp$ADMIN == 'Comoros'] <- 49.5 #CIA
 sp$ag_pct_gdp[sp$ADMIN == 'Western Sahara'] <- sp$ag_pct_gdp[sp$ADMIN == 'Morocco']
 sp$ag_pct_gdp[sp$ADMIN == 'Taiwan'] <- 1.8
+sp$ag_pct_gdp[sp$ADMIN == 'Kosovo'] <- 12.9
+sp$ag_pct_gdp[sp$ADMIN == 'Siachen Glacier'] <- sp$ag_pct_gdp[sp$ADMIN == 'Pakistan']
+sp$ag_pct_gdp[sp$ADMIN == 'Liechtenstein'] <- 7
+sp$ag_pct_gdp[sp$ADMIN == 'Nauru'] <- 6.1
+sp$ag_pct_gdp[sp$ADMIN == 'North Korea'] <- 25.4
+
 
 #Need to decide on scale and make a template raster
-r <- raster('templateRaster.tif')
+r <- raster('../Irrigation/gmia_v5_aei_pct.asc')
 
-rasterize(sp, r, field="ag_pct_gdp", fun='mean')
-
-
-
+rasterize(sp, r, field="ag_pct_gdp", fun='mean', na.rm=TRUE, filename='../Final Rasters/ag_pct_gdp.tif', driver='GTiff')
 
 
 

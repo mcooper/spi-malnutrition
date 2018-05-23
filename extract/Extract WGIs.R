@@ -14,7 +14,7 @@ wgi <- read.csv('WGIData.csv') %>%
   gather(Year, Score, -ï..Country.Name, -Indicator.Code) %>%
   spread(Indicator.Code, Score) %>%
   mutate(Year = as.numeric(gsub('X', '', Year))) %>%
-  select(ï..Country.Name, interview_year=Year, goverment_effectiveness=GE.EST,
+  select(ï..Country.Name, interview_year=Year, government_effectiveness=GE.EST,
          stability_violence=PV.EST)
 
 temp <- expand.grid(unique(wgi$ï..Country.Name), seq(1988, 2016))
@@ -25,7 +25,7 @@ wgi <- merge(wgi, temp, all=T) %>%
          wgi_impute = is.na(stability_violence)) %>%
   arrange(desc(interview_year)) %>%
   group_by(Country.Code) %>%
-  fill(goverment_effectiveness, stability_violence)
+  fill(government_effectiveness, stability_violence)
 
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
   select(latitude, longitude, code, interview_year) %>%
@@ -36,7 +36,7 @@ data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
 data$Country.Code <- countrycode(data$Country.or.Area, 'country.name', 'iso3c')
 
 all <- merge(data, wgi, all.x=T, all.y=F) %>%
-  select(interview_year, latitude, longitude, code, goverment_effectiveness, stability_violence, wgi_impute)
+  select(interview_year, latitude, longitude, code, government_effectiveness, stability_violence, wgi_impute)
 
 write.csv(all, '../../DHS Processed/WorldGovernanceIndicators.csv', row.names=F)
 
@@ -58,12 +58,19 @@ wgi <- wgi %>%
 
 sp <- sp::merge(sp, wgi)
 
-sp$goverment_effectiveness[which(sp$SOVEREIGNT_ISO_3C == 'ESH')] <- sp$goverment_effectiveness[which(sp$SOVEREIGNT_ISO_3C == 'MAR')]
+sp$government_effectiveness[which(sp$SOVEREIGNT_ISO_3C == 'ESH')] <- sp$government_effectiveness[which(sp$SOVEREIGNT_ISO_3C == 'MAR')]
 sp$stability_violence[which(sp$SOVEREIGNT_ISO_3C == 'ESH')] <- sp$stability_violence[which(sp$SOVEREIGNT_ISO_3C == 'MAR')]
 
-#Need to decide on scale and make a template raster
-r <- raster('templateRaster.tif')
+sp$government_effectiveness[which(sp$ADMIN == 'Kosovo')] <- sp$government_effectiveness[which(sp$SOVEREIGNT_ISO_3C == 'SRB')]
+sp$stability_violence[which(sp$ADMIN == 'Kosovo')] <- sp$stability_violence[which(sp$SOVEREIGNT_ISO_3C == 'SRB')]
 
-rasterize(sp, r, field="government_effectiveness", fun='mean')
-rasterize(sp, r, field="stability_violence", fun='mean')
+sp$government_effectiveness[which(sp$ADMIN == 'Siachen Glacier')] <- sp$government_effectiveness[which(sp$SOVEREIGNT_ISO_3C == 'PAK')]
+sp$stability_violence[which(sp$ADMIN == 'Siachen Glacier')] <- sp$stability_violence[which(sp$SOVEREIGNT_ISO_3C == 'PAK')]
+
+
+#Need to decide on scale and make a template raster
+r <- raster('../Irrigation/gmia_v5_aei_pct.asc')
+
+rasterize(sp, r, field="government_effectiveness", fun='mean', na.rm=TRUE, filename='../Final Rasters/government_effectiveness.tif', driver='GTiff')
+rasterize(sp, r, field="stability_violence", fun='mean', na.rm=TRUE, filename='../Final Rasters/stability_violence.tif', driver='GTiff')
 
