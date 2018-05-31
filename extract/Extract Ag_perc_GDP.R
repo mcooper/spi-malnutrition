@@ -4,7 +4,7 @@ library(tidyverse)
 library(countrycode)
 
 ag <- read.csv('API_NV.AGR.TOTL.ZS_DS2_en_csv_v2_9911168.csv', skip = 4) %>%
-  select(-Country.Code, -Indicator.Name, -Indicator.Code) %>%
+  dplyr::select(-Country.Code, -Indicator.Name, -Indicator.Code) %>%
   gather(interview_year, ag_pct_gdp, -Country.Name) %>%
   mutate(interview_year = as.numeric(gsub('X', '', interview_year)),
          ag_pct_gdp_interpolated = is.na(ag_pct_gdp),
@@ -22,9 +22,10 @@ ag <- read.csv('API_NV.AGR.TOTL.ZS_DS2_en_csv_v2_9911168.csv', skip = 4) %>%
 ag$ag_pct_gdp[ag$Country.Name == 'Haiti'] <- 21.9
 ag$ag_pct_gdp[ag$Country.Name == 'Korea, Dem. Peopleâ???Ts Rep.'] <- 25.4
 ag$ag_pct_gdp[ag$Country.Name == 'South Sudan'] <- 39 #Estimate for Sudan? IDK what else to use
+ag$ag_pct_gdp[ag$Country.Name == 'Comoros'] <- 49.5
 
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
-  select(latitude, longitude, code, interview_year) %>%
+  dplyr::select(latitude, longitude, code, interview_year) %>%
   mutate(country = substr(code, 1, 2)) %>%
   unique %>%
   merge(read.csv('../Global Codes and Shapefile/DHS-WB-UN Country Codes.csv'), all.x=T, all.y=F)
@@ -32,7 +33,7 @@ data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
 data$iso3c <- countrycode(data$Country.or.Area, 'country.name', 'iso3c')
 
 all <- merge(data, ag, all.x=T, all.y=F) %>%
-  select(interview_year, latitude, longitude, code, ag_pct_gdp, ag_pct_gdp_interpolated)
+  dplyr::select(interview_year, latitude, longitude, code, ag_pct_gdp, ag_pct_gdp_interpolated)
 
 write.csv(all, '../../DHS Processed/Ag_Pct_GDP.csv', row.names=F)
 
@@ -63,9 +64,9 @@ sp$ag_pct_gdp[sp$ADMIN == 'North Korea'] <- 25.4
 
 
 #Need to decide on scale and make a template raster
-r <- raster('../Irrigation/gmia_v5_aei_pct.asc')
+r <- raster('../Final Rasters/irrigation.tif')
 
-rasterize(sp, r, field="ag_pct_gdp", fun='mean', na.rm=TRUE, filename='../Final Rasters/ag_pct_gdp.tif', driver='GTiff')
+rasterize(sp, r, field="ag_pct_gdp", fun='mean', na.rm=TRUE, filename='../Final Rasters/ag_pct_gdp.tif', driver='GTiff', overwrite=T)
 
 
 

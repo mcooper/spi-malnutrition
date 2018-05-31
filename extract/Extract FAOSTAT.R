@@ -15,7 +15,7 @@ library(countrycode)
 # Tonnes = 1,000 kg
 d <- read.csv('FAOSTAT_data_5-20-2018.csv') %>%
   filter(Year >= 1988) %>%
-  select(Area, Item, Year, Value) %>%
+  dplyr::select(Area, Item, Year, Value) %>%
   spread(Item, Value) %>%
   mutate(Country.Code=countrycode(Area, origin='country.name', destination='iso3c')) %>%
   filter(!is.na(Country.Code))
@@ -96,10 +96,10 @@ sp$Cereals[is.na(sp$Cereals)] <- 0
 sp$RootsandTubers[is.na(sp$RootsandTubers)] <- 0
 
 #Need to decide on scale and make a template raster
-r <- raster('../Irrigation/gmia_v5_aei_pct.asc')
+r <- raster('../Final Rasters/irrigation.tif')
 
-rasterize(sp, r, field="Cereals", fun='mean', na.rm=TRUE, filename='../Final Rasters/Cereals.tif', driver='GTiff')
-rasterize(sp, r, field="RootsandTubers", fun='mean', na.rm=TRUE, filename='../Final Rasters/RootsandTubers.tif', driver='GTiff')
+rasterize(sp, r, field="Cereals", fun='mean', na.rm=TRUE, filename='../Final Rasters/Cereals.tif', driver='GTiff', overwrite=T)
+rasterize(sp, r, field="RootsandTubers", fun='mean', na.rm=TRUE, filename='../Final Rasters/RootsandTubers.tif', driver='GTiff', overwrite=T)
 
 
 

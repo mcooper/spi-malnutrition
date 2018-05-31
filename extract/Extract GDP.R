@@ -73,9 +73,9 @@ sp@data$X2020[sp@data$ADMIN == "Andorra"] <- sp@data$X2020[sp@data$ADMIN == "Fra
 names(sp@data)[names(sp@data) == 'X2020'] <- 'gdp2020'
 
 #Need to decide on scale and make a template raster
-r <- raster('../Irrigation/gmia_v5_aei_pct.asc')
+r <- raster('../Final Rasters/irrigation.tif')
 
-rasterize(sp, r, field="gdp2020", fun='mean', na.rm=TRUE, filename='../Final Rasters/gdp2020.tif', driver='GTiff')
+rasterize(sp, r, field="gdp2020", fun='mean', na.rm=TRUE, filename='../Final Rasters/gdp2020.tif', driver='GTiff', overwrite=TRUE)
 
 
 

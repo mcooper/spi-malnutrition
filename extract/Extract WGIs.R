@@ -9,12 +9,12 @@ library(countrycode)
 #Government Effectiveness: Estimate
 
 wgi <- read.csv('WGIData.csv') %>%
-  select(-Country.Code, -Indicator.Name) %>%
+  dplyr::select(-Country.Code, -Indicator.Name) %>%
   filter(Indicator.Code %in% c('GE.EST', 'PV.EST')) %>%
   gather(Year, Score, -ï..Country.Name, -Indicator.Code) %>%
   spread(Indicator.Code, Score) %>%
   mutate(Year = as.numeric(gsub('X', '', Year))) %>%
-  select(ï..Country.Name, interview_year=Year, government_effectiveness=GE.EST,
+  dplyr::select(ï..Country.Name, interview_year=Year, government_effectiveness=GE.EST,
          stability_violence=PV.EST)
 
 temp <- expand.grid(unique(wgi$ï..Country.Name), seq(1988, 2016))
@@ -28,7 +28,7 @@ wgi <- merge(wgi, temp, all=T) %>%
   fill(government_effectiveness, stability_violence)
 
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
-  select(latitude, longitude, code, interview_year) %>%
+  dplyr::select(latitude, longitude, code, interview_year) %>%
   mutate(country = substr(code, 1, 2)) %>%
   unique %>%
   merge(read.csv('../Global Codes and Shapefile/DHS-WB-UN Country Codes.csv'), all.x=T, all.y=F)
@@ -36,7 +36,7 @@ data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
 data$Country.Code <- countrycode(data$Country.or.Area, 'country.name', 'iso3c')
 
 all <- merge(data, wgi, all.x=T, all.y=F) %>%
-  select(interview_year, latitude, longitude, code, government_effectiveness, stability_violence, wgi_impute)
+  dplyr::select(interview_year, latitude, longitude, code, government_effectiveness, stability_violence, wgi_impute)
 
 write.csv(all, '../../DHS Processed/WorldGovernanceIndicators.csv', row.names=F)
 
@@ -69,8 +69,8 @@ sp$stability_violence[which(sp$ADMIN == 'Siachen Glacier')] <- sp$stability_viol
 
 
 #Need to decide on scale and make a template raster
-r <- raster('../Irrigation/gmia_v5_aei_pct.asc')
+r <- raster('../Final Rasters/irrigation.tif')
 
-rasterize(sp, r, field="government_effectiveness", fun='mean', na.rm=TRUE, filename='../Final Rasters/government_effectiveness.tif', driver='GTiff')
-rasterize(sp, r, field="stability_violence", fun='mean', na.rm=TRUE, filename='../Final Rasters/stability_violence.tif', driver='GTiff')
+rasterize(sp, r, field="government_effectiveness", fun='mean', na.rm=TRUE, filename='../Final Rasters/government_effectiveness.tif', driver='GTiff', overwrite=TRUE)
+rasterize(sp, r, field="stability_violence", fun='mean', na.rm=TRUE, filename='../Final Rasters/stability_violence.tif', driver='GTiff', overwrite=TRUE)
 
