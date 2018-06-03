@@ -51,8 +51,9 @@ library(randomForest)
 
 mod <- randomForest(latitude ~ forest + bare + ndvi + ag_pct_gdp + irrigation + market_dist + gdp + Cereals + RootsandTubers + 
                       government_effectiveness + stability_violence + precip_10yr_mean + tmin_10yr_mean + tmax_10yr_mean + population,
-                    data = alldf)
+                    data = na.omit(alldf))
 
+pred <- predict(s, mod)
 
 
 
