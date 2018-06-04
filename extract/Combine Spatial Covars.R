@@ -42,21 +42,17 @@ names(s) <- c("ag_pct_gdp", "bare", "Cereals", "precip_10yr_mean", "forest", "gd
               "irrigation", "market_dist", "ndvi", "population", "RootsandTubers", "stability_violence", "tmax_10yr_mean",
               "tmin_10yr_mean")
 
+#Combine Cerealas and Roots and Tubers
+s[["carbs"]] <- s[["Cereals"]] + s[["RootsandTubers"]]
+s <- dropLayer(s, which(names(s) == "RootsandTubers"))
+s <- dropLayer(s, which(names(s) == "Cereals"))
+
+alldf$crop_prod <- alldf$RootsandTubers + alldf$Cereals
+alldf$RootsandTubers <- NULL
+alldf$Cereals <- NULL
+
 setwd('../../DHS Processed/')
 
 write.csv(alldf, 'SpatialCovars.csv', row.names=F)
-writeRaster(s, 'SpatialCovars.tif', format='GTiff')
-
-library(randomForest)
-
-mod <- randomForest(latitude ~ forest + bare + ndvi + ag_pct_gdp + irrigation + market_dist + gdp + Cereals + RootsandTubers + 
-                      government_effectiveness + stability_violence + precip_10yr_mean + tmin_10yr_mean + tmax_10yr_mean + population,
-                    data = na.omit(alldf))
-
-pred <- predict(s, mod)
-
-
-
-
-
+writeRaster(s, 'SpatialCovars.tif', format='GTiff', overwrite=T)
 
