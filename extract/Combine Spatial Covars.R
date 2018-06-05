@@ -43,7 +43,7 @@ names(s) <- c("ag_pct_gdp", "bare", "Cereals", "precip_10yr_mean", "forest", "gd
               "tmin_10yr_mean")
 
 #Combine Cerealas and Roots and Tubers
-s[["carbs"]] <- s[["Cereals"]] + s[["RootsandTubers"]]
+s[["crop_prod"]] <- s[["Cereals"]] + s[["RootsandTubers"]]
 s <- dropLayer(s, which(names(s) == "RootsandTubers"))
 s <- dropLayer(s, which(names(s) == "Cereals"))
 
@@ -71,5 +71,6 @@ alldf <- alldf %>%
 
 setwd('../../DHS Processed/')
 
-save(alldf, s, file="SpatialCovars.Rdata")
+write.csv(alldf, 'SpatialCovars.csv', row.names=F)
+writeRaster(s, 'SpatialCovars.grd', format="raster")
 
