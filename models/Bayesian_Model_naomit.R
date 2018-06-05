@@ -99,7 +99,7 @@ ggplot(aes(x=spei24,y=fit), data=predicts) +
 library(lme4)
 
 drought <- sel %>% 
-  filter(spei24 < -0.45)
+  filter(spei24 < 1)
 
 # dsum <- drought %>%
 #   group_by(code) %>%
@@ -266,27 +266,55 @@ haz_dhs[i] ~ normal(mu, sigma_e);
 }
 "
 
-
 stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
                 iter = 2000, chains = 4, init=init)
 
+################################
+#Write Results
+#####################################
 time <- substr(Sys.time(), 1, 10)
 
-modtitle <- 'RE_mean_chiSq'
+modtitle <- 'RE_mean_chiSq_SPEIless1'
 
 az_write_blob(list(stanDat, drought_stan_code, stanmod), paste0(time, modtitle))
 
+###############################
+#Extract Random Effects
+###############################
 sum <- summary(stanmod)$summary
 
 spei24 <- sum[grepl('re_spei24_beta', row.names(sum), fixed=T), 'mean']
+
 intercept <- sum[grepl('re_intercept[', row.names(sum), fixed=T), 'mean']
 
-sel <- sum[ , 'mean']
+##Calculate Residuals and RSME
+# sel <- sum[ , 'mean']
+# re <- codemap[stanDat[['code']], ]
+# pred <- sel['intercept'] + re$w1 + re$w2*stanDat[['spei24']] + sel['toiletFlushToilet_beta'] * stanDat[['toiletFlushToilet']] + sel['toiletOther_beta'] * stanDat[['toiletOther']] + sel['toiletPitLatrine_beta'] * stanDat[['toiletPitLatrine']] + sel['relationship_hhheadNotRelated_beta'] * stanDat[['relationship_hhheadNotRelated']] + sel['relationship_hhheadRelative_beta'] * stanDat[['relationship_hhheadRelative']] + sel['age_beta'] * stanDat[['age']] + sel['birth_order_beta'] * stanDat[['birth_order']] + sel['head_age_beta'] * stanDat[['head_age']] + sel['head_sexMale_beta'] * stanDat[['head_sexMale']] + sel['sexMale_beta'] * stanDat[['sexMale']] + sel['wealth_indexMiddle_beta'] * stanDat[['wealth_indexMiddle']] + sel['wealth_indexPoorer_beta'] * stanDat[['wealth_indexPoorer']] + sel['wealth_indexRicher_beta'] * stanDat[['wealth_indexRicher']] + sel['wealth_indexRichest_beta'] * stanDat[['wealth_indexRichest']] + sel['hhsize_beta'] * stanDat[['hhsize']] + sel['diarrhea_beta'] * stanDat[['diarrhea']] + sel['fever_beta'] * stanDat[['fever']] + sel['breast_duration_beta'] * stanDat[['breast_duration']] + sel['urban_ruralRural_beta'] * stanDat[['urban_ruralRural']] + sel['parents_years_ed_beta'] * stanDat[['parents_years_ed']] + sel['gdp_beta'] * stanDat[['gdp']] + sel['md_beta'] * stanDat[['md']] + sel['pop_beta'] * stanDat[['pop']] + sel['mean_annual_precip_beta'] * stanDat[['mean_annual_precip']] + sel['spei24_beta'] * stanDat[['spei24']]
+# resid <- stanDat[['haz_dhs']] - pred
+# sqrt(mean(resid^2))
 
-re <- codemap[stanDat[['code']], ]
+##############################
+#Bring in Spatial Covars
+##########################
 
-pred <- sel['intercept'] + re$w1 + re$w2*stanDat[['spei24']] + sel['toiletFlushToilet_beta'] * stanDat[['toiletFlushToilet']] + sel['toiletOther_beta'] * stanDat[['toiletOther']] + sel['toiletPitLatrine_beta'] * stanDat[['toiletPitLatrine']] + sel['relationship_hhheadNotRelated_beta'] * stanDat[['relationship_hhheadNotRelated']] + sel['relationship_hhheadRelative_beta'] * stanDat[['relationship_hhheadRelative']] + sel['age_beta'] * stanDat[['age']] + sel['birth_order_beta'] * stanDat[['birth_order']] + sel['head_age_beta'] * stanDat[['head_age']] + sel['head_sexMale_beta'] * stanDat[['head_sexMale']] + sel['sexMale_beta'] * stanDat[['sexMale']] + sel['wealth_indexMiddle_beta'] * stanDat[['wealth_indexMiddle']] + sel['wealth_indexPoorer_beta'] * stanDat[['wealth_indexPoorer']] + sel['wealth_indexRicher_beta'] * stanDat[['wealth_indexRicher']] + sel['wealth_indexRichest_beta'] * stanDat[['wealth_indexRichest']] + sel['hhsize_beta'] * stanDat[['hhsize']] + sel['diarrhea_beta'] * stanDat[['diarrhea']] + sel['fever_beta'] * stanDat[['fever']] + sel['breast_duration_beta'] * stanDat[['breast_duration']] + sel['urban_ruralRural_beta'] * stanDat[['urban_ruralRural']] + sel['parents_years_ed_beta'] * stanDat[['parents_years_ed']] + sel['gdp_beta'] * stanDat[['gdp']] + sel['md_beta'] * stanDat[['md']] + sel['pop_beta'] * stanDat[['pop']] + sel['mean_annual_precip_beta'] * stanDat[['mean_annual_precip']] + sel['spei24_beta'] * stanDat[['spei24']]
+library(raster)
+library(randomForest)
 
-resid <- stanDat[['haz_dhs']] - pred
+#Load objects alldf and s, which have the spatial covariate data
+#Looking like were doing this from local bc the raster package cant seem to predict with in-memory rasters from blobs
+s <- stack('SpatialCovars.grd')
+alldf <- read.csv('SpatialCovars.csv')
 
-sqrt(mean(resid^2))
+codemap$random_effect <- spei24
+codemap <- merge(codemap, alldf, all.x=T, all.y=F)
+
+rfmod <- randomForest(spei24 ~ ag_pct_gdp + bare + precip_10yr_mean + forest + gdp + government_effectiveness + irrigation + 
+                        population + stability_violence + tmax_10yr_mean + tmin_10yr_mean + crop_prod, data=codemap)
+
+out <- predict(s, rfmod, progress='text')
+
+plot(out)
+
+
+
