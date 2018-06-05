@@ -51,8 +51,25 @@ alldf$crop_prod <- alldf$RootsandTubers + alldf$Cereals
 alldf$RootsandTubers <- NULL
 alldf$Cereals <- NULL
 
+#Simplify to get one metric per code
+alldf <- alldf %>%
+  group_by(code) %>%
+  summarize(ag_pct_gdp=mean(ag_pct_gdp),
+            bare=mean(bare),
+            precip_10yr_mean=mean(precip_10yr_mean),
+            forest=mean(forest),
+            gdp=mean(gdp),
+            government_effectiveness=mean(government_effectiveness),
+            irrigation=mean(irrigation),
+            market_dist=mean(market_dist),
+            ndvi=mean(ndvi),
+            population=mean(population),
+            stability_violence=mean(stability_violence),
+            tmax_10yr_mean=mean(tmax_10yr_mean),
+            tmin_10yr_mean=mean(tmin_10yr_mean),
+            crop_prod=mean(crop_prod))
+
 setwd('../../DHS Processed/')
 
-write.csv(alldf, 'SpatialCovars.csv', row.names=F)
-writeRaster(s, 'SpatialCovars.tif', format='GTiff', overwrite=T)
+save(alldf, s, file="SpatialCovars.Rdata")
 
