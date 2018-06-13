@@ -26,15 +26,22 @@ az_write_blob <- function(blob, blobname, container='stan-models'){
 
 hh <- az_read_csv('hhvars.csv')
 spi <- az_read_csv('Coords&Precip.csv')
+cov <- az_read_csv('SpatialCovars.csv')
 
 ################################
 #Combine and clear workspace
 ################################
+hh <- hh %>%
+  filter(country %in% c('KE', "TZ", "UG"))
+
+spi <- spi %>%
+  select(-precip_10yr_mean, -tmin_10yr_mean, -tmax_10yr_mean)
+
 all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
-              list(hh, spi))
+              list(hh, spi, cov))
 
 all <- all %>%
-  filter(is_visitor == 0 & years_in_location >= 2)
+  filter(is_visitor == 0 & years_in_location >= 2 | is.na(is_visitor) | is.na(years_in_location))
 
 #Relevel factors
 all <- all %>%
@@ -49,7 +56,7 @@ all$related_hhhead <- all$relationship_hhhead == "Not Related"
 sel <- all %>%
   select(code, surveycode, country, interview_year, toilet, relationship_hhhead, age, birth_order, haz_dhs, head_age, head_sex, hhsize,
          sex, wealth_index, diarrhea, fever, breast_duration, urban_rural,
-         parents_years_ed, spei24, latitude, longitude) %>%
+         parents_years_ed, spei24, latitude, longitude, market_dist) %>%
   na.omit
 
 ###################################################
@@ -72,8 +79,8 @@ moddata = data.frame(age = mean(sel$age, na.rm=T),
                      related_hhhead = TRUE,
                      diarrhea = mean(sel$diarrhea, na.rm=T),
                      fever = mean(sel$fever, na.rm=T),
-                     country = 'SN', 
-                     surveycode = 'SN-4-2',
+                     country = 'KE', 
+                     surveycode = 'KE-4-1',
                      spei24=seq(-2.5, 2.5, 0.05),
                      toilet="Pit Latrine",
                      relationship_hhhead="Immediate Family",
@@ -99,7 +106,7 @@ ggplot(aes(x=spei24,y=fit), data=predicts) +
 library(lme4)
 
 drought <- sel %>% 
-  filter(spei24 < -0.25)
+  filter(spei24 < 0)
 
 # dsum <- drought %>%
 #   group_by(code) %>%
@@ -117,7 +124,7 @@ flood <- sel %>%
 #plot(flood$longitude, flood$latitude, pch=16, cex=0.2)
 
 mod_d <- lmer(haz_dhs ~ spei24 + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-                breast_duration + urban_rural + parents_years_ed + (1 | code), data=drought)
+                breast_duration + urban_rural + parents_years_ed + market_dist + (1 | code), data=drought)
 
 mod_f <- lmer(haz_dhs ~ spei24  + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
                 breast_duration + urban_rural + parents_years_ed + (1 | code), data=flood)
@@ -166,6 +173,7 @@ stanDat[["fever"]] <- drought$fever
 stanDat[["breast_duration"]] <- drought$breast_duration
 stanDat[["urban_ruralRural"]] <- drought$urban_rural == "Rural"
 stanDat[["parents_years_ed"]] <- drought$parents_years_ed
+stanDat[["market_dist"]] <- drought$market_dist
 stanDat[["spei24"]] <- drought$spei24
 
 stanDat[["surveycode"]] <- length(unique(drought$surveycode))
@@ -200,6 +208,7 @@ int<lower=0> breast_duration[N];
 int<lower=0, upper=1> urban_ruralRural[N];
 int<lower=0> parents_years_ed[N];
 real<lower=-3, upper=3> spei24[N];
+real<lower=0> market_dist[N];
 
 int<lower=1> code_N;       //number of sites
 
@@ -229,6 +238,7 @@ real fever_beta;
 real breast_duration_beta;
 real urban_ruralRural_beta;
 real parents_years_ed_beta;
+real market_dist_beta;
 real<lower=0> sigma_e; //error sd
 
 vector<lower=0>[code_N] re_spei24_beta;
@@ -255,7 +265,7 @@ re_spei24_beta ~ normal(re_spei24_mean, re_spei24_sigma);
 
 
 for (i in 1:N){
-mu = intercept + re_intercept[code[i]] + re_spei24_beta[code[i]] * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
+mu = intercept + re_intercept[code[i]] + re_spei24_beta[code[i]] * spei24[i] + market_dist_beta*market_dist[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
 
 haz_dhs[i] ~ normal(mu, sigma_e);
 }
@@ -263,14 +273,14 @@ haz_dhs[i] ~ normal(mu, sigma_e);
 "
 
 stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
-                iter = 2000, chains = 4, init=init)
+                iter = 10000, chains = 4, init=init)
 
 ################################
 #Write Results
 #####################################
 time <- substr(Sys.time(), 1, 10)
 
-modtitle <- 'RE_mean_chiSq_SPEIless1'
+modtitle <- 'Just_EastAfrica_10k_iter'
 
 az_write_blob(list(stanDat, drought_stan_code, stanmod), paste0(time, modtitle))
 
@@ -284,8 +294,8 @@ spei24 <- sum[grepl('re_spei24_beta', row.names(sum), fixed=T), 'mean']
 intercept <- sum[grepl('re_intercept[', row.names(sum), fixed=T), 'mean']
 
 ##Calculate Residuals and RSME
-  hist(sum[grepl('re_spei24_beta[', row.names(sum), fixed=T), '2.5%'], 100)
-  rhat <- sum[ , 'Rhat']
+hist(sum[grepl('re_spei24_beta[', row.names(sum), fixed=T), '2.5%'], 100)
+rhat <- sum[ , 'Rhat']
 # sel <- sum[ , 'mean']
 # re <- codemap[stanDat[['code']], ]
 # pred <- sel['intercept'] + re$w1 + re$w2*stanDat[['spei24']] + sel['toiletFlushToilet_beta'] * stanDat[['toiletFlushToilet']] + sel['toiletOther_beta'] * stanDat[['toiletOther']] + sel['toiletPitLatrine_beta'] * stanDat[['toiletPitLatrine']] + sel['relationship_hhheadNotRelated_beta'] * stanDat[['relationship_hhheadNotRelated']] + sel['relationship_hhheadRelative_beta'] * stanDat[['relationship_hhheadRelative']] + sel['age_beta'] * stanDat[['age']] + sel['birth_order_beta'] * stanDat[['birth_order']] + sel['head_age_beta'] * stanDat[['head_age']] + sel['head_sexMale_beta'] * stanDat[['head_sexMale']] + sel['sexMale_beta'] * stanDat[['sexMale']] + sel['wealth_indexMiddle_beta'] * stanDat[['wealth_indexMiddle']] + sel['wealth_indexPoorer_beta'] * stanDat[['wealth_indexPoorer']] + sel['wealth_indexRicher_beta'] * stanDat[['wealth_indexRicher']] + sel['wealth_indexRichest_beta'] * stanDat[['wealth_indexRichest']] + sel['hhsize_beta'] * stanDat[['hhsize']] + sel['diarrhea_beta'] * stanDat[['diarrhea']] + sel['fever_beta'] * stanDat[['fever']] + sel['breast_duration_beta'] * stanDat[['breast_duration']] + sel['urban_ruralRural_beta'] * stanDat[['urban_ruralRural']] + sel['parents_years_ed_beta'] * stanDat[['parents_years_ed']] + sel['gdp_beta'] * stanDat[['gdp']] + sel['md_beta'] * stanDat[['md']] + sel['pop_beta'] * stanDat[['pop']] + sel['mean_annual_precip_beta'] * stanDat[['mean_annual_precip']] + sel['spei24_beta'] * stanDat[['spei24']]
@@ -322,7 +332,7 @@ haz_sum <- drought %>%
 codemap2 <- merge(codemap, haz_sum, all.x=T, all.y=F)
 
 codemap2$hazlvl <- ifelse(codemap2$haz_mean < -200, "Low", 
-                         ifelse(codemap2$haz_mean > 0, "High", "Medium"))
+                          ifelse(codemap2$haz_mean > 0, "High", "Medium"))
 
 library(ggplot2)
 ggplot(codemap2) + geom_histogram(aes(x=random_effect, fill=hazlvl), bins=100)
