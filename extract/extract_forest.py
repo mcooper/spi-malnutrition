@@ -3,7 +3,7 @@ import pandas as pd
 
 ee.Initialize()
 
-data = pd.read_csv('g:\\My Drive\DHS Processed\sp_export.csv')
+data = pd.read_csv('sp_export.csv')
 
 forest = ee.Image("UMD/hansen/global_forest_change_2016_v1_4")
 baseforest = forest.select('treecover2000')
@@ -13,6 +13,8 @@ gain = forest.select('gain')
 
 accum = pd.DataFrame()
 for y in range(0, 16):
+    print("****************************\nNow Running Year " + str(2000 + y) + "\n****************************")
+    
     loss = baseforest.where(forest.select('loss').lte(i), 1).where(forest.select('loss').gt(i), 0).where(forest.select('loss').eq(0), 0)
     
     if y > 7:
@@ -23,9 +25,12 @@ for y in range(0, 16):
     yforest = baseforest.subtract(loss).add(gain)
     yforest = yforest.where(yforest.gt(1), 1).where(yforest.lt(0), 0)
     
-    sel = data[data['interview_year'] == (2000 + y)]
+    if y != 0:
+        sel = data[data['interview_year'] == (2000 + y)]
+    elif y == 0:
+        sel = data[data['interview_year'] <= 2000]
     
-    #Make buffered points
+    print("Make buffered points")
     points = []
     for row in sel.iterrows():
         if not (row[1]['longitude']==0) & (row[1]['latitude']==0):
@@ -33,18 +38,23 @@ for y in range(0, 16):
             feat = ee.Feature(geom, {'code':row[1]['code']})
             points.append(feat)
             
-    #Make features
+    print("Make features")
     feat = []
     i = 0
     while i < len(points):
-        j = i + 100
+        j = i + 50
         fc = ee.FeatureCollection(points[i:j])
         feat.append(fc)
         i = j
     
-    ext = map(lambda(x): yforest.reduceRegions(reducer=ee.Reducer.mean(), collection=x).getInfo(), feat)
+    print("Reduce regions")
+    summary = []
+    for f in feat:
+        summary.append(yforest.reduceRegions(reducer=ee.Reducer.mean(), collection=f).getInfo())
+        print(str(feat.index(f)) + " of " + str(len(feat)) + " in " + str(2000 + y))
     
-    for featclass in ext10:
+    print("Add to DF")
+    for featclass in summary:
         feats = featclass['features']
         for f in feats:
             code = f['properties']['code']
@@ -53,4 +63,4 @@ for y in range(0, 16):
 
     time.sleep(60)
 
-accum.to_csv('g:\\My Drive\DHS Processed\forest_cover.csv')
+accum.to_csv('forest_cover.csv')

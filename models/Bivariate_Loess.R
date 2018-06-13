@@ -4,7 +4,7 @@ library(ggplot2)
 setwd('G://My Drive/DHS Processed')
 
 lc <- read.csv('landcover.csv')
-md <- read.csv('MarketDist.csv')
+covars <- read.csv('SpatialCova')
 gdp <- read.csv('country_gdp.csv')
 
 md00 <- merge(select(md, code, md=market2000), data.frame(interview_year=seq(1988, 2007)))
