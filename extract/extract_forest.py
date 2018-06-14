@@ -8,6 +8,8 @@ buffersize = 25000
 
 data = pd.read_csv('sp_export.csv')
 
+data = data[['code', 'latitude', 'longitude', 'interview_year']].drop_duplicates()
+
 forest = ee.Image("UMD/hansen/global_forest_change_2016_v1_4")
 baseforest = forest.select('treecover2000')
 baseforest = baseforest.where(baseforest.gte(10), 1).where(baseforest.lt(10), 0)
@@ -15,7 +17,7 @@ baseforest = baseforest.where(baseforest.gte(10), 1).where(baseforest.lt(10), 0)
 gain = forest.select('gain')
 
 accum = pd.DataFrame()
-for y in range(3, 17):
+for y in range(0, 17):
     print("****************************\nNow Running Year " + str(2000 + y) + "\n****************************")
     
     loss = baseforest.where(forest.select('loss').lte(y), 1).where(forest.select('loss').gt(y), 0).where(forest.select('loss').eq(0), 0)
