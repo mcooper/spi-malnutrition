@@ -15,7 +15,7 @@ baseforest = baseforest.where(baseforest.gte(10), 1).where(baseforest.lt(10), 0)
 gain = forest.select('gain')
 
 accum = pd.DataFrame()
-for y in range(0, 17):
+for y in range(3, 17):
     print("****************************\nNow Running Year " + str(2000 + y) + "\n****************************")
     
     loss = baseforest.where(forest.select('loss').lte(y), 1).where(forest.select('loss').gt(y), 0).where(forest.select('loss').eq(0), 0)
@@ -55,6 +55,7 @@ for y in range(0, 17):
     for f in feat:
         summary.append(yforest.reduceRegions(reducer=ee.Reducer.mean(), collection=f).getInfo())
         print(str(feat.index(f)) + " of " + str(len(feat)) + " in " + str(2000 + y))
+        time.sleep(1)
     
     print("Add to DF")
     for featclass in summary:

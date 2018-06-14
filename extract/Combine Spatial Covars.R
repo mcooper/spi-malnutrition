@@ -22,8 +22,9 @@ precip <- read.csv('Coords&Precip.csv') %>%  #Because of different months within
             tmax_10yr_mean=mean(tmax_10yr_mean)) %>%
   unique
 pop <- read.csv('population.csv')
+admin <- read.csv('Admin_Areas.csv')
 
-alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop))
+alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin))
 
 library(raster)
 
@@ -53,7 +54,7 @@ alldf$Cereals <- NULL
 
 #Simplify to get one metric per code
 alldf <- alldf %>%
-  group_by(code) %>%
+  group_by(code, Adm1, Adm2) %>%
   summarize(ag_pct_gdp=mean(ag_pct_gdp),
             bare=mean(bare),
             precip_10yr_mean=mean(precip_10yr_mean),
