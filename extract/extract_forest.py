@@ -1,7 +1,10 @@
 import ee
 import pandas as pd
+import time
 
 ee.Initialize()
+
+buffersize = 25000
 
 data = pd.read_csv('sp_export.csv')
 
@@ -12,7 +15,7 @@ baseforest = baseforest.where(baseforest.gte(10), 1).where(baseforest.lt(10), 0)
 gain = forest.select('gain')
 
 accum = pd.DataFrame()
-for y in range(0, 16):
+for y in range(0, 17):
     print("****************************\nNow Running Year " + str(2000 + y) + "\n****************************")
     
     loss = baseforest.where(forest.select('loss').lte(y), 1).where(forest.select('loss').gt(y), 0).where(forest.select('loss').eq(0), 0)
@@ -34,7 +37,7 @@ for y in range(0, 16):
     points = []
     for row in sel.iterrows():
         if not (row[1]['longitude']==0) & (row[1]['latitude']==0):
-            geom = ee.Geometry.Point(row[1]['longitude'], row[1]['latitude']).buffer(25000)
+            geom = ee.Geometry.Point(row[1]['longitude'], row[1]['latitude']).buffer(buffersize)
             feat = ee.Feature(geom, {'code':row[1]['code']})
             points.append(feat)
     
@@ -63,4 +66,4 @@ for y in range(0, 16):
     
     time.sleep(60)
 
-accum.to_csv('forest_cover.csv')
+accum.to_csv('forest_cover' + buffersize + '.csv')
