@@ -69,4 +69,4 @@ for y in range(0, 17):
     
     time.sleep(60)
 
-accum.to_csv('forest_cover' + buffersize + '.csv')
+accum.drop_duplicates().to_csv('forest_cover' + str(buffersize) + '.csv')
