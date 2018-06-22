@@ -7,13 +7,15 @@ library(zoo)
 library(foreach)
 library(doParallel)
 
-setwd('/datadrive')
+setwd('/home/mattcoop')
 
-dat <- read.csv('/home/mattcoop/sp_export.csv')
+dat <- read.csv('hhvars.csv') %>%
+  select(calc_birthyear, calc_birthmonth, interview_month, interview_year, code,
+         latitude, longitude)
 
 sp <- SpatialPointsDataFrame(coords=dat[ c('longitude', 'latitude')], data = dat)
 
-r <- raster('CHIRPS/Monthly/chirps-v2.0.1981.01.tif')
+r <- raster('CHIRPS/chirps-v2.0.2017.01.tif')
 codes <- raster(matrix(seq(1, ncell(r)), nrow=nrow(r), ncol=ncol(r)), xmx=xmax(r), xmn=xmin(r), ymx=ymax(r), ymn=ymin(r))
 codes[r==-9999] <- NA
 

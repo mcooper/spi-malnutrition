@@ -4,7 +4,7 @@ import time
 
 ee.Initialize()
 
-buffersize = 25000
+buffersize = 15000
 
 data = pd.read_csv('sp_export.csv')
 
@@ -15,6 +15,16 @@ baseforest = forest.select('treecover2000')
 baseforest = baseforest.where(baseforest.gte(10), 1).where(baseforest.lt(10), 0)
 
 gain = forest.select('gain')
+
+def tryReduceRegions(raster, feature):
+    try:
+        reduction = raster.reduceRegions(reducer=ee.Reducer.mean(), collection=feature).getInfo()
+        time.sleep(1)
+    except ee.ee_exception.EEException:
+        print('Memory Exceeded, waiting')
+        time.sleep(60*5)
+        reduction = tryReduceRegions(raster, feature)
+    return reduction
 
 accum = pd.DataFrame()
 for y in range(0, 17):
@@ -55,12 +65,11 @@ for y in range(0, 17):
     print("Reduce regions")
     summary = []
     for f in feat:
-        summary.append(yforest.reduceRegions(reducer=ee.Reducer.mean(), collection=f).getInfo())
+        summary.append(tryReduceRegions(yforest, f))
         print(str(feat.index(f)) + " of " + str(len(feat)) + " in " + str(2000 + y))
-        time.sleep(1)
     
     print("Add to DF")
-    for featclass in summary:
+    for featclass in summary:   
         feats = featclass['features']
         for f in feats:
             code = f['properties']['code']
@@ -69,4 +78,7 @@ for y in range(0, 17):
     
     time.sleep(60)
 
-accum.drop_duplicates().to_csv('forest_cover' + str(buffersize) + '.csv')
+accum.drop_duplicates() \
+.groupby('code', as_index=False)['mean'].mean() \
+.rename(columns = {'mean': 'forest_' + str(buffersize)}) \
+.to_csv('forest_cover' + str(buffersize) + '.csv', index=False)
