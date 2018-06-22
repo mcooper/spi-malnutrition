@@ -24,7 +24,7 @@ all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
 all$haz_dhs <- all$haz_dhs/100
 
 all <- all %>%
-  filter(years_in_location >= 2 & is_visitor == 0)
+  filter(years_in_location >= 2 & is_visitor == 0 | is.na(all$years_in_location) | is.na(all$is_visitor))
 
 all$related_hhhead <- all$relationship_hhhead != "Not Related"
 
@@ -32,10 +32,10 @@ library(lme4)
 
 combmod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
                head_age + market_dist + mother_years_ed + workers + related_hhhead + wealth_index + 
-               istwin + diarrhea + fever + wealth_index + spei24 + (1|country) + (1|code), data = all %>% filter(urban_rural == 'Rural'))
+               istwin + diarrhea + fever + wealth_index + spi24 + (spi24|Adm1) + (1|code), data = all %>% filter(urban_rural == 'Rural' & spi24 < 1))
 
 re <- ranef(combmod)$Adm1
-hist(re$spei24)
+hist(re$spi24, 100)
 re$Adm1 <- rownames(re)
 re$spei24_fix <- fixef(combmod)[['spei24']]
 
@@ -54,12 +54,20 @@ re$hazval <- ifelse(re$haz_dhs_mean < -1.75, "Low HAZ",
 re$speival <- ifelse(re$spei24_mean < -1, "Low SPEI",
                      ifelse(re$spei24_mean > 0.5, "High SPEI", "Average SPEI"))
 
-ggplot(re) + geom_histogram(aes(x=spei24, fill=hazval), bins=100) + 
+ggplot(re) + geom_histogram(aes(x=spi24, fill=hazval), bins=100) + 
   ggtitle("Histogram of Random Effects for SPEI on HAZ, subset by HAZ Values")
-ggplot(re) + geom_histogram(aes(x=spei24, fill=speival), bins=100) + 
+ggplot(re) + geom_histogram(aes(x=spi24, fill=speival), bins=100) + 
   ggtitle("Histogram of Random Effects for SPEI on HAZ, subset by SPEI Values")
 
-ggplot(re) + geom_point(aes(x=longitude, y=latitude, color=spei24), size=0.25) + 
+ggplot(re) + geom_point(aes(x=longitude, y=latitude, color=spi24), size=0.25) + 
   scale_color_gradient2(low="green", high="red", mid="yellow")
+
+library(rgdal)
+shp <- readOGR('../DHS Spatial Covars/Admin Areas', 'gadm36_1')
+
+shp <- merge(shp, re, by.x="GID_1", by.y="Adm1")
+writeOGR(shp, '../Dissertation/Visualizations/AdmModel', 'Adm1', driver="ESRI Shapefile")
+
+
 
 
