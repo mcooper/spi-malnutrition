@@ -332,7 +332,7 @@ haz_sum <- drought %>%
 codemap2 <- merge(codemap, haz_sum, all.x=T, all.y=F)
 
 codemap2$hazlvl <- ifelse(codemap2$haz_mean < -200, "Low", 
-                          ifelse(codemap2$haz_mean > 0, "High", "Medium"))
+                          ifelse(codemap2$haz_mean > 0, "High", "Average"))
 
 library(ggplot2)
 ggplot(codemap2) + geom_histogram(aes(x=random_effect, fill=hazlvl), bins=100)

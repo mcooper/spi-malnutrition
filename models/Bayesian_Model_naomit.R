@@ -26,12 +26,13 @@ az_write_blob <- function(blob, blobname, container='stan-models'){
 
 hh <- az_read_csv('hhvars.csv')
 spi <- az_read_csv('Coords&Precip.csv')
+cov <- az_read_csv('SpatialCovars.csv')
 
 ################################
 #Combine and clear workspace
 ################################
 all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
-              list(hh, spi))
+              list(hh, spi, cov))
 
 all <- all %>%
   filter(is_visitor == 0 & years_in_location >= 2)
@@ -48,83 +49,86 @@ all$related_hhhead <- all$relationship_hhhead == "Not Related"
 
 sel <- all %>%
   select(code, surveycode, country, interview_year, toilet, relationship_hhhead, age, birth_order, haz_dhs, head_age, head_sex, hhsize,
-         sex, wealth_index, diarrhea, fever, breast_duration, urban_rural,
+         sex, wealth_index, diarrhea, fever, breast_duration, urban_rural, market_dist, Adm1, Adm2,
          parents_years_ed, spei24, latitude, longitude) %>%
   na.omit
 
 ###################################################
 #First run GAM model to determine inflection point
 ###################################################
+# 
+# library(mgcv)
+# library(ggplot2)
+# 
+# mod <- gam(haz_dhs ~ s(spei24, bs='cr') + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
+#              breast_duration + urban_rural + parents_years_ed + surveycode, data=sel)
+# 
+# moddata = data.frame(age = mean(sel$age, na.rm=T),
+#                      interview_year = 2007,
+#                      head_sex = 'Male',
+#                      hhsize = mean(sel$hhsize, na.rm=T),
+#                      sex = "Male",
+#                      head_age = mean(sel$head_age, na.rm=T),
+#                      wealth_index = "Middle", 
+#                      related_hhhead = TRUE,
+#                      diarrhea = mean(sel$diarrhea, na.rm=T),
+#                      fever = mean(sel$fever, na.rm=T),
+#                      country = 'SN', 
+#                      surveycode = 'SN-4-2',
+#                      spei24=seq(-2.5, 2.5, 0.05),
+#                      toilet="Pit Latrine",
+#                      relationship_hhhead="Immediate Family",
+#                      birth_order=3,
+#                      breast_duration=16,
+#                      urban_rural="Rural",
+#                      parents_years_ed=4)
+# 
+# fits = predict(mod, moddata, type='response', se=T)
+# predicts = data.frame(moddata, fits) %>% 
+#   mutate(lower = fit - 1.96*se.fit,
+#          upper = fit + 1.96*se.fit)
+# 
+# ggplot(aes(x=spei24,y=fit), data=predicts) +
+#   geom_ribbon(aes(ymin = lower, ymax=upper), fill='gray90') +
+#   geom_line(color='#1e90ff') + 
+#   theme_bw()
+# 
+# ###################################################
+# #Then run GLMMs to determine MCMC starting points
+# ###################################################
+# 
+# 
+# 
+# drought <- sel %>% 
+#   filter(spei24 < -0.25)
+# 
+# # dsum <- drought %>%
+# #   group_by(code) %>%
+# #   summarize(size=n()) %>%
+# #   filter(size > 4)
+# 
+# # drought <- drought %>%
+# #   filter(code %in% dsum$code)
+# 
+# #plot(drought$longitude, drought$latitude, pch=16, cex=0.2)
+# 
+# flood <- sel %>%
+#   filter(spei24 > 1.25)
+# 
+# #plot(flood$longitude, flood$latitude, pch=16, cex=0.2)
+# 
 
-library(mgcv)
-library(ggplot2)
-
-mod <- gam(haz_dhs ~ s(spei24, bs='cr') + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-             breast_duration + urban_rural + parents_years_ed + surveycode, data=sel)
-
-moddata = data.frame(age = mean(sel$age, na.rm=T),
-                     interview_year = 2007,
-                     head_sex = 'Male',
-                     hhsize = mean(sel$hhsize, na.rm=T),
-                     sex = "Male",
-                     head_age = mean(sel$head_age, na.rm=T),
-                     wealth_index = "Middle", 
-                     related_hhhead = TRUE,
-                     diarrhea = mean(sel$diarrhea, na.rm=T),
-                     fever = mean(sel$fever, na.rm=T),
-                     country = 'SN', 
-                     surveycode = 'SN-4-2',
-                     spei24=seq(-2.5, 2.5, 0.05),
-                     toilet="Pit Latrine",
-                     relationship_hhhead="Immediate Family",
-                     birth_order=3,
-                     breast_duration=16,
-                     urban_rural="Rural",
-                     parents_years_ed=4)
-
-fits = predict(mod, moddata, type='response', se=T)
-predicts = data.frame(moddata, fits) %>% 
-  mutate(lower = fit - 1.96*se.fit,
-         upper = fit + 1.96*se.fit)
-
-ggplot(aes(x=spei24,y=fit), data=predicts) +
-  geom_ribbon(aes(ymin = lower, ymax=upper), fill='gray90') +
-  geom_line(color='#1e90ff') + 
-  theme_bw()
-
-###################################################
-#Then run GLMMs to determine MCMC starting points
-###################################################
-
-library(lme4)
-
-drought <- sel %>% 
-  filter(spei24 < -0.25)
-
-# dsum <- drought %>%
-#   group_by(code) %>%
-#   summarize(size=n()) %>%
-#   filter(size > 4)
-
-# drought <- drought %>%
-#   filter(code %in% dsum$code)
-
-#plot(drought$longitude, drought$latitude, pch=16, cex=0.2)
-
-flood <- sel %>%
-  filter(spei24 > 1.25)
-
-#plot(flood$longitude, flood$latitude, pch=16, cex=0.2)
-
-mod_d <- lmer(haz_dhs ~ spei24 + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-                breast_duration + urban_rural + parents_years_ed + (1 | code), data=drought)
-
-mod_f <- lmer(haz_dhs ~ spei24  + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-                breast_duration + urban_rural + parents_years_ed + (1 | code), data=flood)
+# mod_f <- lmer(haz_dhs ~ spei24  + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
+#                 breast_duration + urban_rural + parents_years_ed + (1 | code), data=flood)
 
 ############################################
 #Stan-tastic models
 ###########################################
+
+drought <- sel
+library(lme4)
+mod_d <- lmer(haz_dhs ~ spei24 + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever +
+                breast_duration + urban_rural + parents_years_ed + (1 | Adm2), data=drought)
 
 library(rstan)
 
@@ -138,9 +142,9 @@ init <- as.list(init)
 init <- list(chain1=init, chain2=init, chain3=init, chain4=init)
 
 codemap <- drought %>% 
-  mutate(code_number=as.numeric(as.factor(as.character(code))),
-         surveycode_number=as.numeric(as.factor(as.character(surveycode)))) %>%
-  group_by(surveycode, surveycode_number, code, code_number, latitude, longitude, urban_rural) %>% 
+  mutate(code_number=as.numeric(as.factor(as.character(Adm2))),
+         survey_number=as.numeric(as.factor(as.character(surveycode)))) %>%
+  group_by(surveycode, surveycode_number, Adm2, code_number, latitude, longitude, urban_rural) %>% 
   summarize(size=n())
 
 stanDat <- list()
@@ -170,8 +174,8 @@ stanDat[["spei24"]] <- drought$spei24
 
 stanDat[["surveycode"]] <- length(unique(drought$surveycode))
 stanDat[["surveycode_N"]] <- as.numeric(as.factor(as.character(drought$surveycode)))
-stanDat[["code_N"]] <- length(unique(drought$code))
-stanDat[["code"]] <- as.numeric(as.factor(as.character(drought$code)))
+stanDat[["code_N"]] <- length(unique(drought$Adm2))
+stanDat[["code"]] <- as.numeric(as.factor(as.character(drought$Adm2)))
 
 drought_stan_code <- "
 data {
@@ -263,14 +267,14 @@ haz_dhs[i] ~ normal(mu, sigma_e);
 "
 
 stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
-                iter = 2000, chains = 4, init=init)
+                iter = 10000, chains = 4, init=init)
 
 ################################
 #Write Results
 #####################################
 time <- substr(Sys.time(), 1, 10)
 
-modtitle <- 'RE_mean_chiSq_SPEIless1'
+modtitle <- 'RE_mAdm2'
 
 az_write_blob(list(stanDat, drought_stan_code, stanmod), paste0(time, modtitle))
 
