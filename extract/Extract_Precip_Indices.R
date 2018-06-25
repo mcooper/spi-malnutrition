@@ -197,7 +197,7 @@ df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridat
 df <- df %>%
   select(-tmpcode)
 
-write.csv(df, 'Coords&Precip.csv', row.names=F)
+write.csv(df, 'PrecipIndices.csv', row.names=F)
 
 
 
