@@ -7,9 +7,9 @@ library(zoo)
 library(foreach)
 library(doParallel)
 
-setwd('/datadrive')
+setwd('~/geo')
 
-dat <- read.csv('/home/mattcoop/sp_export.csv')
+dat <- read.csv('~/dhsprocessed/sp_export.csv')
 
 sp <- SpatialPointsDataFrame(coords=dat[ c('longitude', 'latitude')], data = dat)
 
@@ -38,7 +38,7 @@ precip_files <- list.files(precip_in_folder, pattern='tif$')
 gdalbuildvrt(paste0(precip_in_folder, precip_files), precip_vrt_file, separate=TRUE, verbose=T, overwrite=TRUE)
 
 #Read in phenology data
-pheno_in_folder <- 'Pheno/'
+pheno_in_folder <- 'Phenology/'
 pheno_vrt_file <- extension(rasterTmpFile(), 'ivrt')
 pheno_files <- list.files(pheno_in_folder, pattern='tif$')
 gdalbuildvrt(paste0(pheno_in_folder, pheno_files), pheno_vrt_file, separate=TRUE, verbose=T, overwrite=TRUE)
@@ -197,7 +197,7 @@ df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridat
 df <- df %>%
   select(-tmpcode)
 
-write.csv(df, 'PrecipIndices.csv', row.names=F)
+write.csv(df, '~/dhsprocessed/PrecipIndices.csv', row.names=F)
 
 
 
