@@ -22,9 +22,12 @@ precip <- read.csv('Coords&Precip.csv') %>%  #Because of different months within
             tmax_10yr_mean=mean(tmax_10yr_mean)) %>%
   unique
 pop <- read.csv('population.csv')
-admin <- read.csv('Admin_Areas.csv')
+admin <- read.csv('Admin_Areas.csv') %>%
+  select(-nnAdm1, -nnAdm2)
+fields <- read.csv('fieldsize.csv')
+nut <- read.csv('nutritiondiversity.csv')
 
-alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin))
+alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin, fields, nut))
 
 library(raster)
 
@@ -39,8 +42,8 @@ cropread <- function(r){
 s <- sapply(list.files(pattern = '.tif$'), FUN=cropread) %>%
   stack
 
-names(s) <- c("ag_pct_gdp", "bare", "Cereals", "precip_10yr_mean", "forest", "gdp", "government_effectiveness",
-              "irrigation", "market_dist", "ndvi", "population", "RootsandTubers", "stability_violence", "tmax_10yr_mean",
+names(s) <- c("ag_pct_gdp", "bare", "Cereals", "precip_10yr_mean", "fieldsize", "forest", "gdp", "government_effectiveness",
+              "irrigation", "market_dist", "ndvi", "nutritiondiversity", "population", "RootsandTubers", "stability_violence", "tmax_10yr_mean",
               "tmin_10yr_mean")
 
 #Combine Cerealas and Roots and Tubers
@@ -68,10 +71,12 @@ alldf <- alldf %>%
             stability_violence=mean(stability_violence),
             tmax_10yr_mean=mean(tmax_10yr_mean),
             tmin_10yr_mean=mean(tmin_10yr_mean),
-            crop_prod=mean(crop_prod))
+            crop_prod=mean(crop_prod),
+            fieldsize=mean(fieldsize),
+            nutritiondiversity=mean(nutritiondiversity))
 
 setwd('../../DHS Processed/')
 
 write.csv(alldf, 'SpatialCovars.csv', row.names=F)
-writeRaster(s, 'SpatialCovars.grd', format="raster")
+writeRaster(s, 'SpatialCovars.grd', format="raster", overwrite=T)
 

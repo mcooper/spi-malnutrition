@@ -7,7 +7,7 @@ library(zoo)
 library(foreach)
 library(doParallel)
 
-setwd('~/geo')
+setwd('/mnt')
 
 dat <- read.csv('~/dhsprocessed/sp_export.csv')
 

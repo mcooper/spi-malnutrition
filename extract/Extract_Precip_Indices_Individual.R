@@ -7,7 +7,7 @@ library(zoo)
 library(foreach)
 library(doParallel)
 
-setwd('~/geo')
+setwd('/mnt')
 
 dat <- read.csv('~/dhsprocessed/hhvars.csv') %>%
   select(interview_month, interview_year, code, latitude, longitude, age)
