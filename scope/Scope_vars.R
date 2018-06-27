@@ -1,51 +1,29 @@
-setwd('D://Documents and Settings/mcooper/Google Drive/DHS Data/')
+setwd('G://My Drive/DHS Processed/')
 
-library(foreign)
+hh <- read.csv('hhvars.csv')
+spi <- read.csv('Coords&Precip.csv')
+cov <- read.csv('SpatialCovars.csv')
+
+################################
+#Combine and clear workspace
+################################
+
+all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
+              list(hh, spi, cov))
+
 library(dplyr)
 
-usefiles <- read.csv('../Dissertation/UseFiles.csv', stringsAsFactors = F)
+sumfun <- function(v){sum(is.na(v))/length(v)}
 
-fs <- usefiles$PR
+survey_summary <- all %>%
+  group_by(surveycode) %>%
+  summarize_at(c("toilet", "relationship_hhhead", "otherwatersource", "drinkwatersource", "age", "birth_order", 
+                 "father_alive", "haz_dhs", "head_age", "head_sex", "height", "hhsize", "mother_alive", "sex",
+                 "urban_rural", "watersource_dist", "waz_dhs", "wealth_factor", "wealth_index", "weight", "mother_age",
+                 "mother_years_ed", "mother_height", "mother_haz", "father_age", "father_years_ed", "father_height", 
+                 "father_haz", "workers", "dependents", "birth_weight", "breast_duration", "diarrhea", "fever", 
+                 "is_visitor", "istwin", "mother_smokes", "parasite_drugs", "parents_years_ed", "years_in_location",
+                 "ever_breastfed", "breastfeeding"), sumfun) %>%
+  merge(all %>% group_by(surveycode) %>% summarize(interview_year=max(interview_year)))
 
-allpr <- data.frame(vars='hv000')
-for (f in fs){
-  out <- read.dta(f)
-  vars <- names(out)
-  l <- rep(TRUE, length(vars))
-  df <- data.frame(vars=vars, temp=l)
-  names(df)[2] <- f
-  allpr <- merge(allpr, df, by='vars', all=T)
-  print(f)
-  print(dim(allpr))
-}
-
-allpr[is.na(allpr)] <- FALSE
-allpr$PR_COUNT <- rowSums(allpr[fs])
-allpr <- allpr %>% arrange(desc(PR_COUNT))
-
-#Scope Childrens Recode Files
-fs <- usefiles$PR
-
-allkr <- data.frame(vars='v000')
-for (f in fs){
-  out <- read.dta(f)
-  vars <- names(out)
-  l <- rep(TRUE, length(vars))
-  df <- data.frame(vars=vars, temp=l)
-  names(df)[2] <- f
-  allkr <- merge(allkr, df, by='vars', all=T)
-  print(f)
-  print(dim(allkr))
-}
-
-allkr[is.na(allkr)] <- FALSE
-
-allkr$KR_COUNT <- rowSums(allkr[fs])
-
-allkr <- allkr %>% arrange(desc(KR_COUNT))
-
-allkr$KR_COUNT[allkr$vars=='hw8']
-#[1] 236
-allpr$PR_COUNT[allpr$vars=='hc8']
-#[1] 164
-#Looks like there are many more surveys with child health records in the KR files
+write.csv(survey_summary, 'C://Git/spi-malnutrition/scope/VariableScope.csv', row.names=F)
