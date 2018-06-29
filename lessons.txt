@@ -1,0 +1,25 @@
+LESSONS FROM MODELING THUS FAR:
+-Models are very sensitive to both input and output variables.  The relationship between rainfall and malnutrition varies greatly depending on whether the variable of interest is HAZ or WHZ, SPI or SPEI, as well as the time scale the index is measured at. This will be hard to deal with and may lead to p-hacking/cherry picking.
+-Forest Cover from ESA and from Hansen are quite different, with many areas having nearly 100% forest in Hansen and 0% forest in ESA.  Interestingly, few areas are high on forest in ESA and low in forest on Hansen.
+	-Problem: Shitty RS classifications, ambiguous definitions of forest?
+	-Overall R2: 0.6
+-Forests are associated with worse nutrition outcomes! This effect goes away if you only look at households far from markets.  Also, grass and water seem to help nutrition outcomes.
+-Random effects for precip indices do improve the model over fixed effects for precip indices based on AIC.
+	-Vindication!
+-Random effects are often correlated with HAZ when using LMER.
+	-Problem: Overfitting?
+	-(I think)? this was less of an issue with Rstan
+-Large random effects seem to happen more often with small SPI values, and never happen with large SPI values.
+	-Problem: Overfitting?
+	-Solution: Try Binning SPI
+-Lots of Spatial Autocorrelation in Error terms, especially if you dont include geographic variables or site-level varying intercepts
+
+
+
+TO DO:
+-Systematically test precip indices for correlation with HAZ, for interaction with ES
+-Test ESA product vs Hansen, JRC water, Globeland30
+-Track down globeland30 for 1990?
+-Try models with Binary ES, SPI variables.
+-Run complicated model in Rstan using simulated data.
+-Upload globeland30 to Blob

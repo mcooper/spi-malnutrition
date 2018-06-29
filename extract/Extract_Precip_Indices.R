@@ -130,7 +130,9 @@ parseDates <- function(dates){
 cl <- makeCluster(7, outfile = '')
 registerDoParallel(cl)
 
-df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridate', 'gdalUtils', 'SPEI', 'dplyr', 'zoo')) %dopar% {
+setwd('PrecipIndices')
+
+df <- foreach(n=1:nrow(rll), .packages=c('raster', 'lubridate', 'gdalUtils', 'SPEI', 'dplyr', 'zoo')) %dopar% {
   
   precip <- extract_neighbors(precip_vrt_file, rll$x[n], rll$y[n])
   
@@ -191,8 +193,12 @@ df <- foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridat
   sel <- sp[sp$tmpcode == rll$layer[n], ]
   sel <- Reduce(function(x, y){merge(x,y,all.x=T,all.y=F)}, list(sel, interview, meanannual))
   cat(n, round(n/nrow(rll)*100, 4), 'percent done\n') 
-  sel
+  write.csv(sel, n, row.names=F)
 }
+
+fs <- list.files()
+
+df <- bind_rows(sapply(fs, read.csv))
 
 df <- df %>%
   select(-tmpcode)
