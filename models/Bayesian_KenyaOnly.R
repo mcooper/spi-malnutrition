@@ -1,32 +1,14 @@
-library(AzureSMR)
 library(dplyr)
 
-az <- read.csv('~/.azure/.AzureSMR', stringsAsFactors = F)
+setwd('~/dhsprocessed')
 
-sc <- createAzureContext(tenantID = az$tenantid,
-                         clientID = az$appid,
-                         authKey = az$authkey)
+hh <- read.csv('hhvars.csv')
+spi <- read.csv('PrecipIndices.csv')
+cov <- read.csv('SpatialCovars.csv')
 
-az_read_csv <- function(csv, container="dhsprocessed"){
-  read.csv(text=azureGetBlob(sc, 
-                             storageAccount=az$storage_acct, 
-                             container=container,
-                             blob=csv,
-                             type="text",
-                             storageKey = az$storageKey))
-}
-
-az_write_blob <- function(blob, blobname, container='stan-models'){
-  file <- paste0(blobname, '.Rdata')
-  save(blob, file=file)
-  system(paste0("az storage blob upload --container-name ", container, " --file ", file, " --name ", file,
-                " --account-name ", az$storage_acct, " --account-key ", az$storageKey))
-  system(paste0("rm ", file))
-}
-
-hh <- az_read_csv('hhvars.csv')
-spi <- az_read_csv('Coords&Precip.csv')
-cov <- az_read_csv('SpatialCovars.csv')
+spi2 <- spi %>%
+  select(-calc_birthyear, -calc_birthmonth, -thousandday_month, -thousandday_year) %>%
+  unique
 
 ################################
 #Combine and clear workspace
@@ -54,50 +36,10 @@ all <- all %>%
 all$related_hhhead <- all$relationship_hhhead == "Not Related"
 
 sel <- all %>%
-  select(code, surveycode, country, interview_year, toilet, relationship_hhhead, age, birth_order, haz_dhs, head_age, head_sex, hhsize,
-         sex, wealth_index, diarrhea, fever, breast_duration, urban_rural,
-         parents_years_ed, spei24, latitude, longitude, market_dist) %>%
+  select(code, surveycode, country, Adm2, interview_year, toilet, related_hhhead, age, birth_order, haz_dhs, head_age, head_sex, hhsize,
+         sex, wealth_index, diarrhea, fever, breast_duration, urban_rural, mother_height, latitude, longitude,
+         parents_years_ed, market_dist, spei24) %>%
   na.omit
-
-###################################################
-#First run GAM model to determine inflection point
-###################################################
-
-library(mgcv)
-library(ggplot2)
-
-mod <- gam(haz_dhs ~ s(spei24, bs='cr') + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-             breast_duration + urban_rural + parents_years_ed + surveycode, data=sel)
-
-moddata = data.frame(age = mean(sel$age, na.rm=T),
-                     interview_year = 2007,
-                     head_sex = 'Male',
-                     hhsize = mean(sel$hhsize, na.rm=T),
-                     sex = "Male",
-                     head_age = mean(sel$head_age, na.rm=T),
-                     wealth_index = "Middle", 
-                     related_hhhead = TRUE,
-                     diarrhea = mean(sel$diarrhea, na.rm=T),
-                     fever = mean(sel$fever, na.rm=T),
-                     country = 'KE', 
-                     surveycode = 'KE-4-1',
-                     spei24=seq(-2.5, 2.5, 0.05),
-                     toilet="Pit Latrine",
-                     relationship_hhhead="Immediate Family",
-                     birth_order=3,
-                     breast_duration=16,
-                     urban_rural="Rural",
-                     parents_years_ed=4)
-
-fits = predict(mod, moddata, type='response', se=T)
-predicts = data.frame(moddata, fits) %>% 
-  mutate(lower = fit - 1.96*se.fit,
-         upper = fit + 1.96*se.fit)
-
-ggplot(aes(x=spei24,y=fit), data=predicts) +
-  geom_ribbon(aes(ymin = lower, ymax=upper), fill='gray90') +
-  geom_line(color='#1e90ff') + 
-  theme_bw()
 
 ###################################################
 #Then run GLMMs to determine MCMC starting points
@@ -105,29 +47,9 @@ ggplot(aes(x=spei24,y=fit), data=predicts) +
 
 library(lme4)
 
-drought <- sel %>% 
-  filter(spei24 < 0)
-
-# dsum <- drought %>%
-#   group_by(code) %>%
-#   summarize(size=n()) %>%
-#   filter(size > 4)
-
-# drought <- drought %>%
-#   filter(code %in% dsum$code)
-
-#plot(drought$longitude, drought$latitude, pch=16, cex=0.2)
-
-flood <- sel %>%
-  filter(spei24 > 1.25)
-
-#plot(flood$longitude, flood$latitude, pch=16, cex=0.2)
-
-mod_d <- lmer(haz_dhs ~ spei24 + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-                breast_duration + urban_rural + parents_years_ed + market_dist + (1 | code), data=drought)
-
-mod_f <- lmer(haz_dhs ~ spei24  + toilet + relationship_hhhead + age + birth_order + head_age + head_sex + hhsize + sex + wealth_index + diarrhea + fever + 
-                breast_duration + urban_rural + parents_years_ed + (1 | code), data=flood)
+mod <- lmer(haz_dhs ~ interview_year + toilet + related_hhhead + age + birth_order + head_age + head_sex + hhsize +
+              sex + wealth_index + diarrhea + fever + mother_height + market_dist + 
+                breast_duration + urban_rural + parents_years_ed + (1 | Adm2), data=sel)
 
 ############################################
 #Stan-tastic models
@@ -138,50 +60,49 @@ library(rstan)
 options(mc.cores = parallel::detectCores())
 rstan_options(auto_write=TRUE)
 
-init <- summary(mod_d)$coefficients[ , 1]
-names(init)[names(init)=="(Intercept)"] <- "intercept"
+init <- summary(mod)$coefficients[ , 1]
 names(init) <- gsub(' ', '', names(init))
+names(init) <- paste0(names(init), "_beta")
+names(init)[names(init)=="(Intercept)_beta"] <- "intercept"
 init <- as.list(init)
 init <- list(chain1=init, chain2=init, chain3=init, chain4=init)
 
-codemap <- drought %>% 
+codemap <- sel %>% 
   mutate(code_number=as.numeric(as.factor(as.character(code))),
          surveycode_number=as.numeric(as.factor(as.character(surveycode)))) %>%
   group_by(surveycode, surveycode_number, code, code_number, latitude, longitude, urban_rural) %>% 
   summarize(size=n())
 
 stanDat <- list()
-stanDat[["N"]] <- nrow(drought)
-stanDat[["haz_dhs"]] <- drought$haz_dhs
-stanDat[["toiletFlushToilet"]] <- drought$toilet == "Flush Toilet"
-stanDat[["toiletOther"]] <- drought$toilet == "Other"
-stanDat[["toiletPitLatrine"]] <- drought$toilet == "Pit Latrine"
-stanDat[["relationship_hhheadNotRelated"]] <- drought$relationship_hhhead == "Not Related"
-stanDat[["relationship_hhheadRelative"]] <- drought$relationship_hhhead == "Relative"
-stanDat[["age"]] <- drought$age
-stanDat[["birth_order"]] <- drought$birth_order
-stanDat[["head_age"]] <- drought$head_age
-stanDat[["head_sexMale"]] <- drought$head_sex == "Male"
-stanDat[["sexMale"]] <- drought$sex == "Male"
-stanDat[["wealth_indexMiddle"]] <- drought$wealth_index == "Middle"
-stanDat[["wealth_indexPoorer"]] <- drought$wealth_index == "Poorer"
-stanDat[["wealth_indexRicher"]] <- drought$wealth_index == "Richer"
-stanDat[["wealth_indexRichest"]] <- drought$wealth_index == "Richest"
-stanDat[["hhsize"]] <- drought$hhsize
-stanDat[["diarrhea"]] <- drought$diarrhea
-stanDat[["fever"]] <- drought$fever
-stanDat[["breast_duration"]] <- drought$breast_duration
-stanDat[["urban_ruralRural"]] <- drought$urban_rural == "Rural"
-stanDat[["parents_years_ed"]] <- drought$parents_years_ed
-stanDat[["market_dist"]] <- drought$market_dist
-stanDat[["spei24"]] <- drought$spei24
+stanDat[["N"]] <- nrow(sel)
+stanDat[["haz_dhs"]] <- sel$haz_dhs
+stanDat[["toiletFlushToilet"]] <- sel$toilet == "Flush Toilet"
+stanDat[["toiletOther"]] <- sel$toilet == "Other"
+stanDat[["toiletPitLatrine"]] <- sel$toilet == "Pit Latrine"
+stanDat[["related_hhhead"]] <- sel$related_hhhead
+stanDat[["age"]] <- sel$age
+stanDat[["birth_order"]] <- sel$birth_order
+stanDat[["head_age"]] <- sel$head_age
+stanDat[["head_sexMale"]] <- sel$head_sex == "Male"
+stanDat[["sexMale"]] <- sel$sex == "Male"
+stanDat[["wealth_indexMiddle"]] <- sel$wealth_index == "Middle"
+stanDat[["wealth_indexPoorer"]] <- sel$wealth_index == "Poorer"
+stanDat[["wealth_indexRicher"]] <- sel$wealth_index == "Richer"
+stanDat[["wealth_indexRichest"]] <- sel$wealth_index == "Richest"
+stanDat[["hhsize"]] <- sel$hhsize
+stanDat[["diarrhea"]] <- sel$diarrhea
+stanDat[["fever"]] <- sel$fever
+stanDat[["breast_duration"]] <- sel$breast_duration
+stanDat[["urban_ruralRural"]] <- sel$urban_rural == "Rural"
+stanDat[["parents_years_ed"]] <- sel$parents_years_ed
+stanDat[["market_dist"]] <- sel$market_dist
+stanDat[["mother_height"]] <- sel$mother_height
+stanDat[["spei24"]] <- sel$spei24
 
-stanDat[["surveycode"]] <- length(unique(drought$surveycode))
-stanDat[["surveycode_N"]] <- as.numeric(as.factor(as.character(drought$surveycode)))
-stanDat[["code_N"]] <- length(unique(drought$code))
-stanDat[["code"]] <- as.numeric(as.factor(as.character(drought$code)))
+stanDat[["Adm2_N"]] <- length(unique(sel$Adm2))
+stanDat[["Adm2"]] <- as.numeric(as.factor(as.character(sel$Adm2)))
 
-drought_stan_code <- "
+stan_code <- "
 data {
 int<lower=1> N;
 
@@ -190,8 +111,7 @@ real<lower=-600, upper=600> haz_dhs[N];
 int<lower=0, upper=1> toiletFlushToilet[N];
 int<lower=0, upper=1> toiletOther[N];
 int<lower=0, upper=1> toiletPitLatrine[N];
-int<lower=0, upper=1> relationship_hhheadNotRelated[N];
-int<lower=0, upper=1> relationship_hhheadRelative[N];
+int<lower=0, upper=1> related_hhhead[N];
 int<lower=0> age[N];
 int<lower=0> birth_order[N];
 int<lower=0> head_age[N];
@@ -207,12 +127,13 @@ int<lower=0, upper=1> fever[N];
 int<lower=0> breast_duration[N];
 int<lower=0, upper=1> urban_ruralRural[N];
 int<lower=0> parents_years_ed[N];
-real<lower=-3, upper=3> spei24[N];
 real<lower=0> market_dist[N];
+real<lower=0> mother_height[N];
+real<lower=-6> spei24[N];
 
-int<lower=1> code_N;       //number of sites
+int<lower=1> Adm2_N;       //number of countries
 
-int<lower=1> code[N];      //site id
+int<lower=1> Adm2[N];      //countries id
 
 }
 
@@ -221,8 +142,7 @@ real intercept;
 real toiletFlushToilet_beta;
 real toiletOther_beta;
 real toiletPitLatrine_beta;
-real relationship_hhheadNotRelated_beta;
-real relationship_hhheadRelative_beta;
+real related_hhhead_beta;
 real age_beta;
 real birth_order_beta;
 real head_age_beta;
@@ -239,15 +159,13 @@ real breast_duration_beta;
 real urban_ruralRural_beta;
 real parents_years_ed_beta;
 real market_dist_beta;
-real<lower=0> sigma_e; //error sd
+real mother_height_beta;
+real spei24_beta;
 
-vector<lower=0>[code_N] re_spei24_beta;
-vector[code_N] re_intercept;
+vector[Adm2_N] re_intercept;
 
 real<lower=0> re_intercept_sigma;
-real<lower=0> re_spei24_sigma;
-
-real<lower=0> re_spei24_mean;
+real<lower=0> sigma_e;
 
 }
 
@@ -255,34 +173,27 @@ real<lower=0> re_spei24_mean;
 model {
 real mu;
 
-sigma_e ~ cauchy(0, 2);
-re_intercept_sigma ~ cauchy(0, 1);
-re_spei24_sigma ~ cauchy(0, 1);
-re_spei24_mean ~ chi_square(1);
-
-re_intercept ~ normal(0, re_intercept_sigma);
-re_spei24_beta ~ normal(re_spei24_mean, re_spei24_sigma);
-
+re_intercept~ normal(0, re_intercept_sigma);
 
 for (i in 1:N){
-mu = intercept + re_intercept[code[i]] + re_spei24_beta[code[i]] * spei24[i] + market_dist_beta*market_dist[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + relationship_hhheadNotRelated_beta*relationship_hhheadNotRelated[i] + relationship_hhheadRelative_beta*relationship_hhheadRelative[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i];
+mu = intercept + re_intercept[Adm2[i]] + market_dist_beta*market_dist[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + related_hhhead_beta*related_hhhead[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + diarrhea_beta*diarrhea[i] + fever_beta*fever[i] + breast_duration_beta*breast_duration[i] + urban_ruralRural_beta*urban_ruralRural[i] + parents_years_ed_beta*parents_years_ed[i] + mother_height_beta*mother_height[i] + spei24_beta*spei24[i];
 
 haz_dhs[i] ~ normal(mu, sigma_e);
 }
 }
 "
 
-stanmod <- stan(model_name="mode1", model_code = drought_stan_code, data=stanDat,
-                iter = 10000, chains = 4, init=init)
+stanmod <- stan(model_name="mode1", model_code = stan_code, data=stanDat,
+                iter = 2000, chains = 4, init=init)
 
 ################################
 #Write Results
 #####################################
 time <- substr(Sys.time(), 1, 10)
 
-modtitle <- 'Just_EastAfrica_10k_iter'
+modtitle <- 'Just_EastAfrica_AdminIntercepts_wSPEI'
 
-az_write_blob(list(stanDat, drought_stan_code, stanmod), paste0(time, modtitle))
+save(list=c("stanDat", "stan_code", "stanmod"), file=paste0('~/stan-models/', time, modtitle))
 
 ###############################
 #Extract Random Effects
