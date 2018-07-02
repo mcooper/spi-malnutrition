@@ -7,9 +7,11 @@ library(zoo)
 library(foreach)
 library(doParallel)
 
-setwd('/mnt')
+setwd('/mnt/mnt')
 
-dat <- read.csv('~/dhsprocessed/sp_export.csv')
+dat <- read.csv('~/dhsprocessed/sp_export.csv') %>%
+  select(-calc_birthyear, -calc_birthmonth, -thousandday_month, -thousandday_year) %>%
+  unique
 
 sp <- SpatialPointsDataFrame(coords=dat[ c('longitude', 'latitude')], data = dat)
 
@@ -84,7 +86,11 @@ extract_neighbors <- function(vrt, x, y){
   br <- gdallocationinfo(vrt, x + 0.05, y - 0.05, wgs84=TRUE, valonly=TRUE) %>%
     as.numeric
   
-  return(rowMeans(cbind(m, u, b, l, r, ul, ur, bl, br), na.rm=T))
+  dat <- cbind(m, u, b, l, r, ul, ur, bl, br)
+  
+  dat[dat == -9999] <- NA
+  
+  return(rowMeans(dat, na.rm=T))
   
 }
 
@@ -94,6 +100,7 @@ parseDates <- function(dates){
   
   dates[dates < 0] <- 0
   
+  #If all dates are NA, dont mask any
   if (all(dates == 0)){
     return(rep(1, 432))
   }
@@ -127,10 +134,8 @@ parseDates <- function(dates){
   return(rep(year, 36))
 }
 
-cl <- makeCluster(7, outfile = '')
+cl <- makeCluster(64, outfile = '')
 registerDoParallel(cl)
-
-setwd('PrecipIndices')
 
 df <- foreach(n=1:nrow(rll), .packages=c('raster', 'lubridate', 'gdalUtils', 'SPEI', 'dplyr', 'zoo')) %dopar% {
   
@@ -193,15 +198,15 @@ df <- foreach(n=1:nrow(rll), .packages=c('raster', 'lubridate', 'gdalUtils', 'SP
   sel <- sp[sp$tmpcode == rll$layer[n], ]
   sel <- Reduce(function(x, y){merge(x,y,all.x=T,all.y=F)}, list(sel, interview, meanannual))
   cat(n, round(n/nrow(rll)*100, 4), 'percent done\n') 
-  write.csv(sel, n, row.names=F)
+  write.csv(sel, paste0('~/PrecipIndices/', n), row.names=F)
 }
 
-fs <- list.files()
+setwd('~/PrecipIndices/')
 
-df <- bind_rows(sapply(fs, read.csv))
-
-df <- df %>%
-  select(-tmpcode)
+df <- list.files()%>%
+	lapply(read.csv) %>%
+	bind_rows %>%
+	select(-tmpcode)
 
 write.csv(df, '~/dhsprocessed/PrecipIndices.csv', row.names=F)
 

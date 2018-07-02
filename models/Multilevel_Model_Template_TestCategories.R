@@ -18,26 +18,32 @@ all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
               list(hh, spei, cov, lc))
 
 ###########################################################
-#Analyze missing data, determine which variables to keep
+#Prep Data
 ############################################################
 
 all$haz_dhs <- all$haz_dhs/100
 all$whz_dhs <- all$whz_dhs/100
 
-all <- all %>%
-  filter(years_in_location >= 2 & is_visitor == 0 | is.na(all$years_in_location) | is.na(all$is_visitor))
+all$es <- as.factor(ifelse(all$natural > 0.75, "High", 
+                 ifelse(all$natural > 0.5, "Medium-High",
+                        ifelse(all$natural > 0.25, "Medium-Low", "Low"))))
 
-all$related_hhhead <- all$relationship_hhhead != "Not Related"
+all$precip <- as.factor(ifelse(all$spei24 > 1.5, "Flood", 
+                     ifelse(all$spei24 < -1.5, "Drought", "Normal")))
+
+all$precip <- relevel(all$precip, ref="Normal")
 
 library(lme4)
 
-mod <- lmer(haz_dhs + )
+mod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet + 
+              head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country) + (precip|code),
+            data=all)
 
-moddat <- all %>% filter(urban_rural == 'Rural') %>%
-  select(haz_dhs, age, interview_year, head_sex, hhsize, sex, gdp, population, mean_annual_precip, 
-           head_age, market_dist, mother_years_ed, workers, related_hhhead, wealth_index, 
-           istwin, diarrhea, fever, wealth_index, spi24, nat_grass, nat_water, code, country) %>%
-  na.omit
+
+summary(mod)
+
+
+
 
 fedmod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
                  head_age + market_dist + mother_years_ed + workers + related_hhhead + wealth_index + 

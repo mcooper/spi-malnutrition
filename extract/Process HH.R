@@ -20,19 +20,19 @@ library(dplyr)
 hh <- read.csv('hhvars.csv')
 
 data1 <- hh %>% 
-  select(code, interview_year, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
+  select(code, interview_year, interview_month, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
          head_age, head_sex, urban_rural, wealth_index, surveycode, country) %>%
   na.omit
 
 data2 <- hh %>% 
-  select(code, interview_year, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
+  select(code, interview_year, interview_month,haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
          head_age, head_sex, urban_rural, wealth_index, otherwatersource, ever_breastfed, diarrhea, 
          is_visitor, istwin, surveycode, country) %>%
   na.omit
 
 data2000 <- hh %>% 
   filter(interview_year > 2000) %>%
-  select(code, interview_year, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
+  select(code, interview_year, interview_month, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
          head_age, head_sex, urban_rural, wealth_index, relationship_hhhead, workers, dependents,
          drinkwatersource, surveycode, country) %>%
   na.omit
