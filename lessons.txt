@@ -18,8 +18,20 @@ LESSONS FROM MODELING THUS FAR:
 
 TO DO:
 -Systematically test precip indices for correlation with HAZ, for interaction with ES
+	-Make Plots
+		-Nature vs SPI
+		-GAM plots
+	-Make Regressions
+		-Betas
+		-P-Values
+		-% deviance explained?
+		-Distribution of Random Effects
+		-interaction betas and p-values
+		-difference in betas and p-values after adding ES.
+		-Test for correlation with residuals
+
+
 -Test ESA product vs Hansen, JRC water, Globeland30
 -Track down globeland30 for 1990?
 -Try models with Binary ES, SPI variables.
 -Run complicated model in Rstan using simulated data.
--Upload globeland30 to Blob

@@ -7,7 +7,7 @@ library(zoo)
 library(foreach)
 library(doParallel)
 
-setwd('/mnt/mnt')
+setwd('/mnt')
 
 dat <- read.csv('~/dhsprocessed/hhvars.csv') %>%
   select(interview_month, interview_year, code, latitude, longitude, age)
@@ -39,7 +39,7 @@ precip_files <- list.files(precip_in_folder, pattern='tif$')
 gdalbuildvrt(paste0(precip_in_folder, precip_files), precip_vrt_file, separate=TRUE, verbose=T, overwrite=TRUE)
 
 #Read in phenology data
-pheno_in_folder <- 'Phenology/'
+pheno_in_folder <- 'Pheno/'
 pheno_vrt_file <- extension(rasterTmpFile(), 'ivrt')
 pheno_files <- list.files(pheno_in_folder, pattern='tif$')
 gdalbuildvrt(paste0(pheno_in_folder, pheno_files), pheno_vrt_file, separate=TRUE, verbose=T, overwrite=TRUE)
@@ -93,7 +93,6 @@ extract_neighbors <- function(vrt, x, y){
   
 }
 
-
 parseDates <- function(dates){
   
   dates <- as.numeric(dates)
@@ -134,6 +133,10 @@ parseDates <- function(dates){
 }
 
 getSPI <- function(index, var, window, month, year){
+  if (window == 0){
+	return(NA)
+  }
+
   ind <- which(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month') == ymd(paste(year, month, 1, sep='-')))
   
   ts <- as.numeric(index(var, window, na.rm=TRUE)$fitted)
@@ -146,6 +149,8 @@ cl <- makeCluster(64, outfile = '')
 registerDoParallel(cl)
 
 foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridate', 'gdalUtils', 'SPEI', 'dplyr', 'zoo')) %dopar% {
+  
+  cat(n, round(n/nrow(rll)*100, 4), 'percent done\n') 
   
   precip <- extract_neighbors(precip_vrt_file, rll$x[n], rll$y[n])
   
@@ -166,7 +171,8 @@ foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridate', 'g
   
   s_season <- precip*phenoMask
   
-  sel <- sp[sp$tmpcode == rll$layer[n], ]
+  sel <- sp[sp$tmpcode == rll$layer[n], ] %>%
+    unique
   
   for (i in 1:nrow(sel)){
     sel$spi_age[i] <- getSPI(spi, precip, sel$age[i], sel$interview_month[i], sel$interview_year[i])
@@ -179,7 +185,6 @@ foreach(n=1:nrow(rll), .combine=bind_rows, .packages=c('raster', 'lubridate', 'g
     sel$spei_gs_ageutero[i] <- getSPI(spei, s_season, sel$age[i] + 9, sel$interview_month[i], sel$interview_year[i])
   }
   
-  cat(n, round(n/nrow(rll)*100, 4), 'percent done\n') 
   write.csv(sel, paste0('~/PrecipIndicesIndividual/', n), row.names=F)
 }
 
@@ -188,7 +193,8 @@ setwd('~/PrecipIndicesIndividual/')
 df <- list.files()%>%
 	lapply(read.csv) %>%
 	bind_rows %>%
-	select(-tmpcode)
+	select(-tmpcode) %>%
+	unique
 
 write.csv(df, '~/dhsprocessed/PrecipIndices_Individual.csv', row.names=F)
 

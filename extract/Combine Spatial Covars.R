@@ -15,11 +15,8 @@ gdp <- read.csv('country_gdp.csv')
 fao <- read.csv('FAOSTAT_TonnesPerCap.csv')
 wgi <- read.csv('WorldGovernanceIndicators.csv') %>%
   select(-wgi_impute)
-precip <- read.csv('Coords&Precip.csv') %>%  #Because of different months within a year, in some cases 10-yr average has to different measurements for one site
-  group_by(code, interview_year) %>%         #But differences are so trivially small, getting the mean for a site shouldn't matter
-  summarise(precip_10yr_mean=mean(precip_10yr_mean),
-            tmin_10yr_mean=mean(tmin_10yr_mean),
-            tmax_10yr_mean=mean(tmax_10yr_mean)) %>%
+precip <- read.csv('PrecipIndices.csv') %>%
+  select(code, precip_10yr_mean, tmax_10yr_mean, tmin_10yr_mean) %>%
   unique
 pop <- read.csv('population.csv')
 admin <- read.csv('Admin_Areas.csv') %>%

@@ -3,51 +3,17 @@ library(dplyr)
 
 setwd('G://My Drive/DHS Processed')
 
-lc <- read.csv('landcover.csv')
+hh <- read.csv('HH_data_A.csv')
+lc <- read.csv('landcover_processed.csv')
+spei <- read.csv('PrecipIndices.csv')
+spei_ind <- read.csv('PrecipIndices_Individual.csv')
+cov <- read.csv('SpatialCovars.csv')
 
-human <- paste0('cci_', c('10', '11', '12', '20', '30', '190', '200', '201', '202', '220'))
-natural <- paste0('cci_', c('40', '50', '60', '61', '62', '70', '71', '80', '90', '100', '110', '120', '121', '122',
-                            '130', '140', '150', '152', '153', '160', '170', '180', '210'))
-
-getPercetCover <- function(selcols, allcolmatch, df){
-  if(length(selcols) > 1){
-    selcolsum <- rowSums(df[ , selcols[selcols %in% names(df)]], na.rm=T)
-  } else{
-    selcolsum <- df[ , selcols]
-  }
-  allcolsum <- rowSums(df[ , grepl(allcolmatch, names(df))], na.rm=T)
-  return(selcolsum/allcolsum)
-}
-
-lc$human <- getPercetCover(human, 'cci_', lc)
-lc$natural <- getPercetCover(natural, 'cci_', lc)
-
-lc <- lc %>%
-  select(code, interview_year, human, natural)
-
-spi <- read.csv('Coords&SPI.csv') %>%
-  select(code, spi24, spi6, spi12, spi36, interview_month, interview_year, mean_annual_precip) %>%
-  unique
-
-md <- read.csv('MarketDist.csv')
-gdp <- read.csv('country_gdp.csv')
-
-md00 <- merge(select(md, code, md=market2000), data.frame(interview_year=seq(1988, 2007)))
-md15 <- merge(select(md, code, md=market2015), data.frame(interview_year=seq(2008, 2016)))
-
-md <- Reduce(bind_rows, list(md00, md15))
-
-hh <- read.csv('hhvars.csv') %>%
-  select(haz_dhs, whz_dhs, code, interview_year, interview_month, country, urban_rural, wealth_index)
-
-#hh <- hh %>% filter(wealth_index == 'Poorest')
-
-all <- Reduce(function(x, y){merge(x,y,all.x=F, all.y=F)}, list(hh, lc, spi, md, gdp)) %>%
-  filter(urban_rural == 'Rural')
+all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, lc, spei, spei_ind, cov))
 
 sel <- all %>%
   filter(-3 < spi24 & 3 > spi24 & !is.na(natural) & !is.na(spi24) &
-           md > 7*24 & md < 31*24)
+           market_dist > 7*24 & market_dist < 31*24)
 
 sel$naturalbin <- cut(sel$natural, breaks=seq(0, 1, 0.1))
 sel$spibin <- cut(sel$spi24, breaks=c(-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3))

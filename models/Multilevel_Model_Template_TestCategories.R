@@ -5,8 +5,8 @@ library(dplyr)
 library(broom)
 
 hh <- read.csv('HH_data_A.csv')
-spei <- read.csv('Coords&Precip.csv') %>%
-  select(code, interview_year, interview_month, spei24, spi24) %>%
+spei <- read.csv('PrecipIndices.csv') %>%
+  select(-precip_10yr_mean, -tmax_10yr_mean, -tmin_10yr_mean) %>%
   unique
 cov <- read.csv('SpatialCovars.csv')
 lc <- read.csv('landcover_processed.csv')
@@ -22,73 +22,78 @@ all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
 ############################################################
 
 all$haz_dhs <- all$haz_dhs/100
-all$whz_dhs <- all$whz_dhs/100
 
-all$es <- as.factor(ifelse(all$natural > 0.75, "High", 
-                 ifelse(all$natural > 0.5, "Medium-High",
-                        ifelse(all$natural > 0.25, "Medium-Low", "Low"))))
+all$es <- as.factor(ifelse(all$natural >= 0.75, "High", 
+                 ifelse(all$natural >= 0.5, "Medium-High",
+                        ifelse(all$natural >= 0.25, "Medium-Low", "Low"))))
 
-all$precip <- as.factor(ifelse(all$spei24 > 1.5, "Flood", 
-                     ifelse(all$spei24 < -1.5, "Drought", "Normal")))
+all$precip <- as.factor(ifelse(all$spi24 > 1.5, "Flood", 
+                     ifelse(all$spi24 < -1.5, "Drought", "Normal")))
 
 all$precip <- relevel(all$precip, ref="Normal")
+all$es <- relevel(all$es, ref="Low")
 
+all <- all %>% 
+  filter(spi24 < 1.5)
+
+###################################################
+#Model
+####################################################
 library(lme4)
-
-mod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet + 
-              head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country) + (precip|code),
-            data=all)
-
-
-summary(mod)
+high_haz_mod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet + 
+              head_age + head_sex + urban_rural + wealth_index + market_dist + es*spei24gs + (1|surveycode) + (1|country),
+            data=all %>% filter(haz_dhs > 1))
 
 
+low_haz_mod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet + 
+              head_age + head_sex + urban_rural + wealth_index + market_dist + es*spei24gs+ (1|surveycode) + (1|country),
+            data=all %>% filter(haz_dhs < -1))
+
+summary(high_haz_mod)
+summary(low_haz_mod)
 
 
-fedmod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
-                 head_age + market_dist + mother_years_ed + workers + related_hhhead + wealth_index + 
-                 istwin + diarrhea + fever + wealth_index + spi24 + (1|country), data = moddat)
+moddata <- data.frame(spei24gs = seq(-3, 1.5, 0.05),
+                      interview_year=1992,
+                      age=60,
+                      birth_order=10,
+                      hhsize=25,
+                      sex="Male",
+                      mother_years_ed=10,
+                      toilet="Pit Latrine",
+                      head_age=30,
+                      head_sex="Male",
+                      urban_rural="Rural",
+                      wealth_index="Poorer",
+                      surveycode="AL-5-1",
+                      country="AL",
+                      market_dist=0)
 
-feremod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
-                   head_age + market_dist + mother_years_ed + workers + related_hhhead + wealth_index + 
-                   istwin + diarrhea + fever + wealth_index + spi24 + (1|country) + (spi24|code), data = moddat)
+low <- moddata
+low$es <- "Low"
+midlow <- moddata
+midlow$es <- "Medium-Low"
+midhigh <- moddata
+midhigh$es <- "Medium-High"
+high <- moddata
+high$es <- "High"
 
-remod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
-                head_age + market_dist + mother_years_ed + workers + related_hhhead + wealth_index + 
-                istwin + diarrhea + fever + wealth_index + (1|country) + (spi24|code), data = moddat)
+preddat <- bind_rows(low, midlow, midhigh, high)
 
+preddat$fits <- predict(low_haz_mod, preddat)
 
-moddat$resid <- residuals(combmod)
+library(ggplot2)
 
+ggplot(preddat) + geom_line(aes(x=spei24gs, y=fits, color=es)) + theme_bw()
 
-ggplot(moddat) + geom_histogram(aes(x=resid, fill=as.factor(interview_year)))
+reg <- read.csv('regions.csv')
 
-re <- ranef(combmod)$Adm1
-hist(re$spei24)
-re$Adm1 <- rownames(re)
-re$spei24_fix <- fixef(combmod)[['spei24']]
+sumry <- all %>% select(latitude, longitude, es, natural, market_dist, country, urban_rural) %>% unique
 
-codesum <- all %>%
-  group_by(Adm1) %>%
-  summarize(spei24_mean = mean(spei24, na.rm=T),
-            haz_dhs_mean = mean(haz_dhs, na.rm=T),
-            longitude=mean(longitude),
-            latitude=mean(latitude))
+sumry <- merge(reg, sumry)
 
-re <- merge(re, codesum, all.x=T, all.y=F)
-
-re$hazval <- ifelse(re$haz_dhs_mean < -1.75, "Low HAZ",
-                    ifelse(re$haz_dhs_mean > -0.85, "High HAZ", "Average HAZ"))
-
-re$speival <- ifelse(re$spei24_mean < -1, "Low SPEI",
-                     ifelse(re$spei24_mean > 0.5, "High SPEI", "Average SPEI"))
-
-ggplot(re) + geom_histogram(aes(x=spei24, fill=hazval), bins=100) + 
-  ggtitle("Histogram of Random Effects for SPEI on HAZ, subset by HAZ Values")
-ggplot(re) + geom_histogram(aes(x=spei24, fill=speival), bins=100) + 
-  ggtitle("Histogram of Random Effects for SPEI on HAZ, subset by SPEI Values")
-
-ggplot(re) + geom_point(aes(x=longitude, y=latitude, color=spei24), size=0.25) + 
-  scale_color_gradient2(low="green", high="red", mid="yellow")
+ggplot(sumry) + geom_histogram(aes(x=log(market_dist), fill=urban_rural))
 
 
+
+write.csv(sumry, 'C://Users/matt/Desktop/ES.csv', row.names=F)

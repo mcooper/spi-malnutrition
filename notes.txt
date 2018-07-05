@@ -35,3 +35,11 @@ data1: age birth_order	hhsize	sex	mother_years_ed	toilet	head_age	head_sex	urban
 data2: age birth_order	hhsize	sex	mother_years_ed	toilet	head_age	head_sex	urban_rural	wealth_factor otherwatersource ever_breastfed diarrhea is_visitor	istwin
 
 data3: age birth_order	hhsize	sex	mother_years_ed toilet	head_age	head_sex	urban_rural	wealth_factor relationship_hhhead	workers	dependents	drinkingwatersource
+
+
+
+
+Meeting with Stefan:
+-Look at low HAZ scores vs high HAZ scores.  Then see how the models work.  Ideally the beta for SPI would be very differnt between them.
+-Find a good study to subset? A good natural experiment?
+-

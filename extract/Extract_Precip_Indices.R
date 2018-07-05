@@ -168,8 +168,8 @@ df <- foreach(n=1:nrow(rll), .packages=c('raster', 'lubridate', 'gdalUtils', 'SP
                           spi24=as.numeric(spi(precip, 24, na.rm=TRUE)$fitted),
                           spi36=as.numeric(spi(precip, 36, na.rm=TRUE)$fitted),
                           precip_10yr_mean=rollapply(precip, width=12*10, FUN=mean, partial=TRUE, align='right'),
-                          tmin_10yr_mean=rollapply(tmax, width=12*10, FUN=mean, partial=TRUE, align='right'),
-                          tmax_10yr_mean=rollapply(tmin, width=12*10, FUN=mean, partial=TRUE, align='right'),
+                          tmin_10yr_mean=rollapply(tmin, width=12*10, FUN=mean, partial=TRUE, align='right'),
+                          tmax_10yr_mean=rollapply(tmax, width=12*10, FUN=mean, partial=TRUE, align='right'),
                           spei12gs=as.numeric(spei(s_season, 12, na.rm=TRUE)$fitted),
                           spei24gs=as.numeric(spei(s_season, 24, na.rm=TRUE)$fitted),
                           spei36gs=as.numeric(spei(s_season, 36, na.rm=TRUE)$fitted),
@@ -203,12 +203,22 @@ df <- foreach(n=1:nrow(rll), .packages=c('raster', 'lubridate', 'gdalUtils', 'SP
 
 setwd('~/PrecipIndices/')
 
-df <- list.files()%>%
+precip <- list.files()%>%
 	lapply(read.csv) %>%
 	bind_rows %>%
 	select(-tmpcode)
 
-write.csv(df, '~/dhsprocessed/PrecipIndices.csv', row.names=F)
+#Make 10yr averages unique for each code.
+#If an DHS site was visited across calendar months or calendar years, if will have multiple 10yr averages
+precip_code <- precip %>%
+  group_by(code) %>%
+  summarise(precip_10yr_mean=mean(precip_10yr_mean),
+            tmin_10yr_mean=mean(tmin_10yr_mean),
+			tmax_10yr_mean=mean(tmax_10yr_mean))
+
+precip2 <- merge(precip %>% select(-precip_10yr_mean, -tmin_10yr_mean, -tmax_10yr_mean), precip_code)
+
+write.csv(precip2, '~/dhsprocessed/PrecipIndices.csv', row.names=F)
 
 
 
