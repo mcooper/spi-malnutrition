@@ -17,7 +17,7 @@
 #'Also, first filter out households that are visitors or were nto present for the duration of the child's life
 ###################################################################################
 
-setwd('G://My Drive/DHS Processed/')
+setwd('~/dhsprocessed/')
 
 library(dplyr)
 
@@ -26,18 +26,21 @@ hh <- read.csv('hhvars.csv') %>%
          whz_dhs = whz_dhs/100) %>%
   filter((years_in_location >= (age/12) | is.na(years_in_location)) & (is_visitor == 0 | is.na(is_visitor)))
 
-data1 <- hh %>% 
+data1 <- hh %>%
+  filter(is_visitor == 0 | is.na(is_visitor)) %>% 
   select(code, interview_year, interview_month, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
          head_age, head_sex, urban_rural, wealth_index, surveycode, country) %>%
   na.omit
 
-data2 <- hh %>% 
+data2 <- hh  %>%
+  filter(is_visitor == 0 | is.na(is_visitor)) %>% 
   select(code, interview_year, interview_month,haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
          head_age, head_sex, urban_rural, wealth_index, otherwatersource, ever_breastfed, diarrhea, 
          istwin, surveycode, country) %>%
   na.omit
 
-data2000 <- hh %>% 
+data2000 <- hh %>%
+  filter(is_visitor == 0 | is.na(is_visitor)) %>% 
   filter(interview_year > 2000) %>%
   select(code, interview_year, interview_month, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
          head_age, head_sex, urban_rural, wealth_index, relationship_hhhead, workers, dependents,
