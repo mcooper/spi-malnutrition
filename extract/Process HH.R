@@ -11,13 +11,20 @@
 #'
 #'The variables were selected based on what was used in previous literature,
 #'as well as /scope/VariableScope.csv, created from /scope/Scope_vars.R
+#'
+#'Testing the residuals shows that adding more variables adds little values
+#'
+#'Also, first filter out households that are visitors or were nto present for the duration of the child's life
 ###################################################################################
 
 setwd('G://My Drive/DHS Processed/')
 
 library(dplyr)
 
-hh <- read.csv('hhvars.csv')
+hh <- read.csv('hhvars.csv') %>%
+  mutate(haz_dhs = haz_dhs/100,
+         whz_dhs = whz_dhs/100) %>%
+  filter((years_in_location >= (age/12) | is.na(years_in_location)) & (is_visitor == 0 | is.na(is_visitor)))
 
 data1 <- hh %>% 
   select(code, interview_year, interview_month, haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
@@ -27,7 +34,7 @@ data1 <- hh %>%
 data2 <- hh %>% 
   select(code, interview_year, interview_month,haz_dhs, age, birth_order, hhsize, sex, mother_years_ed, toilet, 
          head_age, head_sex, urban_rural, wealth_index, otherwatersource, ever_breastfed, diarrhea, 
-         is_visitor, istwin, surveycode, country) %>%
+         istwin, surveycode, country) %>%
   na.omit
 
 data2000 <- hh %>% 
@@ -58,26 +65,12 @@ sqrt(mean(residuals(mod1)^2))
 
 mod2 <- lmer(haz_dhs~interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet + 
                head_age + head_sex + urban_rural + wealth_index + otherwatersource + ever_breastfed + diarrhea + 
-               istwin + (1|surveycode) + (1|country), data=data2 %>% filter(is_visitor == 0))
+               istwin + (1|surveycode) + (1|country), data=data2)
 
 sqrt(mean(residuals(mod2)^2))
 #[1] 146.3615
 
 #looks like dataset 2 performs slightly better by RMSE
-
-#Compare AIC, using both datasets
-mod3 <- lmer(haz_dhs~interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet + 
-               head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country), 
-               data=data2 %>% filter(is_visitor == 0))
-
-AIC(mod2)
-#[1] 5645072
-AIC(mod3)
-#[1] 5648004
-
-#Again, more covariates is better.  But we have many more records from mod1, so will likely stick to that.
-
-
 
 
 

@@ -1,40 +1,15 @@
-library(dplyr)
 library(ggplot2)
+library(dplyr)
 
 setwd('G://My Drive/DHS Processed')
 
-lc <- read.csv('landcover.csv')
-covars <- read.csv('SpatialCovars.csv')
+hh <- read.csv('HH_data_A.csv')
+lc <- read.csv('landcover_processed.csv')
+spei <- read.csv('PrecipIndices.csv')
+spei_ind <- read.csv('PrecipIndices_Individual.csv')
+cov <- read.csv('SpatialCovars.csv')
 
-human <- paste0('cci_', c('10', '11', '12', '20', '30', '190', '200', '201', '202', '220'))
-natural <- paste0('cci_', c('40', '50', '60', '61', '62', '70', '71', '80', '90', '100', '110', '120', '121', '122',
-                            '130', '140', '150', '152', '153', '160', '170', '180', '210'))
-
-getPercetCover <- function(selcols, allcolmatch, df){
-  if(length(selcols) > 1){
-    selcolsum <- rowSums(df[ , selcols[selcols %in% names(df)]], na.rm=T)
-  } else{
-    selcolsum <- df[ , selcols]
-  }
-  allcolsum <- rowSums(df[ , grepl(allcolmatch, names(df))], na.rm=T)
-  return(selcolsum/allcolsum)
-}
-
-lc$human <- getPercetCover(human, 'cci_', lc)
-lc$natural <- getPercetCover(natural, 'cci_', lc)
-
-lc <- lc %>%
-  select(code, interview_year, human, natural)
-
-spi <- read.csv('Coords&Precip.csv') %>%
-  select(code, spei24, interview_year, interview_month) %>%
-  unique
-
-hh <- read.csv('hhvars.csv') %>%
-  select(haz_dhs, interview_year, interview_month, country, urban_rural, wealth_index,
-         latitude, longitude, code)
-
-all <- Reduce(function(x, y){merge(x,y,all.x=F, all.y=F)}, list(hh, lc, spi, covars))
+all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, lc, spei, spei_ind, cov))
 
 all <- all %>%
   filter(spei24 > -3 & spei24 < 3 & urban_rural=='Rural')

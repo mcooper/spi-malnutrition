@@ -13,6 +13,8 @@ LESSONS FROM MODELING THUS FAR:
 	-Problem: Overfitting?
 	-Solution: Try Binning SPI
 -Lots of Spatial Autocorrelation in Error terms, especially if you dont include geographic variables or site-level varying intercepts
+-Differences in hh and individual-level variables do not matter much, residuals are very similar
+	-Use few control variables that permit a wide range of DHS sites
 
 
 
@@ -24,12 +26,12 @@ TO DO:
 	-Make Regressions
 		-Betas
 		-P-Values
-		-% deviance explained?
 		-Distribution of Random Effects
 		-interaction betas and p-values
 		-difference in betas and p-values after adding ES.
 		-Test for correlation with residuals
 
+	-Look at Loess vs Residuals?
 
 -Test ESA product vs Hansen, JRC water, Globeland30
 -Track down globeland30 for 1990?
