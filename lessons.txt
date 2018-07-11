@@ -15,6 +15,7 @@ LESSONS FROM MODELING THUS FAR:
 -Lots of Spatial Autocorrelation in Error terms, especially if you dont include geographic variables or site-level varying intercepts
 -Differences in hh and individual-level variables do not matter much, residuals are very similar
 	-Use few control variables that permit a wide range of DHS sites
+-Running the regression for only part of the SPI spectrum can yield weird coefficients; best to use binning.
 
 
 
@@ -37,3 +38,6 @@ TO DO:
 -Track down globeland30 for 1990?
 -Try models with Binary ES, SPI variables.
 -Run complicated model in Rstan using simulated data.
+-Look more into "Urbanization timing" dataset
+-Learn R-INLA!
+-See if distance to Urban DHS sites is a suitable proxy?

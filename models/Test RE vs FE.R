@@ -4,18 +4,17 @@ library(ggplot2)
 library(dplyr)
 library(broom)
 
-hh <- read.csv('hhvars.csv')
-spei <- read.csv('Coords&Precip.csv') %>%
-  select(-precip_10yr_mean, -tmin_10yr_mean, -tmax_10yr_mean)
+hh <- read.csv('HH_data_A.csv')
+spei <- read.csv('PrecipIndices.csv')
+spei_ind <- read.csv('PrecipIndices_Individual.csv')
 cov <- read.csv('SpatialCovars.csv')
-forest <- read.csv('forest_cover25000.csv')
 lc <- read.csv('landcover_processed.csv')
 
 ################################
 #Combine and clear workspace
 ################################
 all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
-              list(hh, spei, cov, forest, lc))
+              list(hh, spei, spei_ind, cov, lc))
 
 #rm(list=setdiff(ls(), "all")) #remove everything but our data
 
@@ -23,42 +22,31 @@ all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
 #Analyze missing data, determine which variables to keep
 ############################################################
 
-all$haz_dhs <- all$haz_dhs/100
-all$whz_dhs <- all$whz_dhs/100
-
-all <- all %>%
-  filter(years_in_location >= 2 & is_visitor == 0 | is.na(all$years_in_location) | is.na(all$is_visitor))
-
-all$related_hhhead <- all$relationship_hhhead != "Not Related"
-
 library(lme4)
 
-moddat <- all %>% filter(urban_rural == 'Rural') %>%
-  select(haz_dhs, age, interview_year, head_sex, hhsize, sex, gdp, population, mean_annual_precip, 
-           head_age, market_dist, mother_years_ed, workers, related_hhhead, wealth_index, 
-           istwin, diarrhea, fever, wealth_index, spi24, spei24, nat_grass, nat_water, code, country) %>%
-  na.omit
+all <- all %>% filter(!is.infinite(spei_age))
 
-femod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
-                 head_age + market_dist + mother_years_ed + workers + related_hhhead + 
-                 istwin + diarrhea + fever + wealth_index + spei24 + (1|country), data = moddat)
+femod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + 
+                mother_years_ed + toilet + head_age + head_sex + urban_rural + 
+                wealth_index + spei_age + (1|surveycode) + (1|country), data = all %>% filter(spei_age < 1))
 
-feremod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
-                   head_age + market_dist + mother_years_ed + workers + related_hhhead + 
-                   istwin + diarrhea + fever + wealth_index + spei24 + (1|country) + (spei24|code), data = moddat)
+feremod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + 
+                  mother_years_ed + toilet + head_age + head_sex + urban_rural + 
+                  wealth_index + spei_age + (spei_age|code), data = all)
 
-remod <- lmer(haz_dhs ~ age + interview_year + head_sex + hhsize + sex + gdp + population + mean_annual_precip +
-                head_age + market_dist + mother_years_ed + workers + related_hhhead + 
-                istwin + diarrhea + fever + wealth_index + (spei24|code), data = moddat)
+remod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + 
+                mother_years_ed + toilet + head_age + head_sex + urban_rural + 
+                wealth_index + (spei_age|code), data = all %>% filter(country %in% c("UG")))
 
+dummod <- lm(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + 
+                 mother_years_ed + toilet + head_age + head_sex + urban_rural + 
+                 wealth_index + spei_age*code, data = all %>% filter(country %in% c("UG")))
 
-maxmod <- lmer(haz_dhs ~ (interview_year + hhsize + sex +
-                           head_age + mother_years_ed + workers + 
-                           wealth_index + spei24|code), data = moddat)
 
 AIC(femod)
 AIC(feremod)
 AIC(remod)
+AIC(dummod)
 
 
 

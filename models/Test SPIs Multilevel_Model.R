@@ -45,7 +45,7 @@ for (i in names(all)[grepl('sp', names(all))]){
   
   
   baseline <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet +
-                              head_age + head_sex + urban_rural + wealth_index + testvar + (1|surveycode) + (1|country), 
+                              head_age + head_sex + urban_rural + wealth_index + (testvar|code) + (1|surveycode) + (1|country), 
                               data=df)
  
   baseline_es<- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet +
@@ -66,7 +66,7 @@ for (i in names(all)[grepl('sp', names(all))]){
   
   tmp$baseline_wet_B <- tidy(baseline) %>% filter(term == "testvarWet") %>% select(estimate) %>% as.numeric
   tmp$baseline_wet_p <- tidy(baseline) %>% filter(term == "testvarWet") %>% select(statistic) %>% as.numeric
-  tmp$baseline_AIC <- AIC(spi_baseline)
+  tmp$baseline_AIC <- AIC(baseline)
 
   #With Landcover
   tmp$baseline_es_dry_B <- tidy(baseline_es) %>% filter(term == "testvarDry") %>% select(estimate) %>% as.numeric
