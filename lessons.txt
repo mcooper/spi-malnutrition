@@ -16,7 +16,8 @@ LESSONS FROM MODELING THUS FAR:
 -Differences in hh and individual-level variables do not matter much, residuals are very similar
 	-Use few control variables that permit a wide range of DHS sites
 -Running the regression for only part of the SPI spectrum can yield weird coefficients; best to use binning.
-
+-Urban sites in DHS are country determined, any coefficient should be at the country level
+-Due to measurement error at each month, use month as a factor
 
 
 TO DO:
@@ -37,7 +38,7 @@ TO DO:
 -Test ESA product vs Hansen, JRC water, Globeland30
 -Track down globeland30 for 1990?
 -Try models with Binary ES, SPI variables.
+	-This worked well!
 -Run complicated model in Rstan using simulated data.
--Look more into "Urbanization timing" dataset
 -Learn R-INLA!
--See if distance to Urban DHS sites is a suitable proxy?
+-Re-run spatial covars adding builtup, log transform necessary vars (like GDP)

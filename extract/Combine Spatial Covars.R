@@ -23,8 +23,9 @@ admin <- read.csv('Admin_Areas.csv') %>%
   select(-nnAdm1, -nnAdm2)
 fields <- read.csv('fieldsize.csv')
 nut <- read.csv('nutritiondiversity.csv')
+built <- read.csv('builtup_25000.csv')
 
-alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin, fields, nut))
+alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin, fields, nut, built))
 
 library(raster)
 
@@ -70,7 +71,8 @@ alldf <- alldf %>%
             tmin_10yr_mean=mean(tmin_10yr_mean),
             crop_prod=mean(crop_prod),
             fieldsize=mean(fieldsize),
-            nutritiondiversity=mean(nutritiondiversity))
+            nutritiondiversity=mean(nutritiondiversity),
+            builtup=mean(builtup_25000))
 
 setwd('../../DHS Processed/')
 

@@ -5,8 +5,7 @@ library(broom)
 
 setwd('~/dhsprocessed')
 
-hh <- read.csv('hhvars.csv')
-hha <- read.csv('HH_data_A.csv')
+hh <- read.csv('HH_data_A.csv')
 lc <- read.csv('landcover_processed.csv')
 spei <- read.csv('PrecipIndices.csv')
 spei_ind <- read.csv('PrecipIndices_Individual.csv')
@@ -45,20 +44,20 @@ for (i in names(all)[grepl('sp', names(all))]){
   
   
   baseline <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet +
-                              head_age + head_sex + urban_rural + wealth_index + (testvar|code) + (1|surveycode) + (1|country), 
+                              head_age + head_sex + urban_rural + wealth_index + testvar + (1|surveycode) + (1|country), 
                               data=df)
  
   baseline_es<- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet +
                                   head_age + head_sex + urban_rural + wealth_index + testvar + natural + (1|surveycode) + (1|country), 
-                                data=df %>% filter(market_dist > 24*14))
+                                data=df %>% filter(builtup < 2))
   
   rural<- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet +
                             head_age + head_sex + urban_rural + wealth_index + testvar + (1|surveycode) + (1|country),
-                          data=df %>% filter(market_dist > 24*14))
+                          data=df %>% filter(builtup < 2))
 
   urban<- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet +
                             head_age + head_sex + urban_rural + wealth_index + testvar + (1|surveycode) + (1|country),
-                          data=df %>% filter(market_dist < 24))
+                          data=df %>% filter(builtup > 2))
 
   #Baseline
   tmp$baseline_dry_B <- tidy(baseline) %>% filter(term == "testvarDry") %>% select(estimate) %>% as.numeric
@@ -103,4 +102,4 @@ for (i in names(all)[grepl('sp', names(all))]){
   
 }
 
-write.csv(sumdf, 'categorizedSPI.csv', row.names=F)
+write.csv(sumdf, 'categorizedSPI_builtup.csv', row.names=F)
