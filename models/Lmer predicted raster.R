@@ -15,14 +15,10 @@ all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, lc, spei, c
 all$lbuiltup <- log(all$builtup)
 
 mod <- lmer(haz_dhs ~ interview_year + (1|country/interview_month) + age + birth_order + hhsize + sex + mother_years_ed + toilet +
-            head_age + head_sex + wealth_index + urban_rural + (1|surveycode) + (1|country), data=all)
-
-all$residuals <- residuals(mod)
-
-mod2 <- lm(residuals ~ spei24*market_dist + spei24*forest + spei24*bare + spei24*ag_pct_gdp + 
-             spei24*precip_10yr_mean + spei24*gdp + spei24*government_effectiveness + spei24*irrigation + 
-             spei24*ndvi + spei24*population + spei24*stability_violence + spei24*tmax_10yr_mean + spei24*tmin_10yr_mean + 
-             spei24*fieldsize + spei24*nutritiondiversity, data=all)
+            head_age + head_sex + wealth_index + urban_rural + spei36*market_dist + spei36*forest + spei36*bare + spei36*ag_pct_gdp + 
+              spei36*precip_10yr_mean + spei36*gdp + spei36*government_effectiveness + spei36*irrigation + 
+              spei36*ndvi + spei36*population + spei36*stability_violence + spei36*tmax_10yr_mean + spei36*tmin_10yr_mean + 
+              spei36*fieldsize + spei36*nutritiondiversity + (1|surveycode) + (1|country), data=all)
 
 library(raster)
 
