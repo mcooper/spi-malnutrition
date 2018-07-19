@@ -114,19 +114,6 @@ stanDat[["urban_ruralRural"]] <- all$urban_rural == "Rural"
 stanDat[["mother_years_ed"]] <- all$mother_years_ed
 stanDat[["spei24"]] <- all$spei24
 
-#Spatial Covariates
-stanDat[["ag_pct_gdp"]] <- codemap$ag_pct_gdp
-stanDat[["forest"]] <- codemap$forest
-stanDat[["gdp"]] <- codemap$gdp
-stanDat[["government_effectiveness"]] <- codemap$government_effectiveness
-stanDat[["irrigation"]] <- codemap$irrigation
-stanDat[["market_dist"]] <- codemap$market_dist
-stanDat[["ndvi"]] <- codemap$ndvi
-stanDat[["population"]] <- codemap$population
-stanDat[["crop_prod"]] <- codemap$crop_prod
-stanDat[["fieldsize"]] <- codemap$fieldsize
-stanDat[["nutritiondiversity"]] <- codemap$nutritiondiversity
-
 stanDat[["code_N"]] <- length(unique(all$code))
 stanDat[["code"]] <- as.numeric(as.factor(as.character(all$code)))
 
@@ -155,19 +142,6 @@ int<lower=0> mother_years_ed[N];
 real<lower=-6, upper=6> spei24[N];
 
 int<lower=1> code_N;       //number of sites
-
-real<lower=0>  ag_pct_gdp [code_N];
-real<lower=0>  forest [code_N];
-real<lower=0>  gdp [code_N];
-real<lower=-10, upper=10>  government_effectiveness [code_N];
-real<lower=0>  irrigation [code_N];
-real<lower=0>  market_dist [code_N];
-real<lower=0>  ndvi [code_N];
-real<lower=0>  population [code_N];
-real<lower=0>  crop_prod [code_N];
-real<lower=0>  fieldsize [code_N];
-real<lower=0>  nutritiondiversity [code_N];
-
 int<lower=1> code[N];      //site id
 
 }
@@ -191,22 +165,6 @@ real urban_ruralRural_beta;
 real mother_years_ed_beta;
 real<lower=0> sigma_e; //error sd
 
-real ag_pct_gdp_geobeta;
-real forest_geobeta;
-real gdp_geobeta;
-real government_effectiveness_geobeta;
-real irrigation_geobeta;
-real market_dist_geobeta;
-real ndvi_geobeta;
-real population_geobeta;
-real crop_prod_geobeta;
-real fieldsize_geobeta;
-real nutritiondiversity_geobeta;
-
-real geo_intercept; 
-real<lower=0> geo_sigma_e;
-
-
 vector<lower=0>[code_N] re_spei24_beta;
 vector[code_N] re_intercept;
 
@@ -217,10 +175,8 @@ real<lower=0> re_intercept_sigma;
 
 model {
 real mu;
-real geo_mu;
 
 sigma_e ~ cauchy(0, 2);
-geo_sigma_e ~ cauchy(0, 2);
 
 intercept ~ normal(-6165.9669, 928.6096);
 toiletFlushToilet_beta ~ normal(-1.2157, 2.2857);
@@ -241,12 +197,6 @@ mother_years_ed_beta ~ normal(1.7453, 0.1858);
 
 for (i in 1:N){
 
-  geo_mu = geo_intercept + ag_pct_gdp[code[i]]*ag_pct_gdp_geobeta + forest[code[i]]*forest_geobeta + gdp[code[i]]*gdp_geobeta + government_effectiveness[code[i]]*government_effectiveness_geobeta + irrigation[code[i]]*irrigation_geobeta + market_dist[code[i]]*market_dist_geobeta + ndvi[code[i]]*ndvi_geobeta + population[code[i]]*population_geobeta + crop_prod[code[i]]*crop_prod_geobeta + fieldsize[code[i]]*fieldsize_geobeta + nutritiondiversity[code[i]]*nutritiondiversity_geobeta;
-
-  re_spei24_beta[code[i]] ~ normal(geo_mu, geo_sigma_e);
-
-
-
   mu = intercept + re_intercept[code[i]] + re_spei24_beta[code[i]] * spei24[i] + toiletFlushToilet_beta*toiletFlushToilet[i] + toiletOther_beta*toiletOther[i] + toiletPitLatrine_beta*toiletPitLatrine[i] + age_beta*age[i] + birth_order_beta*birth_order[i] + head_age_beta*head_age[i] + head_sexMale_beta*head_sexMale[i] + sexMale_beta*sexMale[i] + wealth_indexMiddle_beta*wealth_indexMiddle[i] + wealth_indexPoorer_beta*wealth_indexPoorer[i] + wealth_indexRicher_beta*wealth_indexRicher[i] + wealth_indexRichest_beta*wealth_indexRichest[i] + hhsize_beta*hhsize[i] + urban_ruralRural_beta*urban_ruralRural[i] + mother_years_ed_beta*mother_years_ed[i];
 
   haz_sim[i] ~ normal(mu, sigma_e);
@@ -256,7 +206,7 @@ for (i in 1:N){
 "
 
 stanmod <- stan(model_name="mode1", init=init, model_code = stan_code, data=stanDat,
-                iter = 1000, chains = 4)
+                iter = 1500, chains = 4)
 
 ################################
 #Write Results
