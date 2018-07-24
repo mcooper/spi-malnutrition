@@ -23,7 +23,7 @@ admin <- read.csv('Admin_Areas.csv') %>%
   select(-nnAdm1, -nnAdm2)
 fields <- read.csv('fieldsize.csv')
 nut <- read.csv('nutritiondiversity.csv')
-built <- read.csv('builtup_25000.csv')
+built <- read.csv('builtup.csv')
 
 alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin, fields, nut, built))
 
@@ -40,9 +40,7 @@ cropread <- function(r){
 s <- sapply(list.files(pattern = '.tif$'), FUN=cropread) %>%
   stack
 
-names(s) <- c("ag_pct_gdp", "bare", "Cereals", "precip_10yr_mean", "fieldsize", "forest", "gdp", "government_effectiveness",
-              "irrigation", "market_dist", "ndvi", "nutritiondiversity", "population", "RootsandTubers", "stability_violence", "tmax_10yr_mean",
-              "tmin_10yr_mean")
+names(s) <- gsub('.tif', '', names(s))
 
 #Combine Cerealas and Roots and Tubers
 s[["crop_prod"]] <- s[["Cereals"]] + s[["RootsandTubers"]]
@@ -72,7 +70,7 @@ alldf <- alldf %>%
             crop_prod=mean(crop_prod),
             fieldsize=mean(fieldsize),
             nutritiondiversity=mean(nutritiondiversity),
-            builtup=mean(builtup_25000))
+            builtup=mean(builtup))
 
 setwd('../../DHS Processed/')
 
