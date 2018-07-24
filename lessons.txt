@@ -42,3 +42,8 @@ TO DO:
 -Run complicated model in Rstan using simulated data.
 -Learn R-INLA!
 -Re-run spatial covars adding builtup, log transform necessary vars (like GDP)
+
+Get baseline stunting data
+Get ArcMap
+Make a more marsimonious model
+Check for collinearity
