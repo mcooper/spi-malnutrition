@@ -6,45 +6,164 @@ library(broom)
 setwd('G://My Drive/DHS Processed')
 
 hha <- read.csv('HH_data_A.csv')
-lc <- read.csv('landcover_processed.csv')
 spei <- read.csv('PrecipIndices.csv')
 cov <- read.csv('SpatialCovars.csv')
 
-all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, lc, spei, cov))
+all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, spei, cov)) %>%
+  na.omit
 
-all$lbuiltup <- log(all$builtup)
+#Inverse Hyperbolic Sine Transformation
+#http://worthwhile.typepad.com/worthwhile_canadian_initi/2011/07/a-rant-on-inverse-hyperbolic-sine-transformations.html
+#
+ihs <- function(x) {
+  y <- log(x + sqrt(x ^ 2 + 1))
+  return(y)
+}
 
-mod <- lmer(haz_dhs ~ interview_year + (1|country/interview_month) + age + birth_order + hhsize + sex + mother_years_ed + toilet +
-            head_age + head_sex + wealth_index + urban_rural + spei36*market_dist + spei36*forest + spei36*bare + spei36*ag_pct_gdp + 
-              spei36*precip_10yr_mean + spei36*gdp + spei36*government_effectiveness + spei36*irrigation + 
-              spei36*ndvi + spei36*population + spei36*stability_violence + spei36*tmax_10yr_mean + spei36*tmin_10yr_mean + 
-              spei36*fieldsize + spei36*nutritiondiversity + (1|surveycode) + (1|country), data=all)
+#'Collinearity with:
+#' NDVI and Bare -0.9
+#' population and builtup 0.77
+#' tmax and tmin 0.82
+
+
+all$bare_ihs <- ihs(all$bare)
+all$forest_ihs <- ihs(all$forest)
+all$gdp_l <- log(all$gdp)
+all$market_dist_ihs <- ihs(all$market_dist)
+all$ndvi_resc <- all$ndvi/5000
+all$population_ihs <- ihs(all$population)
+all$fieldsize_ihs <- ihs(all$fieldsize)
+all$builtup_ihs <- ihs(all$builtup)
+
+#Make categorical
+all$spei24 <- ifelse(all$spei24 > 1.5, "Wet",
+                     ifelse(all$spei24 < -1.5, "Dry", "Normal")) %>%
+  as.factor %>%
+  relevel(ref = "Normal")
+
+mod <- lmer(haz_dhs ~ interview_year + (1|country/interview_month) + age + 
+              birth_order + hhsize + sex + mother_years_ed + toilet +
+              head_age + head_sex + wealth_index + urban_rural + 
+              spei24*market_dist_ihs + 
+              spei24*forest_ihs + 
+              spei24*ag_pct_gdp + spei24*precip_10yr_mean + spei24*gdp_l + 
+              spei24*government_effectiveness + spei24*irrigation + 
+              spei24*ndvi_resc + spei24*population_ihs + spei24*stability_violence + 
+              spei24*tmax_10yr_mean + 
+              spei24*fieldsize_ihs + spei24*nutritiondiversity + 
+              (1|surveycode) + (1|country), data=all)
+
+###Do Moran's I on the mod
+all$residuals <- residuals(mod)
+
 
 library(raster)
 
 setwd('G://My Drive/DHS Spatial Covars/Final Rasters')
 
-market_dist <- raster('market_distance.tif')
-forest <- raster('forest.tif')
-bare <- raster('bare.tif')
+setNAs <- function(raster, column){
+  raster[raster > max(all[ , column], na.rm=T)] <- NA
+  raster[raster < min(all[ , column], na.rm=T)] <- NA
+  return(raster)
+}
+
+market_dist <- raster('market_distance.tif') %>% 
+  ihs
+
+forest <- raster('forest.tif') %>% 
+  ihs
+
 ag_pct_gdp <- raster('ag_pct_gdp.tif')
+
 precip_10yr_mean <- raster('CHIRPS_10yr_avg.tif')
-gdp <- raster('gdp2020.tif')
-govt_eff <- raster('government_effectiveness.tif')
+
+gdp <- raster('gdp2020.tif') %>% 
+  log %>%
+  setNAs('gdp_l')
+
+government_effectiveness <- raster('government_effectiveness.tif')
+
 irrigation <- raster('irrigation.tif')
-ndvi <- raster('ndvi.tif')
-pop <- raster('population.tif')
-sv <- raster('stability_violence.tif')
+
+ndvi <- (raster('ndvi.tif')/5000)
+
+pop <- raster('population.tif') %>% 
+  ihs
+
+stability_violence <- raster('stability_violence.tif') %>%
+  ihs
+
 tmax <- raster('TMAX_10yr_avg.tif')
-tmin <- raster('TMIN_10yr_avg.tif')
-field_size <- raster('fieldsize.tif')
-nd <- raster('nutritiondiversity.tif')
 
-f <- -1.601e-05*market_dist + -4.119e-05*forest + 4.050e-04*bare -4.354e-04*ag_pct_gdp + 5.979e-05*precip_10yr_mean + 1.130e-05*gdp + 2.208e-04*govt_eff + 
-  1.556e-04*irrigation + 2.909e-06*ndvi + 4.837e-07*pop + 1.285e-03*sv + 1.096e-02*tmax -6.328e-03*tmin + 1.339e-03*field_size -9.379e-02*nd
+fieldsize <- raster('fieldsize.tif') %>% 
+  ihs
 
+nutritiondiversity <- raster('nutritiondiversity.tif')
 
+builtup <- raster('builtup.tif') %>% 
+  ihs
 
+s <- tidy(mod)
+row.names(s) <- s$term
+
+wet <- s['spei24Wet', 'estimate'] + 
+  s['spei24Wet:market_dist_ihs', 'estimate']*market_dist + 
+  s['spei24Wet:forest', 'estimate']*forest + 
+  s['spei24Wet:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
+  s['spei24Wet:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
+  s['spei24Wet:gdp', 'estimate']*gdp + 
+  s['spei24Wet:government_effectiveness', 'estimate']*government_effectiveness + 
+  s['spei24Wet:irrigation', 'estimate']*irrigation + 
+  s['spei24Wet:ndvi', 'estimate']*ndvi + 
+  s['spei24Wet:stability_violence', 'estimate']*stability_violence + 
+  s['spei24Wet:tmax', 'estimate']*tmax +
+  s['spei24Wet:fieldsize', 'estimate']*fieldsize +
+  s['spei24Wet:nutritiondiversity', 'estimate']*nutritiondiversity
+
+dry <- s['spei24Dry', 'estimate'] + 
+  s['spei24Dry:market_dist_ihs', 'estimate']*market_dist + 
+  s['spei24Dry:forest', 'estimate']*forest + 
+  s['spei24Dry:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
+  s['spei24Dry:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
+  s['spei24Dry:gdp', 'estimate']*gdp + 
+  s['spei24Dry:government_effectiveness', 'estimate']*government_effectiveness + 
+  s['spei24Dry:irrigation', 'estimate']*irrigation + 
+  s['spei24Dry:ndvi', 'estimate']*ndvi + 
+  s['spei24Dry:stability_violence', 'estimate']*stability_violence + 
+  s['spei24Dry:tmax', 'estimate']*tmax +
+  s['spei24Dry:fieldsize', 'estimate']*fieldsize +
+  s['spei24Dry:nutritiondiversity', 'estimate']*nutritiondiversity
+
+s2 <- s
+s2$estimate[s2$statistic > -2 & s2$statistic < 2] <- 0
+
+wet_signif <- s['spei24Wet', 'estimate'] + 
+  s['spei24Wet:market_dist_ihs', 'estimate']*market_dist + 
+  s['spei24Wet:forest', 'estimate']*forest + 
+  s['spei24Wet:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
+  s['spei24Wet:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
+  s['spei24Wet:gdp', 'estimate']*gdp + 
+  s['spei24Wet:government_effectiveness', 'estimate']*government_effectiveness + 
+  s['spei24Wet:irrigation', 'estimate']*irrigation + 
+  s['spei24Wet:ndvi', 'estimate']*ndvi + 
+  s['spei24Wet:stability_violence', 'estimate']*stability_violence + 
+  s['spei24Wet:tmax', 'estimate']*tmax +
+  s['spei24Wet:fieldsize', 'estimate']*fieldsize +
+  s['spei24Wet:nutritiondiversity', 'estimate']*nutritiondiversity
+
+dry_signif <- s['spei24Dry', 'estimate'] + 
+  s['spei24Dry:market_dist_ihs', 'estimate']*market_dist + 
+  s['spei24Dry:forest', 'estimate']*forest + 
+  s['spei24Dry:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
+  s['spei24Dry:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
+  s['spei24Dry:gdp', 'estimate']*gdp + 
+  s['spei24Dry:government_effectiveness', 'estimate']*government_effectiveness + 
+  s['spei24Dry:irrigation', 'estimate']*irrigation + 
+  s['spei24Dry:ndvi', 'estimate']*ndvi + 
+  s['spei24Dry:stability_violence', 'estimate']*stability_violence + 
+  s['spei24Dry:tmax', 'estimate']*tmax +
+  s['spei24Dry:fieldsize', 'estimate']*fieldsize +
+  s['spei24Dry:nutritiondiversity', 'estimate']*nutritiondiversity
 
 
 
