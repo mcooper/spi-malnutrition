@@ -24,8 +24,9 @@ admin <- read.csv('Admin_Areas.csv') %>%
 fields <- read.csv('fieldsize.csv')
 nut <- read.csv('nutritiondiversity.csv')
 built <- read.csv('builtup.csv')
+elev <- read.csv('elevation.csv')
 
-alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin, fields, nut, built))
+alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, list(sp, ag, avhrr, irrig, market, gdp, fao, wgi, precip, pop, admin, fields, nut, built, elev))
 
 library(raster)
 
