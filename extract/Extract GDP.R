@@ -43,7 +43,7 @@ gdp20 <- read.table('weoreptc.aspx', sep='\t', header=T, quote='', nrows=193, na
 
 gdp20$X2020[gdp20$Country == 'Egypt'] <- gdpdat$Value[gdpdat$Country.or.Area == 'Egypt' & gdpdat$Year == 2016]
 gdp20$X2020[gdp20$Country == 'Pakistan'] <- gdpdat$Value[gdpdat$Country.or.Area == 'Pakistan' & gdpdat$Year == 2016]
-gdp20$X2020[gdp20$Country == 'Somalia'] <- gdpdat$Value[gdpdat$Country.or.Area == 'Somalia' & gdpdat$Year == 2016]
+gdp20$X2020[gdp20$Country == 'Somalia'] <- 434 #More realistic value from google
 gdp20$X2020[gdp20$Country == 'Syria'] <- gdpdat$Value[gdpdat$Country.or.Area == 'Syrian Arab Republic' & gdpdat$Year == 2016]
 
 gdp20 <- bind_rows(gdp20,

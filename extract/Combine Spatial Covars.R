@@ -71,10 +71,11 @@ alldf <- alldf %>%
             crop_prod=mean(crop_prod),
             fieldsize=mean(fieldsize),
             nutritiondiversity=mean(nutritiondiversity),
-            builtup=mean(builtup))
+            builtup=mean(builtup),
+            elevation=mean(elevation))
 
 setwd('../../DHS Processed/')
 
 write.csv(alldf, 'SpatialCovars.csv', row.names=F)
 writeRaster(s, 'SpatialCovars.grd', format="raster", overwrite=T)
-
+writeRaster(s[['crop_prod']], 'crop_prod.tif', format='GTiff')

@@ -43,4 +43,3 @@ data <- merge(data, dat %>% dplyr::select(code, interview_year, market_dist))
 write.csv(data, 'market_distance.csv', row.names=F)
 
 writeRaster(tt2015, 'market_distance.tif', format="GTiff")
-
