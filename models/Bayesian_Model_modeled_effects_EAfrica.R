@@ -1,32 +1,11 @@
-library(AzureSMR)
 library(dplyr)
 
-az <- read.csv('~/.azure/.AzureSMR', stringsAsFactors = F)
+setwd('~/dhsprocessed')
 
-sc <- createAzureContext(tenantID = az$tenantid,
-                         clientID = az$appid,
-                         authKey = az$authkey)
-
-az_read_csv <- function(csv, container="dhsprocessed"){
-  read.csv(text=azureGetBlob(sc, 
-                             storageAccount=az$storage_acct, 
-                             container=container,
-                             blob=csv,
-                             type="text",
-                             storageKey = az$storageKey))
-}
-
-az_write_blob <- function(blob, blobname, container='stan-models'){
-  file <- paste0(blobname, '.Rdata')
-  save(blob, file=file)
-  system(paste0("az storage blob upload --container-name ", container, " --file ", file, " --name ", file,
-                " --account-name ", az$storage_acct, " --account-key ", az$storageKey))
-  system(paste0("rm ", file))
-}
-
-hh <- az_read_csv('hhvars.csv')
-spi <- az_read_csv('Coords&Precip.csv')
-cov <- az_read_csv('SpatialCovars.csv')
+hh <- read.csv('HH_data_A.csv')
+spi <- read.csv('PrecipIndices.csv') %>%
+  select(-precip_10yr_mean, -tmax_10yr_mean, -tmin_10yr_mean)
+cov <- read.csv('SpatialCovars.csv')
 
 ################################
 #Combine and clear workspace
@@ -35,15 +14,11 @@ all <- Reduce(function(x, y){merge(x, y, all.x=T, all.y=F)},
               list(hh, spi, cov))
 
 all <- all %>%
-  filter((is_visitor == 0 | is.na(is_visitor)) & (years_in_location >= 2 | is.na(years_in_location))) %>% 
   filter(country %in% c('KE', 'RW', 'TZ', 'UG'))
 
 #Relevel factors
 all <- all %>%
   mutate(toilet=relevel(toilet, ref="No Facility"),
-         relationship_hhhead=relevel(relationship_hhhead, ref="Immediate Family"),
-         otherwatersource=relevel(otherwatersource, ref="Surface Water"),
-         drinkwatersource=relevel(drinkwatersource, ref="Surface Water"),
          wealth_index=relevel(wealth_index, ref="Poorest"))
 
 all$related_hhhead <- all$relationship_hhhead == "Not Related"
