@@ -41,6 +41,13 @@ for (y in unique(data$interview_year)){
   sel$forest <- extract(forest, sp)
   sel$bare <- extract(bare, sp)
   
+  #One friggin NA in Nigeria?
+  while (sum(is.na(sel$ndvi)) > 0){
+    print('dealing with NAs in Nigeria')
+    ndvi <- focal(ndvi, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
+    sel$ndvi[is.na(sel$ndvi)] <- extract(ndvi, sp[is.na(sel$ndvi), ])
+  }
+  
   newdata <- bind_rows(newdata, sel)
 }
 
