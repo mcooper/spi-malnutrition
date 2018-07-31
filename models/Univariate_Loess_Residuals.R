@@ -74,7 +74,7 @@ analyze <- function(df, var){
 cl <- makeCluster(4, outfile = '')
 registerDoParallel(cl)
 
-foreach(i=1:names(all)[grepl('sp', names(all))], .packages=c('ggplot2', 'dplyr')) %dopar% {
+foreach(i=names(all)[grepl('sp', names(all))], .packages=c('ggplot2', 'dplyr')) %dopar% {
   cat('******************\n', i, '\n******************')
   analyze(df=all, i)
 }
