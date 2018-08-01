@@ -3,6 +3,7 @@ library(dplyr)
 library(lme4)
 library(foreach)
 library(doParallel)
+library(broom)
 
 setwd('~/dhsprocessed')
 setwd('G://My Drive/DHS Processed')
@@ -31,20 +32,30 @@ for (i in names(all)[grepl('sp', names(all))]){
   all <- all[!is.infinite(all[ , i]), ]
 }
 
+all <- na.omit(all)
 
 for (i in names(all)[grepl('sp', names(all))]){
   print(i)
   
   all$precip <- all[ , i]
   
-  all$precip <- ifelse(all$precip < -1.5, "Low",
-                       ifelse(all$precip > 1.5, "High", "Medium"))
+  all$precip <- as.factor(ifelse(all$precip < -1.5, "Low",
+                       ifelse(all$precip > 1.5, "High", "Medium")))
 
+  all$precip <- relevel(all$precip, ref="Medium")
+  
   #Get Residuals
   mod <- lmer(haz_dhs ~ interview_year + (1|country/interview_month) + age + birth_order + hhsize + sex + mother_years_ed + toilet +
                 head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country) + precip, data=all[!is.infinite(all$precip), ])
   
-  df <- bind_rows(df, data.frame(index=i, AIC=AIC(mod)))
+  td <- tidy(mod)
+  row.names(td) <- td$term
+  
+  df <- bind_rows(df, data.frame(index=i, AIC=AIC(mod), 
+                                 high=td['precipHigh', 'estimate'],
+                                 low=td['precipLow', 'estimate'],
+                                 highstat=td['precipHigh', 'statistic'],
+                                 lowstat=td['precipLow', 'estimate']))
 }
 
 
