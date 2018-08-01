@@ -9,22 +9,11 @@ setwd('G://My Drive/DHS Processed')
 
 hh <- read.csv('hhvars.csv')
 hha <- read.csv('HH_data_A.csv')
-spei <- read.csv('PrecipIndices.csv')
-spei_ind <- read.csv('PrecipIndices_Individual.csv')
 cov <- read.csv('SpatialCovars.csv')
 
 hh <- hh[ , c(names(hha), 'whz_dhs')] %>% na.omit
 
-all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, spei, spei_ind, cov))
-
-all$spi_age_mix[all$age > 24] <- all$spi_age[all$age > 24]
-all$spi_age_mix[all$age < 24] <- all$spi_ageutero[all$age < 24]
-all$spi_gs_age_mix[all$age > 24] <- all$spi_gs_age[all$age > 24]
-all$spi_gs_age_mix[all$age < 24] <- all$spi_gs_ageutero[all$age < 24]
-all$spei_age_mix[all$age > 24] <- all$spei_age[all$age > 24]
-all$spei_age_mix[all$age < 24] <- all$spei_ageutero[all$age < 24]
-all$spei_gs_age_mix[all$age > 24] <- all$spei_gs_age[all$age > 24]
-all$spei_gs_age_mix[all$age < 24] <- all$spei_gs_ageutero[all$age < 24]
+all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, cov))
 
 #Get Residuals
 mod <- lmer(haz_dhs ~ interview_year + (1|country/interview_month) + age + birth_order + hhsize + sex + mother_years_ed + toilet +
@@ -32,7 +21,7 @@ mod <- lmer(haz_dhs ~ interview_year + (1|country/interview_month) + age + birth
 
 all$residuals <- residuals(mod)
 
-analyze <- function(df, var){
+analyze <- function(df, var, outcome){
   df$predvar <- df[ , var]
   
   df <- df %>%
@@ -68,16 +57,32 @@ analyze <- function(df, var){
           plot.caption = element_text(hjust = 0),
           axis.title = element_text(face="bold"))
   
-  ggsave(paste0(var, '_ResidualLoess_InterceptCode.png'), width=8, height=6)
+  ggsave(paste0(outcome, '-', var, '_ResidualLoess_InterceptCode.png'), width=8, height=6)
 }
 
 cl <- makeCluster(4, outfile = '')
 registerDoParallel(cl)
 
-foreach(i=names(all)[grepl('sp', names(all))], .packages=c('ggplot2', 'dplyr')) %dopar% {
+foreach(i=c("ag_pct_gdp", "bare", "precip_10yr_mean", 
+            "forest", "gdp", "government_effectiveness", "irrigation", "market_dist", 
+            "ndvi", "population", "stability_violence", "tmax_10yr_mean", 
+            "tmin_10yr_mean", "crop_prod", "fieldsize", "nutritiondiversity", 
+            "builtup", "elevation"), .packages=c('ggplot2', 'dplyr')) %dopar% {
   cat('******************\n', i, '\n******************')
-  analyze(df=all, i)
+  analyze(df=all, i, 'haz')
 }
 
+#Get Residuals
+mod <- lmer(whz_dhs ~ interview_year + (1|country/interview_month) + age + birth_order + hhsize + sex + mother_years_ed + toilet +
+              head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country) + (1|code), data=all)
 
+all$residuals <- residuals(mod)
 
+foreach(i=c("ag_pct_gdp", "bare", "precip_10yr_mean", 
+            "forest", "gdp", "government_effectiveness", "irrigation", "market_dist", 
+            "ndvi", "population", "stability_violence", "tmax_10yr_mean", 
+            "tmin_10yr_mean", "crop_prod", "fieldsize", "nutritiondiversity", 
+            "builtup", "elevation"), .packages=c('ggplot2', 'dplyr')) %dopar% {
+  cat('******************\n', i, '\n******************')
+  analyze(df=all, i, 'whz')
+}
