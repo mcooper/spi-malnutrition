@@ -14,12 +14,14 @@ hhb <- read.csv('HH_data_B.csv')
 
 #Create A by subsetting B
 mod_simple <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
-                     toilet + head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country),
+                     toilet + head_age + head_sex + urban_rural + wealth_index + 
+                     (1|surveycode) + (1|country) + (1|surveycode/calc_birthmonth),
                    data=hhb)
 
 mod_all <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
                   toilet + head_age + head_sex + urban_rural + wealth_index + otherwatersource + 
-                  ever_breastfed + diarrhea + is_visitor + istwin + (1|surveycode) + (1|country),
+                  ever_breastfed + diarrhea + istwin + 
+                  (1|surveycode) + (1|country) + (1|surveycode/calc_birthmonth),
                 data=hhb)
 
 AIC(mod_simple)
