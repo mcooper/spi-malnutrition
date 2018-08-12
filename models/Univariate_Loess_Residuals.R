@@ -10,14 +10,15 @@ setwd('G://My Drive/DHS Processed')
 hh <- read.csv('hhvars.csv')
 hha <- read.csv('HH_data_A.csv')
 cov <- read.csv('SpatialCovars.csv')
+spi <- read.csv('Coords&Precip.csv')
 
 hh <- hh[ , c(names(hha), 'whz_dhs')] %>% na.omit
 
-all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, cov))
+all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, cov, spi))
 
 #Get Residuals
-mod <- lmer(haz_dhs ~ interview_year + (1|country/interview_month) + age + birth_order + hhsize + sex + mother_years_ed + toilet +
-              head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country) + (1|code), data=all)
+mod <- lmer(haz_dhs ~ interview_year + (1|country/calc_birthmonth) + age + birth_order + hhsize + sex + mother_years_ed + toilet +
+              head_age + head_sex + urban_rural + wealth_index, data=all)
 
 all$residuals <- residuals(mod)
 
@@ -57,7 +58,7 @@ analyze <- function(df, var, outcome){
           plot.caption = element_text(hjust = 0),
           axis.title = element_text(face="bold"))
   
-  ggsave(paste0(outcome, '-', var, '_ResidualLoess_InterceptCode.png'), width=8, height=6)
+  ggsave(paste0(outcome, '-', var, '_ResidualLoess_NoIntercepts.png'), width=8, height=6)
 }
 
 cl <- makeCluster(4, outfile = '')
@@ -67,7 +68,9 @@ foreach(i=c("ag_pct_gdp", "bare", "precip_10yr_mean",
             "forest", "gdp", "government_effectiveness", "irrigation", "market_dist", 
             "ndvi", "population", "stability_violence", "tmax_10yr_mean", 
             "tmin_10yr_mean", "crop_prod", "fieldsize", "nutritiondiversity", 
-            "builtup", "elevation"), .packages=c('ggplot2', 'dplyr')) %dopar% {
+            "builtup", "elevation", "spi12", "spei12", 'spi24', 'spei24',
+            'spi36', 'spei36', "spei12gs",
+            "spei24gs", "spei36gs", "spi12gs", "spi24gs", "spi36gs"), .packages=c('ggplot2', 'dplyr')) %dopar% {
   cat('******************\n', i, '\n******************')
   analyze(df=all, i, 'haz')
 }
@@ -82,7 +85,11 @@ foreach(i=c("ag_pct_gdp", "bare", "precip_10yr_mean",
             "forest", "gdp", "government_effectiveness", "irrigation", "market_dist", 
             "ndvi", "population", "stability_violence", "tmax_10yr_mean", 
             "tmin_10yr_mean", "crop_prod", "fieldsize", "nutritiondiversity", 
-            "builtup", "elevation"), .packages=c('ggplot2', 'dplyr')) %dopar% {
+            "builtup", "elevation", "spi12", "spei12", 'spi24', 'spei24',
+            'spi36', 'spei36', "spei12gs",
+            "spei24gs", "spei36gs", "spi12gs", "spi24gs", "spi36gs"), .packages=c('ggplot2', 'dplyr')) %dopar% {
   cat('******************\n', i, '\n******************')
   analyze(df=all, i, 'whz')
 }
+
+
