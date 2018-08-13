@@ -15,8 +15,17 @@ r <- resample(r, resamp, method="bilinear")
 
 r2 <- focal(r, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
 
+r3 <- r2
+
+for (i in 1:20){
+  print(i)
+  r3 <- focal(r3, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
+}
+
+r2[is.na(r2)] <- r3[is.na(r2)]
+
 #then save it to file
-writeRaster(r2, '../Final Rasters/nutritiondiversity.tif', format='GTiff')
+writeRaster(r2, '../Final Rasters/nutritiondiversity.tif', format='GTiff', overwrite=T)
 
 #Then extract values, averaging across Queen's case
 dat <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%

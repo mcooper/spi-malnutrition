@@ -54,7 +54,7 @@ all$elevation_ihs <- ihs(all$elevation)
 
 #Make categorical
 all$spei24 <- ifelse(all$spei24 > 1.5, "Wet",
-                     ifelse(all$spei24 < -0.4, "Dry", "Normal")) %>%
+                     ifelse(all$spei24 < -1.5, "Dry", "Normal")) %>%
   as.factor %>%
   relevel(ref = "Normal")
 
@@ -69,7 +69,7 @@ mod <- lm(haz_dhs ~ age + as.factor(calc_birthmonth) +
                spei24*elevation +
                #spei24*fieldsize +
                #spei24*forest +
-               spei24*gdp +
+               spei24*gdp_l +
                spei24*government_effectiveness +
                spei24*irrigation +
                #spei24*market_dist +
@@ -115,7 +115,8 @@ elevation <- (raster('elevation.tif')/1000) %>%
 #forest <- raster('forest.tif')
 
 gdp <- (raster('gdp2020.tif')/1000) %>%
-  setNAs('gdp')
+  setNAs('gdp') %>%
+  log
 
 government_effectiveness <- raster('government_effectiveness.tif') %>%
   setNAs('government_effectiveness')
@@ -147,7 +148,7 @@ s <- tidy(mod)
 row.names(s) <- s$term
 
 wet <- s['spei24Wet', 'estimate'] + 
-  s['spei24Wet:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
+  #s['spei24Wet:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
   s['spei24Wet:builtup', 'estimate']*builtup + 
   s['spei24Wet:crop_prod', 'estimate']*crop_prod + 
   s['spei24Wet:elevation', 'estimate']*elevation + 
@@ -165,7 +166,7 @@ wet <- s['spei24Wet', 'estimate'] +
   s['spei24Wet:tmax', 'estimate']*tmax
 
 dry <- s['spei24Dry', 'estimate'] + 
-  s['spei24Dry:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
+  #s['spei24Dry:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
   s['spei24Dry:builtup', 'estimate']*builtup + 
   s['spei24Dry:crop_prod', 'estimate']*crop_prod + 
   s['spei24Dry:elevation', 'estimate']*elevation + 
@@ -188,47 +189,8 @@ drynas[dry > 0] <- NA
 wetnas <- wet
 wetnas[wet > 0] <- NA
 
-s2 <- s
-s2$estimate[s2$statistic > -2 & s2$statistic < 2] <- 0
-
-wet_signif <- s2['spei24Wet', 'estimate'] + 
-  s2['spei24Wet:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
-  s2['spei24Wet:builtup', 'estimate']*builtup + 
-  s2['spei24Wet:crop_prod', 'estimate']*crop_prod + 
-  s2['spei24Wet:elevation', 'estimate']*elevation + 
-  s2['spei24Wet:fieldsize', 'estimate']*fieldsize +
-  s2['spei24Wet:forest', 'estimate']*forest + 
-  s2['spei24Wet:gdp', 'estimate']*gdp + 
-  s2['spei24Wet:government_effectiveness', 'estimate']*government_effectiveness + 
-  s2['spei24Wet:irrigation', 'estimate']*irrigation + 
-  s2['spei24Wet:market_dist', 'estimate']*market_dist + 
-  s2['spei24Wet:ndvi', 'estimate']*ndvi + 
-  s2['spei24Wet:nutritiondiversity', 'estimate']*nutritiondiversity + 
-  s2['spei24Wet:population', 'estimate']*population + 
-  s2['spei24Wet:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
-  s2['spei24Wet:stability_violence', 'estimate']*stability_violence + 
-  s2['spei24Wet:tmax', 'estimate']*tmax
-
-dry_signif <- s2['spei24Dry', 'estimate'] + 
-  s2['spei24Dry:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
-  s2['spei24Dry:builtup', 'estimate']*builtup + 
-  s2['spei24Dry:crop_prod', 'estimate']*crop_prod + 
-  s2['spei24Dry:elevation', 'estimate']*elevation + 
-  s2['spei24Dry:fieldsize', 'estimate']*fieldsize +
-  s2['spei24Dry:forest', 'estimate']*forest + 
-  s2['spei24Dry:gdp', 'estimate']*gdp + 
-  s2['spei24Dry:government_effectiveness', 'estimate']*government_effectiveness + 
-  s2['spei24Dry:irrigation', 'estimate']*irrigation + 
-  s2['spei24Dry:market_dist', 'estimate']*market_dist + 
-  s2['spei24Dry:ndvi', 'estimate']*ndvi + 
-  s2['spei24Dry:nutritiondiversity', 'estimate']*nutritiondiversity + 
-  s2['spei24Dry:population', 'estimate']*population + 
-  s2['spei24Dry:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
-  s2['spei24Dry:stability_violence', 'estimate']*stability_violence + 
-  s2['spei24Dry:tmax', 'estimate']*tmax
-
-dry[dry > 0] <- NA
-wet[wet > 0] <- NA
+writeRaster(dry, 'G:/My Drive/Dissertation/Final Maps/Dry.tif', format='GTiff')
+writeRaster(wet, 'G:/My Drive/Dissertation/Final Maps/Wet.tif', format='GTiff')
 
 plot(dry, main='Expected Change in HAZ Scores From a 24-Month SPEI of < -1.5',
      xlim=c(-100, 150), ylim=c(-40, 50), axes=F)
