@@ -4,8 +4,7 @@ library(rstanarm)
 setwd('~/dhsprocessed')
 
 hh <- read.csv('HH_data_A.csv')
-spi <- read.csv('PrecipIndices.csv') %>%
-  select(-precip_10yr_mean, -tmax_10yr_mean, -tmin_10yr_mean)
+spi <- read.csv('PrecipIndices.csv')
 cov <- read.csv('SpatialCovars.csv')
 
 ################################
