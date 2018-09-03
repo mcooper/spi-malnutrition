@@ -1,16 +1,17 @@
-y_i_j &= \beta X_i_j + \alpha_iS_i_j + \epsilon_i + \epsilon_i_j \\ \\
-\alpha_i &= \gamma_iG_i + \epsilon_i
+%Make sure to put \usepackage{xcolor} in the section "Choose Options"
+
+y_i_j &= \beta X_i + \textcolor{red}{\alpha_jS_j} + \epsilon_i \\ \\
+\textcolor{red}{\alpha_j &= \gamma G_j}
 
 \begin{flushleft}
 \text{where:}\\
-\textit{i} = \text{DHS Site} \\
-\textit{j} = \text{Individual Child} \\
+\textit{i} = \text{Individual Child Index} \\
 \textit{y} = \text{Child's HAZ Score} \\
 \beta = \text{Vector of Coefficients} \\
-\textit{X} = \text{Individual Nutrition Covariates} \\
-\textit{S} = \text{Precipitation Index} \\
-\alpha = \text{Coefficient for Precipitation Index} \\
-\textit{G} = \text{Geographic Factors Moderating Impact of Precipitation Shock} \\
-\gamma = \text{Coefficients for Geographic Factors}
-
+\textit{X} = \text{Individual and Household Nutrition Covariates} \\
+\textcolor{red}{\textit{j} = \text{Community Index} \\
+\textit{S} = \text{Precipitation Shock} \\
+\alpha = \text{Coefficient for Precipitation Shock} \\
+\textcolor{red}{\textit{G} = \text{Geographic Factors Moderating Impact of Precipitation Shock} \\
+\gamma = \text{Coefficients for Geographic Factors}}}
 \end{flushleft}

@@ -23,6 +23,7 @@ all$tmax_10yr_mean <- all$tmax_10yr_mean - 273.15
 all$tmin_10yr_mean <- all$tmin_10yr_mean - 273.15
 all$builtup <- all$builtup*100
 all$elevation <- all$elevation/1000
+all$imports_percap <- all$imports_percap/1000
 
 #Inverse Hyperbolic Sine Transformation
 #http://worthwhile.typepad.com/worthwhile_canadian_initi/2011/07/a-rant-on-inverse-hyperbolic-sine-transformations.html
@@ -52,145 +53,144 @@ all$fieldsize_ihs <- ihs(all$fieldsize)
 all$builtup_ihs <- ihs(all$builtup)
 all$elevation_ihs <- ihs(all$elevation)
 
-#Make categorical
-all$spei24 <- ifelse(all$spei24 > 1.5, "Wet",
-                     ifelse(all$spei24 < -1.5, "Dry", "Normal")) %>%
-  as.factor %>%
-  relevel(ref = "Normal")
-
-all$countrymonth <- paste0(all$country, all$calc_birthmonth)
-
-mod <- lm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
-               birth_order + hhsize + sex + mother_years_ed + toilet +
-               head_age + head_sex + wealth_index +
-               #spei24*ag_pct_gdp +
-               spei24*builtup +
-               spei24*crop_prod +
-               spei24*elevation +
-               #spei24*fieldsize +
-               #spei24*forest +
-               spei24*gdp_l +
-               spei24*government_effectiveness +
-               spei24*irrigation +
-               #spei24*market_dist +
-               spei24*ndvi +
-               #spei24*bare + 
-               spei24*nutritiondiversity +
-               spei24*population +
-               spei24*precip_10yr_mean +
-               spei24*stability_violence +
-               spei24*tmax_10yr_mean
-             , data=all)
-
-summary(mod)
-
-###Do Moran's I on the mod
-all$residuals <- residuals(mod)
-
-
 library(raster)
 
 setwd('G://My Drive/DHS Spatial Covars/Final Rasters')
 
 setNAs <- function(raster, column){
-  raster[raster > (max(all[ , column], na.rm=T) + sd(all[ , column], na.rm=T))] <- NA
-  raster[raster < (min(all[ , column], na.rm=T) - sd(all[ , column], na.rm=T))] <- NA
+  raster[raster > (max(all[ , column], na.rm=T) + sd(all[ , column], na.rm=T)/2)] <- NA
+  raster[raster < (min(all[ , column], na.rm=T) - sd(all[ , column], na.rm=T)/2)] <- NA
   return(raster)
 }
 
-ag_pct_gdp <- raster('ag_pct_gdp.tif') %>%
-  setNAs('ag_pct_gdp')
+ag_pct_gdp <- raster('ag_pct_gdp.tif') #%>% setNAs('ag_pct_gdp')
 
-builtup <- (raster('builtup.tif')*100) %>%
-  setNAs('builtup')
+builtup <- (raster('builtup.tif')*100) #%>% setNAs('builtup')
 
-crop_prod <- raster('crop_prod.tif') %>%
-  setNAs('crop_prod')
+crop_prod <- raster('crop_prod.tif') #%>% setNAs('crop_prod')
 
-elevation <- (raster('elevation.tif')/1000) %>%
-  setNAs('elevation')
+elevation <- (raster('elevation.tif')/1000) #%>% setNAs('elevation')
 
-#fieldsize <- raster('fieldsize.tif')
+fieldsize <- raster('fieldsize.tif')
 
-#forest <- raster('forest.tif')
+forest <- raster('forest.tif')
 
 gdp <- (raster('gdp2020.tif')/1000) %>%
-  setNAs('gdp') %>%
-  log
+  setNAs('gdp')
 
-government_effectiveness <- raster('government_effectiveness.tif') %>%
-  setNAs('government_effectiveness')
+gdp_l <- log(gdp)
 
-irrigation <- raster('irrigation.tif') %>%
-  setNAs('irrigation')
+government_effectiveness <- raster('government_effectiveness.tif') #%>% setNAs('government_effectiveness')
 
-#market_dist <- raster('market_distance.tif')/(24*7)
+high_settle <- raster('high_settle.tif') #%>% setNAs('high_settle')
 
-ndvi <- (raster('ndvi.tif')/5000) %>%
-  setNAs('ndvi')
+imports_percap <- raster('imports_percap.tif')
 
-nutritiondiversity <- raster('nutritiondiversity.tif') %>%
-  setNAs('nutritiondiversity')
+irrigation <- raster('irrigation.tif') #%>% setNAs('irrigation')
 
-population <- (raster('population.tif')/1000) %>%
-  setNAs('population')
+low_settle <- raster('low_settle.tif') #%>% setNAs('low_settle')
 
-precip_10yr_mean <- (raster('CHIRPS_10yr_avg.tif')*12/1000) %>%
-  setNAs('precip_10yr_mean')
+market_dist <- raster('market_distance.tif')/(24*7)
 
-stability_violence <- raster('stability_violence.tif') %>%
-  setNAs('stability_violence')
+ndvi <- (raster('ndvi.tif')/5000) #%>% setNAs('ndvi')
 
-tmax <- (raster('TMAX_10yr_avg.tif') - 273.15) %>%
-  setNAs('tmax_10yr_mean')
+nutritiondiversity <- raster('nutritiondiversity.tif') #%>% setNAs('nutritiondiversity')
 
-s <- tidy(mod)
-row.names(s) <- s$term
+population <- (raster('population.tif')/1000) #%>% setNAs('population')
 
-wet <- s['spei24Wet', 'estimate'] + 
-  #s['spei24Wet:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
-  s['spei24Wet:builtup', 'estimate']*builtup + 
-  s['spei24Wet:crop_prod', 'estimate']*crop_prod + 
-  s['spei24Wet:elevation', 'estimate']*elevation + 
-  #s['spei24Wet:fieldsize', 'estimate']*fieldsize +
-  #s['spei24Wet:forest', 'estimate']*forest + 
-  s['spei24Wet:gdp', 'estimate']*gdp + 
-  s['spei24Wet:government_effectiveness', 'estimate']*government_effectiveness + 
-  s['spei24Wet:irrigation', 'estimate']*irrigation + 
-  #s['spei24Wet:market_dist', 'estimate']*market_dist + 
-  s['spei24Wet:ndvi', 'estimate']*ndvi + 
-  s['spei24Wet:nutritiondiversity', 'estimate']*nutritiondiversity + 
-  s['spei24Wet:population', 'estimate']*population + 
-  s['spei24Wet:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
-  s['spei24Wet:stability_violence', 'estimate']*stability_violence + 
-  s['spei24Wet:tmax', 'estimate']*tmax
+precip_10yr_mean <- (raster('CHIRPS_10yr_avg.tif')*12/1000) #%>% setNAs('precip_10yr_mean')
 
-dry <- s['spei24Dry', 'estimate'] + 
-  #s['spei24Dry:ag_pct_gdp', 'estimate']*ag_pct_gdp + 
-  s['spei24Dry:builtup', 'estimate']*builtup + 
-  s['spei24Dry:crop_prod', 'estimate']*crop_prod + 
-  s['spei24Dry:elevation', 'estimate']*elevation + 
-  #s['spei24Dry:fieldsize', 'estimate']*fieldsize +
-  #s['spei24Dry:forest', 'estimate']*forest + 
-  s['spei24Dry:gdp', 'estimate']*gdp + 
-  s['spei24Dry:government_effectiveness', 'estimate']*government_effectiveness + 
-  s['spei24Dry:irrigation', 'estimate']*irrigation + 
-  #s['spei24Dry:market_dist', 'estimate']*market_dist + 
-  s['spei24Dry:ndvi', 'estimate']*ndvi + 
-  s['spei24Dry:nutritiondiversity', 'estimate']*nutritiondiversity + 
-  s['spei24Dry:population', 'estimate']*population + 
-  s['spei24Dry:precip_10yr_mean', 'estimate']*precip_10yr_mean + 
-  s['spei24Dry:stability_violence', 'estimate']*stability_violence + 
-  s['spei24Dry:tmax', 'estimate']*tmax
+roughness <- raster('roughness.tif') #%>% setNAs('roughness')
 
-drynas <- dry
-drynas[dry > 0] <- NA
+stability_violence <- raster('stability_violence.tif') #%>% setNAs('stability_violence')
 
-wetnas <- wet
-wetnas[wet > 0] <- NA
+tmax_10yr_mean <- (raster('TMAX_10yr_avg.tif') - 273.15) #%>% setNAs('tmax_10yr_mean')
 
-writeRaster(dry, 'G:/My Drive/Dissertation/Final Maps/Dry.tif', format='GTiff')
-writeRaster(wet, 'G:/My Drive/Dissertation/Final Maps/Wet.tif', format='GTiff')
+makeRasts <- function(mod){
+  s <- tidy(mod)
+  
+  #Make wet raster
+  wet_coefs <- s[grepl('speiWet', s$term), c('term', 'estimate')]
+  dry_coefs <- s[grepl('speiDry', s$term), c('term', 'estimate')]
+  
+  wet_coefs$term <- gsub('speiWet:', '', wet_coefs$term)
+  dry_coefs$term <- gsub('speiDry:', '', dry_coefs$term)
+  
+  wet <- wet_coefs$estimate[1]
+  for (i in 2:nrow(wet_coefs)){
+    rast <- get(wet_coefs$term[i])
+    wet <- wet + rast*wet_coefs$estimate[i]
+  }
+  
+  dry <- dry_coefs$estimate[1]
+  for (i in 2:nrow(dry_coefs)){
+    rast <- get(dry_coefs$term[i])
+    dry <- dry + rast*dry_coefs$estimate[i]
+  }
+  
+  wet_censored <- wet
+  wet_censored[wet > 0] <- NA
+  
+  dry_censored <- dry
+  dry_censored[dry > 0] <- NA
+  
+  return(list(wet, wet_censored, dry, dry_censored))
+}
+
+#Make categorical
+all$spei <- all$spei36gs
+
+all$spei <- ifelse(all$spei > 1.5, "Wet",
+                   ifelse(all$spei < -0.4, "Dry", "Normal")) %>%
+  as.factor %>%
+  relevel(ref = "Normal")
+
+
+mod <- lm(haz_dhs ~ interview_year + age + urban_rural + 
+            birth_order + hhsize + sex + mother_years_ed + toilet +
+            head_age + head_sex + wealth_index + spei + 
+               #spei*ag_pct_gdp +
+               spei*builtup +
+               spei*crop_prod +
+               spei*elevation +
+               spei*forest +
+               spei*gdp_l +
+               spei*government_effectiveness +
+               #spei*high_settle + 
+               #spei*imports_percap + 
+               spei*irrigation +
+               #spei*low_settle + 
+               spei*market_dist +
+               #spei*ndvi +
+               #spei*bare + 
+               spei*nutritiondiversity +
+               spei*population +
+               spei*precip_10yr_mean +
+               spei*roughness + 
+               spei*stability_violence +
+               spei*tmax_10yr_mean
+             , data=all)
+
+summary(mod)
+
+rasts <- makeRasts(mod)
+
+#wet_censored
+plot(rasts[[2]])
+
+#dry_censored
+plot(rasts[[4]])
+
+#dry
+plot(rasts[[3]])
+
+#wet
+plot(rasts[[1]])
+
+
+writeRaster(rasts[[1]], 'Wet.tif', format='GTiff', overwrite=T)
+writeRaster(rasts[[3]], 'Dry.tif', format='GTiff', overwrite=T)
+
 
 plot(dry, main='Expected Change in HAZ Scores From a 24-Month SPEI of < -1.5',
      xlim=c(-100, 150), ylim=c(-40, 50), axes=F)
