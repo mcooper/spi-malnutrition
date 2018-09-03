@@ -23,7 +23,7 @@ rough_res <- resample(roughness, resamp)
 rough_res_foc <- focal(rough_res, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
 
 #then save it to file
-writeRaster(r2, '../Final Rasters/roughness.tif', format='GTiff')
+writeRaster(rough_res_foc, '../Final Rasters/roughness.tif', format='GTiff', overwrite=T)
 
 #Then extract values, averaging across Queen's case
 

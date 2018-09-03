@@ -8,13 +8,13 @@ s90 <- raster('settlements90.tif')
 s00 <- raster('settlements00.tif')
 s15 <- raster('settlements15.tif')
 
-s90high <- s90 > 1
-s00high <- s00 > 1
-s15high <- s15 > 1
+s90high <- s90 > 2
+s00high <- s00 > 2
+s15high <- s15 > 2
 
-s90low <- s15 > 2
-s00low <- s15 > 2
-s15low <- s15 > 2
+s90low <- s90 > 1
+s00low <- s00 > 1
+s15low <- s15 > 1
 
 ref <- raster('chirps-v2.0.1981.01.tif')
 
@@ -77,8 +77,8 @@ dat %>%
   select(interview_year, high_settle, low_settle, code) %>% 
   write.csv('~/dhsprocessed/settled.csv', row.names=F)
 
-writeRaster(s15high_res_fc, '~/dhsprocessed/high_settle.tif', format='GTiff')
-writeRaster(s15low_res_fc, '~/dhsprocessed/low_settle.tif', format='GTiff')
+writeRaster(s15high_res_fc, '~/dhsprocessed/high_settle.tif', format='GTiff', overwrite=T)
+writeRaster(s15low_res_fc, '~/dhsprocessed/low_settle.tif', format='GTiff', overwrite=T)
 
 
 
