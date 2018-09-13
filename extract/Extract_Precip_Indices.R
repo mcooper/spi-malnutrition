@@ -156,7 +156,7 @@ df <- foreach(n=1:nrow(rll), .packages=c('raster', 'lubridate', 'gdalUtils', 'SP
   
   s <- precip - PET
   
-  s_season <- precip*phenoMask
+  s_season <- s*phenoMask
   
   interview <- data.frame(tmpcode=rll$layer[n],
                           interview_month=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
@@ -176,21 +176,6 @@ df <- foreach(n=1:nrow(rll), .packages=c('raster', 'lubridate', 'gdalUtils', 'SP
                           spi12gs=as.numeric(spi(precip_season, 12, na.rm=TRUE)$fitted),
                           spi24gs=as.numeric(spi(precip_season, 24, na.rm=TRUE)$fitted),
                           spi36gs=as.numeric(spi(precip_season, 36, na.rm=TRUE)$fitted))
-  
-  # birthdate <- data.frame(tmpcode=rll$layer[n],
-  #                         calc_birthmonth=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-  #                         calc_birthyear=year(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-  #                         birthday_9monthtotal=rollapply(precip, width=9, FUN=sum, partial=TRUE, align='right'),
-  #                         birthday_spei9=as.numeric(spei(s, 9, na.rm=TRUE)$fitted),
-  #                         birthday_spi9=as.numeric(spi(precip, 9, na.rm=TRUE)$fitted))
-  # 
-  # thousanddays <- data.frame(tmpcode=rll$layer[n],
-  #                            thousandday_month=month(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-  #                            thousandday_year=year(seq(ymd('1981-01-01'), ymd('2016-12-01'), by='1 month')),
-  #                            thousandday_spei33=as.numeric(spei(s, 33, na.rm=TRUE)$fitted),
-  #                            thousandday_spi33=as.numeric(spi(precip, 33, na.rm=TRUE)$fitted),
-  #                            thousandday_spei24=as.numeric(spei(s, 24, na.rm=TRUE)$fitted),
-  #                            thousandday_spi24=as.numeric(spi(precip, 24, na.rm=TRUE)$fitted))
   
   meanannual <- data.frame(tmpcode=rll$layer[n],
                            mean_annual_precip=mean(precip, na.rm=T)*12)
