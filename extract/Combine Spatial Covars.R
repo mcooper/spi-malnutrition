@@ -38,7 +38,7 @@ alldf$crop_prod <- alldf$Cereals + alldf$RootsandTubers
 #Simplify to get one metric per code
 alldf <- alldf %>%
   select(code, interview_year, ag_pct_gdp, bare, forest, gdp, government_effectiveness, 
-         irrigation, market_dist, ndvi, population, stability_violence, crop_prod, fieldsize, 
+         irrig_aai, irrig_aei, market_dist, ndvi, population, stability_violence, crop_prod, fieldsize, 
          nutritiondiversity, builtup, elevation, high_settle, low_settle, roughness,
          imports_percap, grid_gdp, grid_hdi)
 
