@@ -94,14 +94,30 @@ stability_violence <- raster('stability_violence.tif') #%>% setNAs('stability_vi
 
 tmax_10yr_mean <- (raster('TMAX_10yr_avg.tif') - 273.15) #%>% setNAs('tmax_10yr_mean')
 
-makeRasts <- function(mod, speicat, usebase=FALSE){
-  s <- tidy(mod)
+#Define Variables for mapping baseline
+age <- mean(all$age)
+birth_order <- mean(all$birth_order)
+hhsize <- mean(all$hhsize)
+mother_years_ed <- mean(all$mother_years_ed)
+head_age <- mean(all$head_age)
+
+makeRasts <- function(mod, term, usebase=FALSE, censor=TRUE){
+  #mod is the model that has been fit
+  #term can be either 'speiDry', 'speiWet', or ''
+  #  'speiDry' and 'speiWet' will map estimated changes in HAZ scores during a wet or dry year
+  #  '' will give a map of estimated HAZ scores during a normal year
+  #usebase will use a raster of 0s and 1s to exclude certain areas.
+  #censor will set values greater than 0 to NA
   
-  term <- paste0('spei', speicat)
+  s <- tidy(mod)
   
   coefs <- s[grepl(term, s$term), c('term', 'estimate')]
   
   coefs$term <- gsub(paste0(term, ':'), '', coefs$term)
+  
+  if(term == ''){
+    coefs <- coefs[!grepl('spei', coefs$term), ]
+  }
   
   if (usebase){
     rast <- base*coefs$estimate[1]
@@ -109,14 +125,19 @@ makeRasts <- function(mod, speicat, usebase=FALSE){
     rast <- coefs$estimate[1]
   }
   for (i in 2:nrow(coefs)){
-    tmp_rast <- get(coefs$term[i])
+    if(exists(coefs$term[i])){
+      tmp_rast <- get(coefs$term[i])
+    } else{
+      tmp_rast <- 0
+    }
     suppressWarnings(rast <- rast + tmp_rast*coefs$estimate[i])
   }
   
-  rast_censored <- rast
-  rast_censored[rast > 0] <- NA
+  if (censor){
+    rast[rast > 0] <- NA
+  }
   
-  return(list(rast, rast_censored))
+  return(rast)
 }
 
 #Make categorical
@@ -168,11 +189,14 @@ mod <- lm(haz_dhs ~ age + as.factor(calc_birthmonth) +
 
 summary(mod)
 
+#Baseline
+plot(makeRasts(mod, ''))
+
 #Dry
-plot(makeRasts(mod, "Dry")[[2]])
+plot(makeRasts(mod, "speiDry"))
 
 #Wet
-plot(makeRasts(mod, "Wet")[[2]])
+plot(makeRasts(mod, "speiWet"))
 
 
 
