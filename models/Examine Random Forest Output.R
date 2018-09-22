@@ -2,76 +2,50 @@ library(dplyr)
 library(raster)
 library(randomForest)
 
-load('G://My Drive/DHS Processed/640-tree-rfmod.Rdata')
+setwd('~/dhsprocessed')
 
-covars <- stack('G://My Drive/DHS Spatial Covars/Final Rasters/SpatialCovars.grd')
-
-covars <- dropLayer(covars, which(names(covars) == "bare"))
-
-ref <- covars[['market_distance']]
-names(ref) <- 'spei24'
-ref <- setValues(ref, 0)
-
-covars <- addLayer(covars, ref)
-
-names(covars)[names(covars)=='gdp2020'] <- 'gdp'
-names(covars)[names(covars)=='CHIRPS_10yr_avg'] <- 'precip_10yr_mean'
-names(covars)[names(covars)=='TMAX_10yr_avg'] <- 'tmax_10yr_mean'
-names(covars)[names(covars)=='TMIN_10yr_avg'] <- 'tmin_10yr_mean'
-names(covars)[names(covars)=='market_distance'] <- 'market_dist'
-
-spi0 <- predict(covars, rfmod)
-
-start <- Sys.time()
-#spi1
-covars[['spei24']] <- setValues(covars[['spei24']], 1)
-spi1 <- predict(covars, rf)
-spi1dif <- spi1-spi0
-Sys.time() - start
-
-#spi1.5
-covars[['spei24']] <- setValues(covars[['spei24']], 1.5)
-spi1.5 <- predict(covars, rf)
-spi1.5dif <- spi1.5-spi0
-
-#spi2
-covars[['spei24']] <- setValues(covars[['spei24']], 2)
-spi2 <- predict(covars, rf)
-spi2dif <- spi2-spi0
-
-#spi3
-covars[['spei24']] <- setValues(covars[['spei24']], 3)
-spi3 <- predict(covars, rf)
-spi3dif <- spi3-spi0
-
-#spineg1
-covars[['spei24']] <- setValues(covars[['spei24']], -1)
-spineg1 <- predict(covars, rf)
-spineg1dif <- spineg1 - spi0
-
-#spineg1.5
-covars[['spei24']] <- setValues(covars[['spei24']], -1.5)
-spineg1.5 <- predict(covars, rf)
-spineg1.5dif <- spineg1.5 - spi0
-
-#spineg2
-covars[['spei24']] <- setValues(covars[['spei24']], -2)
-spineg2 <- predict(covars, rf)
-spineg2dif <- spineg2 - spi0
-
-#spineg3
-covars[['spei24']] <- setValues(covars[['spei24']], -3)
-spineg3 <- predict(covars, rf)
-spineg3dif <- spineg3-spi0
-
-testdf <- data.frame(spei=seq(-3, 3, 0.1))
-
-samp <- extract(covars, SpatialPoints(list(0, 25)))
-
-for (i in 51:nrow(testdf)){
-  print(i)
-  samp[ , 20] <- testdf$spei[i]
-  testdf$predict[i] <- predict(rf, samp)
+cropread <- function(r){
+  r <- raster(r)
+  r <- crop(r, extent(-180, 180, -50, 50))
+  r
 }
 
+ag_pct_gdp <- cropread('ag_pct_gdp.tif')
+builtup <- cropread('builtup.tif')
+crop_prod <- cropread('crop_prod.tif')
+elevation <- cropread('elevation.tif')
+fieldsize <- cropread('fieldsize.tif')
+forest <- cropread('forest.tif')
+grid_gdp <- cropread('grid_gdp.tif')
+grid_hdi <- cropread('grid_hdi.tif')
+government_effectiveness <- cropread('government_effectiveness.tif') 
+imports_percap <- cropread('imports_percap.tif')
+irrig_aei <- cropread('irrig_aei.tif')
+market_dist <- cropread('market_dist.tif')
+ndvi <- cropread('ndvi.tif')
+nutritiondiversity <- cropread('nutritiondiversity.tif')
+population <- cropread('population.tif')
+roughness <- cropread('roughness.tif')
+stability_violence <- cropread('stability_violence.tif')
 
+covars <- stack(list(ag_pct_gdp, forest, government_effectiveness, irrig_aei, 
+                     market_dist, ndvi, population,
+                     stability_violence, crop_prod, fieldsize, nutritiondiversity, 
+                     builtup, elevation, roughness,
+                     imports_percap, grid_gdp, grid_hdi))
+
+
+load('~/rf-mod-dryloess')
+load('~/rf-mod-wetloess')
+load('~/rf-mod-normalloess')
+
+
+#normal HAZ scores
+normal <- predict(covars, rfnormal)
+
+wet <- predict(covars, rfwet)
+
+dry <- predict(covars, rfdry)
+
+drought <- dry - normal
+flood <- wet - normal
