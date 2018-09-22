@@ -1,8 +1,7 @@
 library(dplyr)
 library(lme4)
-library(broom)
-library(car)
 library(MASS)
+library(broom)
 
 setwd('~/dhsprocessed')
 setwd('G://My Drive/DHS Processed')
@@ -19,7 +18,6 @@ all$precip_10yr_mean <- (all$precip_10yr_mean*12)/1000
 all$gdp <- all$gdp/1000
 all$grid_gdp <- all$grid_gdp/1000
 all$market_dist <- all$market_dist/(24*7)
-all$ndvi <- all$ndvi/5000
 all$population <- all$population/1000
 all$tmax_10yr_mean <- all$tmax_10yr_mean - 273.15
 all$tmin_10yr_mean <- all$tmin_10yr_mean - 273.15
@@ -41,15 +39,15 @@ setNAs <- function(raster, column){
   return(raster)
 }
 
-ag_pct_gdp <- raster('ag_pct_gdp.tif') #%>% setNAs('ag_pct_gdp')
+ag_pct_gdp <- raster('ag_pct_gdp.tif')
 
 background <- ag_pct_gdp/ag_pct_gdp
 
-builtup <- (raster('builtup.tif')*100) #%>% setNAs('builtup')
+builtup <- (raster('builtup.tif')*100)
 
-crop_prod <- raster('crop_prod.tif') #%>% setNAs('crop_prod')
+crop_prod <- raster('crop_prod.tif')
 
-elevation <- (raster('elevation.tif')/1000) #%>% setNAs('elevation')
+elevation <- (raster('elevation.tif')/1000)
 
 fieldsize <- raster('fieldsize.tif')
 
@@ -68,31 +66,33 @@ grid_gdp_l <- log(grid_gdp)
 
 grid_hdi <- raster('grid_hdi.tif')
 
-government_effectiveness <- raster('government_effectiveness.tif') #%>% setNAs('government_effectiveness')
+government_effectiveness <- raster('government_effectiveness.tif')
 
-high_settle <- raster('high_settle.tif') #%>% setNAs('high_settle')
+high_settle <- raster('high_settle.tif')
 
 imports_percap <- raster('imports_percap.tif')/1000
 
-irrigation <- raster('irrigation.tif') #%>% setNAs('irrigation')
+irrig_aei <- raster('irrig_aei.tif')
 
-low_settle <- raster('low_settle.tif') #%>% setNAs('low_settle')
+irrig_aai <- raster('irrig_aai.tif')
 
-market_dist <- raster('market_distance.tif')/(24*7)
+low_settle <- raster('low_settle.tif')
 
-ndvi <- (raster('ndvi.tif')/5000) #%>% setNAs('ndvi')
+market_dist <- raster('market_dist.tif')/(24*7)
 
-nutritiondiversity <- raster('nutritiondiversity.tif') #%>% setNAs('nutritiondiversity')
+ndvi <- raster('ndvi.tif')
 
-population <- (raster('population.tif')/1000) #%>% setNAs('population')
+nutritiondiversity <- raster('nutritiondiversity.tif')
 
-precip_10yr_mean <- (raster('CHIRPS_10yr_avg.tif')*12/1000) #%>% setNAs('precip_10yr_mean')
+population <- (raster('population.tif')/1000)
 
-roughness <- raster('roughness.tif') #%>% setNAs('roughness')
+precip_10yr_mean <- (raster('CHIRPS_10yr_avg.tif')*12/1000)
 
-stability_violence <- raster('stability_violence.tif') #%>% setNAs('stability_violence')
+roughness <- raster('roughness.tif')
 
-tmax_10yr_mean <- (raster('TMAX_10yr_avg.tif') - 273.15) #%>% setNAs('tmax_10yr_mean')
+stability_violence <- raster('stability_violence.tif')
+
+tmax_10yr_mean <- (raster('TMAX_10yr_avg.tif') - 273.15)
 
 #Define Variables for mapping baseline
 age <- mean(all$age)
@@ -182,7 +182,7 @@ mod <- lm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             #spei*fieldsize + 
             spei*crop_prod +
             spei*government_effectiveness +
-            spei*irrigation +
+            spei*irrig_aai +
             spei*nutritiondiversity +
             spei*stability_violence,
            data=all)
