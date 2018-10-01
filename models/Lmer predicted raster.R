@@ -148,7 +148,7 @@ all$spei <- ifelse(all$spei > 1.5, "Wet",
   as.factor %>%
   relevel(ref = "Normal")
 
-mod <- lm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
+mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
             birth_order + hhsize + sex + mother_years_ed + toilet +
             head_age + head_sex + wealth_index + 
             

@@ -13,16 +13,19 @@ hhb <- read.csv('HH_data_B.csv')
 ################################
 
 #Create A by subsetting B
-mod_simple <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
-                     toilet + head_age + head_sex + urban_rural + wealth_index + 
-                     (1|surveycode) + (1|country) + (1|surveycode/calc_birthmonth),
+mod_simple <- lm(haz_dhs ~  age + birth_order + hhsize + sex + mother_years_ed + 
+                     toilet + head_age + head_sex + wealth_index + 
+                   as.factor(calc_birthmonth),
                    data=hhb)
 
-mod_all <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
-                  toilet + head_age + head_sex + urban_rural + wealth_index + otherwatersource + 
+mod_all <- lm(haz_dhs ~ age + birth_order + hhsize + sex + mother_years_ed + 
+                  toilet + head_age + head_sex + wealth_index + otherwatersource + 
                   ever_breastfed + diarrhea + istwin + 
-                  (1|surveycode) + (1|country) + (1|surveycode/calc_birthmonth),
+                  as.factor(calc_birthmonth),
                 data=hhb)
+
+sqrt(mean(residuals(mod_simple)^2))
+sqrt(mean(residuals(mod_all)^2))
 
 AIC(mod_simple)
 AIC(mod_all)
@@ -34,6 +37,15 @@ hhb$mod_all_resid <- residuals(mod_all)
 # [1] 0.9966823
 
 #Always use dataset A!
+
+smp <- tidy(mod_simple)
+names(smp)[2:5] <- paste0('simple_', names(smp)[2:5])
+all <- tidy(mod_all)
+names(all)[2:5] <- paste0('all_', names(all)[2:5])
+
+comb <- merge(smp, all, all=T)
+
+write.csv(comb, 'C://Users/matt/Desktop/CompareAvsB.csv', row.names=F)
 
 #####################################
 #Lets see if Mother's height matters?

@@ -19,8 +19,10 @@ col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500"))(29), 
 levelplot(dry, xlim=c(-100, 150), ylim=c(-40, 50), col.regions=col.l,
           xlab='', ylab='', 
           margin=F, 
-          main="Expected Change in Mean HAZ Scores Under Drought",
-          maxpixels=1.5e6) + 
+          main=list(label="Expected Change in Mean HAZ Scores Under Drought", cex=3),
+          maxpixels=1.5e6,
+          scales=list(draw=FALSE),
+          colorkey=list(labels=list(cex=2), space="bottom", height=0.5)) + 
   layer(sp.polygons(sp))
 
 #################
@@ -31,15 +33,15 @@ col.l <- c(colorRampPalette(c("#15719f", "#528ab4", "#62a1c7", "#7bc7dd", "#95d6
 levelplot(wet, xlim=c(-100, 150), ylim=c(-40, 50), col.regions=col.l,
           xlab='', ylab='', 
           margin=F, 
-          main="Expected Change in Mean HAZ Scores Under Excessive Rainfall",
-          maxpixels=1.5e6) + 
+          main=list(label="Expected Change in Mean HAZ Scores Under Excessive Rainfall", cex=3),
+          maxpixels=1.5e6,
+          scales=list(draw=FALSE),
+          colorkey=list(labels=list(cex=2), space="bottom", height=0.5)) + 
   layer(sp.polygons(sp))
 
 ##################
 #Show points
 ###################
-This is too hard apparently
-
 
 data <- read.csv('G://My Drive/DHS Processed/PrecipIndices.csv') %>%
   group_by(latitude, longitude) %>%
@@ -57,10 +59,25 @@ my.palette <- c("#222222", "#780000", "#15719f")
 
 plt <- spplot(spdat, "spei", col.regions = my.palette, 
        cex = 0.1, 
-       main = list(label="DHS Points Under Drought, Normal Conditions, and Excessive Rainfall", cex=5),
+       main = list(label="DHS Points Under Drought, Normal Conditions, and Excessive Rainfall", cex=3),
        sp.layout=list('sp.polygons', sp, fill="#DDDDDD"))
 
 
 plt$legend$bottom$args$key$points$cex <- c(2,2,2)
 
 plot(plt)
+
+##################
+#Show only points, no legend
+###################
+
+plt2 <- spplot(spdat, "spei", col.regions = c("#780000", "#780000", "#780000"), 
+              cex = 0.1, 
+              main = list(label="Locations of DHS Sites", cex=3),
+              sp.layout=list('sp.polygons', sp, fill="#DDDDDD"))
+
+
+plt2$legend$bottom$args$key$text[[1]] <- c("", "", "")
+plt2$legend$bottom$args$key$points$cex <- c(0,0,0)
+
+plot(plt2)
