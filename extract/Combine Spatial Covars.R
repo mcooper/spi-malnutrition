@@ -27,11 +27,12 @@ settle <- read.csv('settled.csv')
 imports <- read.csv('Imports_Per_Capita.csv')
 grid_gdp <- read.csv('grid_gdp.csv')
 grid_hdi <- read.csv('grid_hdi.csv')
+enrollment <- read.csv('enrollment.csv')
 
 alldf <- Reduce(function(x,y){merge(x, y, all.x=T, all.y=F)}, 
                 list(sp, ag, avhrr, irrig, market, gdp, fao, wgi,
                      pop, fields, nut, built, elev, rough, settle, 
-                     imports, grid_gdp, grid_hdi))
+                     imports, grid_gdp, grid_hdi, enrollment))
 
 alldf$crop_prod <- alldf$Cereals + alldf$RootsandTubers
 
@@ -40,6 +41,6 @@ alldf <- alldf %>%
   select(code, interview_year, ag_pct_gdp, bare, forest, gdp, government_effectiveness, 
          irrig_aai, irrig_aei, market_dist, ndvi, population, stability_violence, crop_prod, fieldsize, 
          nutritiondiversity, builtup, elevation, high_settle, low_settle, roughness,
-         imports_percap, grid_gdp, grid_hdi)
+         imports_percap, grid_gdp, grid_hdi, enrollment)
 
 write.csv(alldf, 'SpatialCovars.csv', row.names=F)
