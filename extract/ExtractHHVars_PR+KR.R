@@ -1,4 +1,4 @@
-setwd('D://Documents and Settings/mcooper/GitHub/spi-malnutrition/')
+setwd('C:/Git/spi-malnutrition/')
 
 library(foreign)
 library(dplyr)

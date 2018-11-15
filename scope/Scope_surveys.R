@@ -1,4 +1,4 @@
-setwd('D://Documents and Settings/mcooper/Google Drive/DHS Data/')
+setwd('G://My Drive/DHS Data/')
 
 library(foreign)
 library(dplyr)
@@ -25,7 +25,7 @@ for (f in fs){
 }
 
 for (f in df$KR[df$KR != '']){
-  file <- read.dta(f)
+  file <- read.dta(f, convert.factors=F)
   if (sum(is.na(file$hw3)) < nrow(file) & !is.null(file$hw3)){
     df$KRheight[df$KR==f] <- TRUE
   }
@@ -39,7 +39,7 @@ for (f in df$KR[df$KR != '']){
 }
 
 for (f in df$PR[df$PR != '']){
-  file <- read.dta(f)
+  file <- read.dta(f, convert.factors=F)
   if (sum(is.na(file$hc3)) < nrow(file) & !is.null(file$hc3)){
     df$PRheight[df$PR==f] <- TRUE
   }
