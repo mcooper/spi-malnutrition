@@ -2,6 +2,7 @@ library(dplyr)
 library(lme4)
 library(MASS)
 library(broom)
+library(tidyr)
 
 setwd('~/dhsprocessed')
 setwd('G://My Drive/DHS Processed')
@@ -58,6 +59,8 @@ gdp <- (raster('gdp2020.tif')/1000) %>%
 
 base <- gdp/gdp
 
+enrollment <- raster('enrollment.tif')
+
 gdp_l <- log(gdp)
 
 grid_gdp <- (raster('grid_gdp.tif')/1000)
@@ -86,7 +89,7 @@ nutritiondiversity <- raster('nutritiondiversity.tif')
 
 population <- (raster('population.tif')/1000)
 
-precip_10yr_mean <- (raster('CHIRPS_10yr_avg.tif')*12/1000)
+precip_10yr_mean <- (raster('precip_10yr_mean.tif')*12/1000)
 
 roughness <- raster('roughness.tif')
 
@@ -140,11 +143,41 @@ makeRasts <- function(mod, term, usebase=FALSE, censor=TRUE){
   return(rast)
 }
 
+getValuesAtPoint <- function(mod, x, y){
+  s <- tidy(mod)
+  
+  coefs <- s[grepl('spei', s$term), c('term', 'estimate')]
+  
+  coefs$extremeType <- ifelse(grepl('Dry', coefs$term), "Dry", "Wet")
+  
+  coefs$term <- gsub('spei...:|spei...', '', coefs$term)
+  
+  coefs <- coefs %>% spread(extremeType, estimate)
+  
+  coefs[1, 'Value'] <- 1
+  for (i in 2:nrow(coefs)){
+    if(exists(coefs$term[i])){
+      tmp_rast <- get(coefs$term[i])
+      v <- raster::extract(tmp_rast, matrix(c(x, y), nrow = 1))
+    } else{
+      v <- NA
+    }
+      coefs[i, 'Value'] <- v
+  }
+  
+  coefs$WetImpact <- coefs$Wet*coefs$Value
+  coefs$DryImpact <- coefs$Dry*coefs$Value
+  
+  cat("Dry:", sum(coefs$DryImpact), "Wet:", sum(coefs$WetImpact), '\n')
+  
+  return(coefs)
+}
+
 #Make categorical
 all$spei <- all$spei24
 
-all$spei <- ifelse(all$spei > 1.5, "Wet",
-                   ifelse(all$spei < -0.4, "Dry", "Normal")) %>%
+all$spei <- ifelse(all$spei > 0.4, "Wet",
+                   ifelse(all$spei < -1.5, "Dry", "Normal")) %>%
   as.factor %>%
   relevel(ref = "Normal")
 
@@ -156,35 +189,38 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             #spei*ag_pct_gdp +
             #spei*gdp_l +
             #spei*grid_gdp_l + 
-            spei*grid_gdp + 
-            #spei*grid_hdi + 
-            #spei*imports_percap + 
+            #spei*grid_gdp + 
+            spei*grid_hdi + 
+            spei*imports_percap + 
             
+            #spei*enrollment + 
+             
             #Pop-Urban vars
-            #spei*builtup +
+            spei*builtup +
             #spei*low_settle + #Slightly colinear with irrigation (0.50) so avoid this one
             #spei*high_settle + 
-            spei*population +
+            #spei*population +
             
             #Land Cover Vars
-            #spei*precip_10yr_mean +
-            #spei*forest +
-            spei*ndvi +
+            spei*precip_10yr_mean +
+            spei*forest +
+            #spei*ndvi +
             #spei*bare + 
             
             #Topographic Vars
             #spei*elevation +
-            #spei*roughness + 
-            spei*tmax_10yr_mean +
+            spei*roughness + 
+            #spei*tmax_10yr_mean +
           
             #Totally Independat Vars
-            spei*market_dist + #not the same before and after 2000
+            #spei*market_dist + #not the same before and after 2000
             #spei*fieldsize + 
             spei*crop_prod +
             spei*government_effectiveness +
             spei*irrig_aai +
-            spei*nutritiondiversity +
-            spei*stability_violence,
+            spei*nutritiondiversity# +
+            #spei*stability_violence
+           ,
            data=all)
 
 summary(mod)
@@ -198,7 +234,7 @@ plot(makeRasts(mod, "speiDry"))
 #Wet
 plot(makeRasts(mod, "speiWet"))
 
-
+getValuesAtPoint(mod, x, y)
 
 writeRaster(rasts[[1]], 'Wet.tif', format='GTiff', overwrite=T)
 writeRaster(rasts[[3]], 'Dry.tif', format='GTiff', overwrite=T)
