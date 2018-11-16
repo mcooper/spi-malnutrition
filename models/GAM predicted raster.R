@@ -1,8 +1,7 @@
 library(dplyr)
-library(lme4)
-library(MASS)
 library(broom)
 library(tidyr)
+library(mgcv)
 
 setwd('~/dhsprocessed')
 setwd('G://My Drive/DHS Processed')
@@ -15,7 +14,7 @@ all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, spei, cov))
   na.omit
 
 #Try rescaling some geospatial covariates
-all$mean_annual_precip <- (all$mean_annual_precip)/1000
+all$precip_10yr_mean <- (all$precip_10yr_mean*12)/1000
 all$gdp <- all$gdp/1000
 all$grid_gdp <- all$grid_gdp/1000
 all$market_dist <- all$market_dist/(24*7)
@@ -41,35 +40,68 @@ setNAs <- function(raster, column){
 }
 
 ag_pct_gdp <- raster('ag_pct_gdp.tif')
+
 background <- ag_pct_gdp/ag_pct_gdp
+
 builtup <- (raster('builtup.tif')*100)
+
 crop_prod <- raster('crop_prod.tif')
+
 elevation <- (raster('elevation.tif')/1000)
+
 fieldsize <- raster('fieldsize.tif')
+
 forest <- raster('forest.tif')
-gdp <- (raster('gdp.tif')/1000) %>%
+
+gdp <- (raster('gdp2020.tif')/1000) %>%
   setNAs('gdp')
+
 base <- gdp/gdp
+
 enrollment <- raster('enrollment.tif')
+
 gdp_l <- log(gdp)
+
 grid_gdp <- (raster('grid_gdp.tif')/1000)
+
 grid_gdp_l <- log(grid_gdp)
+
 grid_hdi <- raster('grid_hdi.tif')
+
 government_effectiveness <- raster('government_effectiveness.tif')
+
 high_settle <- raster('high_settle.tif')
+
 imports_percap <- raster('imports_percap.tif')/1000
+
 irrig_aei <- raster('irrig_aei.tif')
+
 irrig_aai <- raster('irrig_aai.tif')
+
 low_settle <- raster('low_settle.tif')
+
 market_dist <- raster('market_dist.tif')/(24*7)
-mean_annual_precip <- raster('mean_annual_precip.tif')/1000
+
 ndvi <- raster('ndvi.tif')
+
 nutritiondiversity <- raster('nutritiondiversity.tif')
+
 population <- (raster('population.tif')/1000)
+
 precip_10yr_mean <- (raster('precip_10yr_mean.tif')*12/1000)
+
 roughness <- raster('roughness.tif')
+
 stability_violence <- raster('stability_violence.tif')
+
 tmax_10yr_mean <- (raster('tmax_10yr_mean.tif') - 273.15)
+
+#Define Variables for mapping baseline
+age <- mean(all$age)
+birth_order <- mean(all$birth_order)
+hhsize <- mean(all$hhsize)
+mother_years_ed <- mean(all$mother_years_ed)
+head_age <- mean(all$head_age)
 
 makeRasts <- function(mod, term, usebase=FALSE, censor=TRUE){
   #mod is the model that has been fit
@@ -86,13 +118,6 @@ makeRasts <- function(mod, term, usebase=FALSE, censor=TRUE){
   coefs$term <- gsub(paste0(term, ':'), '', coefs$term)
   
   if(term == ''){
-    #Define Variables for mapping baseline
-    age <- mean(all$age)
-    birth_order <- mean(all$birth_order)
-    hhsize <- mean(all$hhsize)
-    mother_years_ed <- mean(all$mother_years_ed)
-    head_age <- mean(all$head_age)
-    
     coefs <- coefs[!grepl('spei', coefs$term), ]
   }
   
@@ -111,7 +136,7 @@ makeRasts <- function(mod, term, usebase=FALSE, censor=TRUE){
   }
   
   if (censor){
-    rast[rast > 0] <- 0
+    rast[rast > 0] <- NA
   }
   
   return(rast)
@@ -150,12 +175,12 @@ getValuesAtPoint <- function(mod, x, y){
 #Make categorical
 all$spei <- all$spei24
 
-all$spei <- ifelse(all$spei > 1.5, "Wet",
-                   ifelse(all$spei < -0.4, "Dry", "Normal")) %>%
+all$spei <- ifelse(all$spei > 0.4, "Wet",
+                   ifelse(all$spei < -1.5, "Dry", "Normal")) %>%
   as.factor %>%
   relevel(ref = "Normal")
 
-mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
+mod <- gam(haz_dhs ~ age + as.factor(calc_birthmonth) + 
             birth_order + hhsize + sex + mother_years_ed + toilet +
             head_age + head_sex + wealth_index + 
             
@@ -164,36 +189,36 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             #spei*gdp_l +
             #spei*grid_gdp_l + 
             #spei*grid_gdp + 
-            spei*grid_hdi + 
-            spei*imports_percap + 
+            s(spei*grid_hdi, bs="tp") + 
+            s(spei*imports_percap, bs="tp") + 
             
             #spei*enrollment + 
              
             #Pop-Urban vars
-            spei*builtup +
+            s(spei*builtup, bs="tp") +
             #spei*low_settle + #Slightly colinear with irrigation (0.50) so avoid this one
             #spei*high_settle + 
             #spei*population +
             
             #Land Cover Vars
-            spei*mean_annual_precip +
-            spei*forest +
+            s(spei*precip_10yr_mean, bs="tp") +
+            s(spei*forest, bs="tp") +
             #spei*ndvi +
             #spei*bare + 
             
             #Topographic Vars
             #spei*elevation +
-            spei*roughness + 
+            s(spei*roughness, bs="tp") + 
             #spei*tmax_10yr_mean +
           
             #Totally Independat Vars
             #spei*market_dist + #not the same before and after 2000
             #spei*fieldsize + 
-            spei*crop_prod +
-            #spei*government_effectiveness +
-            spei*irrig_aai +
-            spei*nutritiondiversity +
-            spei*stability_violence
+            s(spei*crop_prod, bs="tp") +
+            s(spei*government_effectiveness, bs="tp") +
+            s(spei*irrig_aai, bs="tp") +
+            s(spei*nutritiondiversity, bs="tp")# +
+            #spei*stability_violence
            ,
            data=all)
 
@@ -210,6 +235,25 @@ plot(makeRasts(mod, "speiWet"))
 
 getValuesAtPoint(mod, x, y)
 
-writeRaster(makeRasts(mod, "speiDry", usebase=T), 'G://My Drive/DHS Spatial Covars/Final Rasters/Dry.tif', format='GTiff', overwrite=T)
-writeRaster(makeRasts(mod, "speiWet", usebase=T), 'G://My Drive/DHS Spatial Covars/Final Rasters/Wet.tif', format='GTiff', overwrite=T)
+writeRaster(rasts[[1]], 'Wet.tif', format='GTiff', overwrite=T)
+writeRaster(rasts[[3]], 'Dry.tif', format='GTiff', overwrite=T)
+
+
+library(raster)
+library(rgdal)
+
+rast <- makeRasts(mod, "Wet", usebase=TRUE)[[2]]
+sp <- readOGR('G:/My Drive/DHS Spatial Covars/Global Codes and Shapefile', 
+              'ne_50m_admin_0_countries')
+
+plot(background,
+     main='Expected Change in HAZ Scores From a 24-Month SPEI of < -1.5',
+     ext=extent(c(-100, 150, -40, 50)),
+     col='#A8A48F',
+     axes=F,
+     legend=F)
+plot(rast, 
+     add=T)
+plot(sp, add=T)
+
 

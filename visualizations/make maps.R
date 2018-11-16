@@ -19,25 +19,25 @@ col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500"))(29), 
 levelplot(dry, xlim=c(-100, 150), ylim=c(-40, 50), col.regions=col.l,
           xlab='', ylab='', 
           margin=F, 
-          main=list(label="Expected Change in Mean HAZ Scores Under Drought", cex=3),
+          main=list(label="Expected Change in Mean HAZ Scores Under Drought (SPEI < -0.4)", cex=3),
           maxpixels=1.5e6,
           scales=list(draw=FALSE),
           colorkey=list(labels=list(cex=2), space="bottom", height=0.5)) + 
-  layer(sp.polygons(sp))
+  layer(sp.polygons(sp, col="#444444"))
 
 #################
 #Too much rain
 #################
-col.l <- c(colorRampPalette(c("#15719f", "#528ab4", "#62a1c7", "#7bc7dd", "#95d6ea"))(29), "#DDDDDD") 
+col.l <- c(colorRampPalette(c("#253494", "#2c7fb8", "#41b6c4", "#a1dab4", "#F1F9C8"))(29), "#DDDDDD") 
 
 levelplot(wet, xlim=c(-100, 150), ylim=c(-40, 50), col.regions=col.l,
           xlab='', ylab='', 
           margin=F, 
-          main=list(label="Expected Change in Mean HAZ Scores Under Excessive Rainfall", cex=3),
+          main=list(label="Expected Change in Mean HAZ Scores Under Excessive Rainfall (SPEI > 1.5)", cex=3),
           maxpixels=1.5e6,
           scales=list(draw=FALSE),
           colorkey=list(labels=list(cex=2), space="bottom", height=0.5)) + 
-  layer(sp.polygons(sp))
+  layer(sp.polygons(sp, col="#444444"))
 
 ##################
 #Show points
