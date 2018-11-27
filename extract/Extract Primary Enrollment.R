@@ -7,6 +7,7 @@ options(stringsAsFactors = F)
 
 enrollment <- read.csv('API_SE.PRM.NENR_DS2_en_csv_v2_10182806.csv', skip = 4) %>%
   dplyr::select(-Country.Code, -Indicator.Name, -Indicator.Code) %>%
+  mutate(X2018=NA, X2019=NA, X2020=NA) %>% 
   gather(interview_year, enrollment, -Country.Name) %>%
   mutate(interview_year = as.numeric(gsub('X', '', interview_year)),
          enrollment_interpolated = is.na(enrollment),
@@ -19,6 +20,9 @@ enrollment <- read.csv('API_SE.PRM.NENR_DS2_en_csv_v2_10182806.csv', skip = 4) %
   arrange(interview_year) %>%
   group_by(Country.Name) %>%
   fill(enrollment)
+
+enrollment$enrollment[enrollment$Country.Name=="South Sudan" & enrollment$interview_year < 2011] <- enrollment$enrollment[enrollment$Country.Name=="Sudan" & enrollment$interview_year < 2011]
+enrollment$enrollment[enrollment$Country.Name=="Timor-Leste" & enrollment$interview_year < 2002] <- enrollment$enrollment[enrollment$Country.Name=="Indonesia" & enrollment$interview_year < 2002]
 
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
   dplyr::select(latitude, longitude, code, interview_year) %>%
@@ -34,7 +38,7 @@ all <- merge(data, enrollment, all.x=T, all.y=F) %>%
 write.csv(all, '../../DHS Processed/Enrollment.csv', row.names=F)
 
 #################
-#Now make raster
+#Now make rasters
 #################
 
 library(rgdal)
@@ -44,21 +48,25 @@ sp <- readOGR('../Global Codes and Shapefile', 'ne_50m_admin_0_countries')
 
 sp$iso3c <- countrycode(sp$SOVEREIGNT, origin='country.name', destination = "iso3c")
 
-final <- enrollment %>%
-  filter(interview_year == 2017 & !is.na(iso3c))
-
-sp <- sp::merge(sp, final)
-
-sp$enrollment[sp$ADMIN == 'Western Sahara'] <- sp$enrollment[sp$ADMIN == 'Morocco']
-sp$enrollment[sp$ADMIN == 'Bosnia and Herzegovina'] <- sp$enrollment[sp$ADMIN == 'Republic of Serbia']
-sp$enrollment[sp$ADMIN == 'Czechia'] <- sp$enrollment[sp$ADMIN == 'Austria']
-sp$enrollment[sp$ADMIN == 'Slovakia'] <- sp$enrollment[sp$ADMIN == 'Austria']
-sp$enrollment[sp$ADMIN == 'Kosovo'] <- sp$enrollment[sp$ADMIN == 'Republic of Serbia']
-sp$enrollment[sp$ADMIN == 'Siachen Glacier'] <- sp$enrollment[sp$ADMIN == 'Pakistan']
-sp$enrollment[sp$ADMIN == 'Taiwan'] <- sp$enrollment[sp$ADMIN == 'China']
-sp$enrollment[sp$ADMIN == 'Turkmenistan'] <- sp$enrollment[sp$ADMIN == 'Uzbekistan']
-
 #Need to decide on scale and make a template raster
 r <- raster('../Final Rasters/irrigation.tif')
 
-finalrast <- rasterize(sp, r, field="enrollment", fun='mean', na.rm=TRUE, filename='../Final Rasters/enrollment.tif', driver='GTiff', overwrite=T)
+for (year in seq(1990, 2020)){
+  dat <- enrollment %>%
+    filter(interview_year==year & !is.na(iso3c))
+  
+  spres <- sp::merge(sp, dat)
+  
+  spres$enrollment[spres$ADMIN == 'Western Sahara'] <- spres$enrollment[spres$ADMIN == 'Morocco']
+  spres$enrollment[spres$ADMIN == 'Bosnia and Herzegovina'] <- spres$enrollment[spres$ADMIN == 'Republic of Serbia']
+  spres$enrollment[spres$ADMIN == 'Czechia'] <- spres$enrollment[spres$ADMIN == 'Austria']
+  spres$enrollment[spres$ADMIN == 'Slovakia'] <- spres$enrollment[spres$ADMIN == 'Austria']
+  spres$enrollment[spres$ADMIN == 'Kosovo'] <- spres$enrollment[spres$ADMIN == 'Republic of Serbia']
+  spres$enrollment[spres$ADMIN == 'Siachen Glacier'] <- spres$enrollment[spres$ADMIN == 'Pakistan']
+  spres$enrollment[spres$ADMIN == 'Taiwan'] <- spres$enrollment[spres$ADMIN == 'China']
+  spres$enrollment[spres$ADMIN == 'Turkmenistan'] <- spres$enrollment[spres$ADMIN == 'Uzbekistan']
+  
+  rasterize(spres, r, field="enrollment", fun='mean', na.rm=TRUE, filename=paste0('../Final Rasters/', year, '/enrollment.tif'), driver='GTiff', overwrite=T)
+
+  print(year)
+}

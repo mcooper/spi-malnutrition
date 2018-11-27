@@ -50,4 +50,14 @@ dat %>%
   select(interview_year, builtup, code) %>% 
   write.csv('../../DHS Processed/builtup.csv', row.names=F)
 
-writeRaster(bu14, '../Final Rasters/builtup.tif', format='GTiff')
+for (year in seq(1990, 1995)){
+  writeRaster(bu90, paste0('../Final Rasters/', year, '/builtup.tif'), format='GTiff')
+}
+
+for (year in seq(1996, 2007)){
+  writeRaster(bu00, paste0('../Final Rasters/', year, '/builtup.tif'), format='GTiff')
+}
+
+for (year in seq(2008, 2020)){
+  writeRaster(bu14, paste0('../Final Rasters/', year, '/builtup.tif'), format='GTiff')
+}

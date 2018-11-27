@@ -25,8 +25,10 @@ for (i in 1:20){
 r2[is.na(r2)] <- r3[is.na(r2)]
 
 #then save it to file
-writeRaster(r2, '../Final Rasters/nutritiondiversity.tif', format='GTiff', overwrite=T)
-
+for (year in seq(1990, 2020)){
+  writeRaster(r2, paste0('../Final Rasters/', year, '/nutritiondiversity.tif'), format='GTiff', overwrite=T)
+}
+  
 #Then extract values, averaging across Queen's case
 dat <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
   dplyr::select(latitude, longitude, code, interview_year) %>%

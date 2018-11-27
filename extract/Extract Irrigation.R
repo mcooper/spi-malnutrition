@@ -30,9 +30,11 @@ aai_pct <- resample(aai_pct, resamp, method="bilinear")
 aei_pct <- focal(aei_pct, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
 aai_pct <- focal(aai_pct, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
 
-#then save it to file
-writeRaster(aei_pct, '../Final Rasters/irrig_aei.tif', format='GTiff', overwrite=T)
-writeRaster(aai_pct, '../Final Rasters/irrig_aai.tif', format='GTiff', overwrite=T)
+for (year in seq(1990, 2020)){
+  #then save it to file
+  writeRaster(aei_pct, paste0('../Final Rasters/', year, '/irrig_aei.tif'), format='GTiff', overwrite=T)
+  writeRaster(aai_pct, paste0('../Final Rasters/', year, '/irrig_aai.tif'), format='GTiff', overwrite=T)
+}
 
 #Then extract values, averaging across Queen's case
 

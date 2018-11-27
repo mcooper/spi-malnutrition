@@ -23,8 +23,10 @@ rough_res <- resample(roughness, resamp)
 rough_res_foc <- focal(rough_res, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
 
 #then save it to file
-writeRaster(rough_res_foc, '../Final Rasters/roughness.tif', format='GTiff', overwrite=T)
-
+for (year in seq(1990, 2020)){
+  writeRaster(rough_res_foc, paste0('../Final Rasters/', year, '/roughness.tif'), format='GTiff', overwrite=T)
+}
+  
 #Then extract values, averaging across Queen's case
 
 dat <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%

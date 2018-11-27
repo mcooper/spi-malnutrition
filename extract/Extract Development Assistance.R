@@ -1,32 +1,25 @@
-setwd('G://My Drive/DHS Spatial Covars/Ag as a perc of GDP/')
+setwd('G://My Drive/DHS Spatial Covars/DevelopmentAssistance/')
 
 library(tidyverse)
 library(countrycode)
 
 options(stringsAsFactors = F)
 
-ag_pct_gdp <- read.csv('API_NV.AGR.TOTL.ZS_DS2_en_csv_v2_9911168.csv', skip = 4) %>%
+assistance <- read.csv('API_DT.ODA.ODAT.PC.ZS_DS2_en_csv_v2_10226222.csv', skip = 4) %>%
   dplyr::select(-Country.Code, -Indicator.Name, -Indicator.Code) %>%
   mutate(X2018=NA, X2019=NA, X2020=NA) %>% 
-  gather(interview_year, ag_pct_gdp, -Country.Name) %>%
+  gather(interview_year, assistance, -Country.Name) %>%
   mutate(interview_year = as.numeric(gsub('X', '', interview_year)),
-         ag_pct_gdp_interpolated = is.na(ag_pct_gdp),
+         assistance_interpolated = is.na(assistance),
          Country.Name = ifelse(Country.Name=='Eswatini', 'Swaziland', Country.Name),
          iso3c = countrycode(Country.Name, 'country.name', 'iso3c')) %>%
   filter(!is.na(interview_year)) %>%
   arrange(desc(interview_year)) %>%
   group_by(Country.Name) %>%
-  fill(ag_pct_gdp) %>%
+  fill(assistance) %>%
   arrange(interview_year) %>%
   group_by(Country.Name) %>%
-  fill(ag_pct_gdp)
-
-#missing data for Haiti, North Korea
-#Will use CIA world factbooks 2017 estimate.
-ag_pct_gdp$ag_pct_gdp[ag_pct_gdp$Country.Name == 'Haiti'] <- 21.9
-ag_pct_gdp$ag_pct_gdp[ag_pct_gdp$iso3c == 'PRK'] <- 25.4
-ag_pct_gdp$ag_pct_gdp[ag_pct_gdp$Country.Name == 'South Sudan'] <- ag_pct_gdp$ag_pct_gdp[ag_pct_gdp$Country.Name == 'Sudan']
-ag_pct_gdp$ag_pct_gdp[ag_pct_gdp$Country.Name == 'Comoros'] <- 49.5
+  fill(assistance)
 
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
   dplyr::select(latitude, longitude, code, interview_year) %>%
@@ -36,10 +29,10 @@ data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
 
 data$iso3c <- countrycode(data$Country.or.Area, 'country.name', 'iso3c')
 
-all <- merge(data, ag_pct_gdp, all.x=T, all.y=F) %>%
-  dplyr::select(interview_year, latitude, longitude, code, ag_pct_gdp)
+all <- merge(data, assistance, all.x=T, all.y=F) %>%
+  dplyr::select(interview_year, latitude, longitude, code, assistance)
 
-write.csv(all, '../../DHS Processed/Ag_Pct_GDP.csv', row.names=F)
+write.csv(all, '../../DHS Processed/Assistance.csv', row.names=F)
 
 #################
 #Now make rasters
@@ -47,6 +40,8 @@ write.csv(all, '../../DHS Processed/Ag_Pct_GDP.csv', row.names=F)
 
 library(rgdal)
 library(raster)
+
+assistance$assistance[assistance$Country.Name == 'South Sudan' & assistance$interview_year < 2011] <- assistance$assistance[assistance$Country.Name == 'Sudan' & assistance$interview_year < 2011]
 
 sp <- readOGR('../Global Codes and Shapefile', 'ne_50m_admin_0_countries')
 
@@ -56,12 +51,14 @@ sp$iso3c <- countrycode(sp$SOVEREIGNT, origin='country.name', destination = "iso
 r <- raster('../Final Rasters/irrigation.tif')
 
 for (year in seq(1990, 2020)){
-  dat <- ag_pct_gdp %>%
+  dat <- assistance %>%
     filter(interview_year==year & !is.na(iso3c))
   
   spres <- sp::merge(sp, dat)
   
-  rasterize(spres, r, field="ag_pct_gdp", fun='mean', na.rm=TRUE, filename=paste0('../Final Rasters/', year, '/ag_pct_gdp.tif'), driver='GTiff', overwrite=T)
+  spres$assistance[is.na(spres$assistance)] <- 0
+  
+  rasterize(spres, r, field="assistance", fun='mean', na.rm=TRUE, filename=paste0('../Final Rasters/', year, '/assistance.tif'), driver='GTiff', overwrite=T)
   
   print(year)
 }

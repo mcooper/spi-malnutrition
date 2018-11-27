@@ -53,9 +53,17 @@ newdata$grid_gdp[is.na(newdata$grid_gdp)] <- 13784.34
 
 write.csv(newdata, 'G://My Drive/DHS Spatial Covars/Gridded GDP and HDI/grid_gdp.csv', row.names=F)
 
-slice <- gdpvar[ , , 26]
-
-r <- raster(t(slice), xmn=-180, xmx=180, ymn=-90, ymx=90,
-            crs='+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-r <- resample(r, ref)
-writeRaster(r, 'G://My Drive/DHS Spatial Covars/Final Rasters/grid_gdp.tif', format='GTiff')
+for (year in seq(1990, 2020)){
+  y <- year - 1989
+  
+  if (y > 26){
+    y <- 26
+  }
+  
+  slice <- gdpvar[ , , 26]
+  
+  r <- raster(t(slice), xmn=-180, xmx=180, ymn=-90, ymx=90,
+              crs='+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+  r <- resample(r, ref)
+  writeRaster(r, paste0('G://My Drive/DHS Spatial Covars/Final Rasters/', year, '/grid_gdp.tif'), format='GTiff')
+}

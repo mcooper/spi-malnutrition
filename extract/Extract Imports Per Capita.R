@@ -5,6 +5,7 @@ library(countrycode)
 
 imports <- read.csv('API_NE.IMP.GNFS.CD_DS2_en_csv_v2_10080803/API_NE.IMP.GNFS.CD_DS2_en_csv_v2_10080803.csv', skip = 4) %>%
   dplyr::select(-Country.Code, -Indicator.Name, -Indicator.Code) %>%
+  mutate(X2018=NA, X2019=NA, X2020=NA) %>% 
   gather(interview_year, imports, -Country.Name) %>%
   mutate(interview_year = as.numeric(gsub('X', '', interview_year)),
          imports_interpolated = is.na(imports),
@@ -19,6 +20,7 @@ imports <- read.csv('API_NE.IMP.GNFS.CD_DS2_en_csv_v2_10080803/API_NE.IMP.GNFS.C
 
 population <- read.csv('../Population/API_SP.POP.TOTL_DS2_en_csv_v2_9908626.csv', skip = 4) %>%
   dplyr::select(-Country.Code, -Indicator.Name, -Indicator.Code) %>%
+  mutate(X2018=NA, X2019=NA, X2020=NA) %>% 
   gather(interview_year, population, -Country.Name) %>%
   mutate(interview_year = as.numeric(gsub('X', '', interview_year)),
          population_interpolated = is.na(population),
@@ -33,6 +35,9 @@ population <- read.csv('../Population/API_SP.POP.TOTL_DS2_en_csv_v2_9908626.csv'
 
 final <- merge(population, imports) %>%
   mutate(imports_percap=imports/population)
+
+final$imports_percap[final$Country.Name=="South Sudan" & final$interview_year < 2011] <- final$imports_percap[final$Country.Name=="Sudan" & final$interview_year < 2011]
+final$imports_percap[final$Country.Name=="Timor-Leste" & final$interview_year < 2002] <- final$imports_percap[final$Country.Name=="Indonesia" & final$interview_year < 2002]
 
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
   dplyr::select(latitude, longitude, code, interview_year) %>%
@@ -58,16 +63,20 @@ sp <- readOGR('../Global Codes and Shapefile', 'ne_50m_admin_0_countries')
 
 sp$iso3c <- countrycode(sp$SOVEREIGNT, origin='country.name', destination = "iso3c")
 
-final <- final %>%
-  filter(interview_year == 2017 & !is.na(iso3c))
+for (year in seq(1990, 2020)){
+  dat <- final %>%
+    filter(interview_year == year & !is.na(iso3c))
+  
+  spres <- sp::merge(sp, dat)
+  
+  spres$imports_percap[spres$ADMIN == 'Western Sahara'] <- spres$imports_percap[spres$ADMIN == 'Morocco']
+  spres$imports_percap[spres$ADMIN == 'Siachen Glacier'] <- spres$imports_percap[spres$ADMIN == 'Pakistan']
+  spres$imports_percap[spres$ADMIN == 'North Korea'] <- 0
+  
+  #Need to decide on scale and make a template raster
+  r <- raster('../Final Rasters/irrigation.tif')
+  
+  finalrast <- rasterize(spres, r, field="imports_percap", fun='mean', na.rm=TRUE, filename=paste0('../Final Rasters/', year, '/imports_percap.tif'), driver='GTiff', overwrite=T)
 
-sp <- sp::merge(sp, final)
-
-sp$imports_percap[sp$ADMIN == 'Western Sahara'] <- sp$imports_percap[sp$ADMIN == 'Morocco']
-sp$imports_percap[sp$ADMIN == 'Siachen Glacier'] <- sp$imports_percap[sp$ADMIN == 'Pakistan']
-sp$imports_percap[sp$ADMIN == 'North Korea'] <- 0
-
-#Need to decide on scale and make a template raster
-r <- raster('../Final Rasters/irrigation.tif')
-
-finalrast <- rasterize(sp, r, field="imports_percap", fun='mean', na.rm=TRUE, filename='../Final Rasters/imports_percap.tif', driver='GTiff', overwrite=T)
+  print(year)
+}

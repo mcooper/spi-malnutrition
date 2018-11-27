@@ -12,4 +12,6 @@ map <- agg/36
 
 map[map<0] <- NA
 
-writeRaster(map, 'G://My Drive/DHS Spatial Covars/Final Rasters/mean_annual_precip.tif', format='GTiff')
+for (year in seq(1990, 2020)){
+  writeRaster(map, paste0('G://My Drive/DHS Spatial Covars/Final Rasters/', year, '/mean_annual_precip.tif'), format='GTiff')
+}

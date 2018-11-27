@@ -77,8 +77,13 @@ dat %>%
   select(interview_year, high_settle, low_settle, code) %>% 
   write.csv('~/dhsprocessed/settled.csv', row.names=F)
 
-writeRaster(s15high_res_fc, '~/dhsprocessed/high_settle.tif', format='GTiff', overwrite=T)
-writeRaster(s15low_res_fc, '~/dhsprocessed/low_settle.tif', format='GTiff', overwrite=T)
+writeRaster(s90high_res_fc, '~/dhsprocessed/high_settle1990.tif', format='GTiff', overwrite=T)
+writeRaster(s00high_res_fc, '~/dhsprocessed/high_settle2000.tif', format='GTiff', overwrite=T)
+writeRaster(s15high_res_fc, '~/dhsprocessed/high_settle2015.tif', format='GTiff', overwrite=T)
+
+writeRaster(s90low_res_fc, '~/dhsprocessed/low_settle1990.tif', format='GTiff', overwrite=T)
+writeRaster(s00low_res_fc, '~/dhsprocessed/low_settle2000.tif', format='GTiff', overwrite=T)
+writeRaster(s15low_res_fc, '~/dhsprocessed/low_settle2015.tif', format='GTiff', overwrite=T)
 
 
 

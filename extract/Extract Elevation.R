@@ -19,10 +19,11 @@ r <- resample(r, resamp, method="bilinear")
 r2 <- focal(r, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
 
 #then save it to file
-writeRaster(r2, '../Final Rasters/elevation.tif', format='GTiff')
-
-#Then extract values, averaging across Queen's case
-
+for (year in seq(1990, 2020)){
+  writeRaster(r2, paste0('../Final Rasters/', year, '/elevation.tif'), format='GTiff')
+}
+  
+#Then extract values
 dat <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
   dplyr::select(latitude, longitude, code, interview_year) %>%
   unique

@@ -18,7 +18,7 @@ pop2010[is.na(pop2010)] <- 0
 pop2015[is.na(pop2015)] <- 0
 pop2020[is.na(pop2020)] <- 0
 
-ref <- raster('Bareground_cover_1982.tif')
+ref <- raster('chirps-v2.0.1981.01.tif')
 
 pop1990 <- resample(pop1990, ref)
 pop2000 <- resample(pop2000, ref)
@@ -66,5 +66,13 @@ dat <- Reduce(bind_rows, list(dat1990, dat2000, dat2005, dat2010, dat2015))
 
 write.csv(dat, 'population.csv', row.names=F)
 
-writeRaster(pop2020, 'population.tif', format="GTiff", overwrite=TRUE)
+writeRaster(pop1990, 'population1990.tif', format="GTiff", overwrite=TRUE)
+writeRaster(pop2000, 'population2000.tif', format="GTiff", overwrite=TRUE)
+writeRaster(pop2005, 'population2005.tif', format="GTiff", overwrite=TRUE)
+writeRaster(pop2010, 'population2010.tif', format="GTiff", overwrite=TRUE)
+writeRaster(pop2015, 'population2015.tif', format="GTiff", overwrite=TRUE)
+writeRaster(pop2020, 'population2020.tif', format="GTiff", overwrite=TRUE)
+
+
+
 

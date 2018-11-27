@@ -68,15 +68,31 @@ for (y in unique(data$interview_year)){
 write.csv(newdata, '../../DHS Processed/avhrr.csv', row.names=F)
 
 #Read in 2016 rasters and write them
-ndvi <- raster('2016_vi_mn_75_100.tif')/10000
-vcf <- stack('VCF_2016.tif')
-forest <- vcf[[1]]
-bare <- vcf[[3]]
-
-ndvi <- focal(ndvi, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
-forest <- focal(forest, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
-bare <- focal(bare, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
-
-writeRaster(ndvi, '../Final Rasters/ndvi.tif', format='GTiff', overwrite=TRUE)
-writeRaster(bare, '../Final Rasters/bare.tif', format='GTiff', overwrite=TRUE)
-writeRaster(forest, '../Final Rasters/forest.tif', format='GTiff', overwrite=TRUE)
+for (year in seq(1990, 2020)){
+  y <- year
+  
+  if (year > 2016){
+    y <- 2016
+  }
+  
+  if (year == 1994){
+    y <- 1995
+  }
+  
+  if (year == 2000){
+    y <- 2001
+  }
+  
+  ndvi <- raster(paste0(y, '_vi_mn_75_100.tif'))/10000
+  vcf <- stack(paste0('VCF_', y, '.tif'))
+  forest <- vcf[[1]]
+  bare <- vcf[[3]]
+  
+  ndvi <- focal(ndvi, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
+  forest <- focal(forest, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
+  bare <- focal(bare, matrix(rep(1, 9), ncol=3), fun=mean, pad=TRUE, na.rm=T, padValue=NA)
+  
+  writeRaster(ndvi, paste0('../Final Rasters/', year, '/ndvi.tif'), format='GTiff', overwrite=TRUE)
+  writeRaster(bare, paste0('../Final Rasters/', year, '/bare.tif'), format='GTiff', overwrite=TRUE)
+  writeRaster(forest, paste0('../Final Rasters/', year, '/forest.tif'), format='GTiff', overwrite=TRUE)
+}
