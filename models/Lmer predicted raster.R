@@ -25,127 +25,10 @@ all$tmin_10yr_mean <- all$tmin_10yr_mean - 273.15
 all$builtup <- all$builtup*100
 all$elevation <- all$elevation/1000
 all$imports_percap <- all$imports_percap/1000
-
 all$gdp_l <- log(all$gdp)
 all$grid_gdp_l <- log(all$grid_gdp)
 
-
-library(raster)
-
-setwd('G://My Drive/DHS Spatial Covars/Final Rasters')
-
-setNAs <- function(raster, column){
-  raster[raster > (max(all[ , column], na.rm=T) + sd(all[ , column], na.rm=T)/2)] <- NA
-  raster[raster < (min(all[ , column], na.rm=T) - sd(all[ , column], na.rm=T)/2)] <- NA
-  return(raster)
-}
-
-ag_pct_gdp <- raster('ag_pct_gdp.tif')
-background <- ag_pct_gdp/ag_pct_gdp
-builtup <- (raster('builtup.tif')*100)
-crop_prod <- raster('crop_prod.tif')
-elevation <- (raster('elevation.tif')/1000)
-fieldsize <- raster('fieldsize.tif')
-forest <- raster('forest.tif')
-gdp <- (raster('gdp.tif')/1000) %>%
-  setNAs('gdp')
-base <- gdp/gdp
-enrollment <- raster('enrollment.tif')
-gdp_l <- log(gdp)
-grid_gdp <- (raster('grid_gdp.tif')/1000)
-grid_gdp_l <- log(grid_gdp)
-grid_hdi <- raster('grid_hdi.tif')
-government_effectiveness <- raster('government_effectiveness.tif')
-high_settle <- raster('high_settle.tif')
-imports_percap <- raster('imports_percap.tif')/1000
-irrig_aei <- raster('irrig_aei.tif')
-irrig_aai <- raster('irrig_aai.tif')
-low_settle <- raster('low_settle.tif')
-market_dist <- raster('market_dist.tif')/(24*7)
-mean_annual_precip <- raster('mean_annual_precip.tif')/1000
-ndvi <- raster('ndvi.tif')
-nutritiondiversity <- raster('nutritiondiversity.tif')
-population <- (raster('population.tif')/1000)
-precip_10yr_mean <- (raster('precip_10yr_mean.tif')*12/1000)
-roughness <- raster('roughness.tif')
-stability_violence <- raster('stability_violence.tif')
-tmax_10yr_mean <- (raster('tmax_10yr_mean.tif') - 273.15)
-
-makeRasts <- function(mod, term, usebase=FALSE, censor=TRUE){
-  #mod is the model that has been fit
-  #term can be either 'speiDry', 'speiWet', or ''
-  #  'speiDry' and 'speiWet' will map estimated changes in HAZ scores during a wet or dry year
-  #  '' will give a map of estimated HAZ scores during a normal year
-  #usebase will use a raster of 0s and 1s to exclude certain areas.
-  #censor will set values greater than 0 to NA
-  
-  s <- tidy(mod)
-  
-  coefs <- s[grepl(term, s$term), c('term', 'estimate')]
-  
-  coefs$term <- gsub(paste0(term, ':'), '', coefs$term)
-  
-  if(term == ''){
-    #Define Variables for mapping baseline
-    age <- mean(all$age)
-    birth_order <- mean(all$birth_order)
-    hhsize <- mean(all$hhsize)
-    mother_years_ed <- mean(all$mother_years_ed)
-    head_age <- mean(all$head_age)
-    
-    coefs <- coefs[!grepl('spei', coefs$term), ]
-  }
-  
-  if (usebase){
-    rast <- base*coefs$estimate[1]
-  } else{
-    rast <- coefs$estimate[1]
-  }
-  for (i in 2:nrow(coefs)){
-    if(exists(coefs$term[i])){
-      tmp_rast <- get(coefs$term[i])
-    } else{
-      tmp_rast <- 0
-    }
-    suppressWarnings(rast <- rast + tmp_rast*coefs$estimate[i])
-  }
-  
-  if (censor){
-    rast[rast > 0] <- 0
-  }
-  
-  return(rast)
-}
-
-getValuesAtPoint <- function(mod, x, y){
-  s <- tidy(mod)
-  
-  coefs <- s[grepl('spei', s$term), c('term', 'estimate')]
-  
-  coefs$extremeType <- ifelse(grepl('Dry', coefs$term), "Dry", "Wet")
-  
-  coefs$term <- gsub('spei...:|spei...', '', coefs$term)
-  
-  coefs <- coefs %>% spread(extremeType, estimate)
-  
-  coefs[1, 'Value'] <- 1
-  for (i in 2:nrow(coefs)){
-    if(exists(coefs$term[i])){
-      tmp_rast <- get(coefs$term[i])
-      v <- raster::extract(tmp_rast, matrix(c(x, y), nrow = 1))
-    } else{
-      v <- NA
-    }
-      coefs[i, 'Value'] <- v
-  }
-  
-  coefs$WetImpact <- coefs$Wet*coefs$Value
-  coefs$DryImpact <- coefs$Dry*coefs$Value
-  
-  cat("Dry:", sum(coefs$DryImpact), "Wet:", sum(coefs$WetImpact), '\n')
-  
-  return(coefs)
-}
+source('C://Git/spi-malnutrition/models/mod_utils.R')
 
 #Make categorical
 all$spei <- all$spei24
@@ -192,7 +75,7 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             spei*crop_prod +
             #spei*government_effectiveness +
             spei*irrig_aai +
-            spei*nutritiondiversity +
+            #spei*nutritiondiversity +
             spei*stability_violence
            ,
            data=all)
@@ -203,13 +86,25 @@ summary(mod)
 #plot(makeRasts(mod, ''))
 
 #Dry
-plot(makeRasts(mod, "speiDry"))
+plot(make_rasts_year(mod, "speiDry", 2017,
+                     list(mean_annual_precip=function(x){x/1000},
+                          imports_percap=function(x){x/1000},
+                          builtup=function(x){x*100})))
 
 #Wet
 plot(makeRasts(mod, "speiWet"))
 
-getValuesAtPoint(mod, x, y)
+for (i in seq(1990, 2020)){
+  print(i)
+  rast <- make_rasts_year(mod, "speiDry", i,
+                        list(mean_annual_precip=function(x){x/1000},
+                             imports_percap=function(x){x/1000},
+                             builtup=function(x){x*100}))
+  writeRaster(rast, paste0('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry', i, '.tif'), format='GTiff', overwrite=T)
+}
 
-writeRaster(makeRasts(mod, "speiDry", usebase=T), 'G://My Drive/DHS Spatial Covars/Final Rasters/Dry.tif', format='GTiff', overwrite=T)
-writeRaster(makeRasts(mod, "speiWet", usebase=T), 'G://My Drive/DHS Spatial Covars/Final Rasters/Wet.tif', format='GTiff', overwrite=T)
-
+for (i in seq(1990, 2020)){
+  print(i)
+  r <- raster(paste0('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry', i, '.tif'))
+  print(minValue(r))
+}

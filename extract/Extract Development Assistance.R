@@ -21,6 +21,8 @@ assistance <- read.csv('API_DT.ODA.ODAT.PC.ZS_DS2_en_csv_v2_10226222.csv', skip 
   group_by(Country.Name) %>%
   fill(assistance)
 
+assistance$assistance[assistance$Country.Name=="South Sudan" & assistance$interview_year < 2011] <- assistance$assistance[assistance$Country.Name=="Sudan" & assistance$interview_year < 2011]
+
 data <- read.csv('G://My Drive/DHS Processed/sp_export.csv') %>%
   dplyr::select(latitude, longitude, code, interview_year) %>%
   mutate(country = substr(code, 1, 2)) %>%
