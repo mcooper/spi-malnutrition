@@ -50,9 +50,9 @@ data$spei24 <- sapply(FUN=pred, X=data$predvar, mod.loess=spei24mod, varname='sp
 
 ggplot(data, aes(x=predvar, y=spei24)) + 
   geom_line(size=1.5) +
-  labs(title="spei24 and Predicted Child Heights",
-       x="spei24 Per Captial",
-       y="Difference from Prediction") +
+  labs(title="Rainfall and Predicted Child Heights",
+       x="24-Month Standardized Precipitation Evapotranspiration Index",
+       y="Difference from Prediction (Residual)") +
   theme_bw()
 
 ggsave('C://Users/matt/Desktop/gdp and HAZ.png', width=6, height=4.5)

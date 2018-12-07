@@ -40,7 +40,7 @@ mod <- inla(haz_dhs ~ 1 + age + as.factor(calc_birthmonth) +
               spei*market_dist +
               spei*crop_prod +
               spei*government_effectiveness +
-              spei*irrigation +
+              spei*irrig_aai +
               spei*nutritiondiversity +
               spei*stability_violence,
           family='gaussian', 

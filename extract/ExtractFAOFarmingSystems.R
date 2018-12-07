@@ -1,4 +1,4 @@
-setwd('G://My Drive/DHS Processed')
+setwd('G://My Drive/DHS Spatial Covars/Farm Systems')
 
 library(dplyr)
 library(sp)
@@ -6,7 +6,7 @@ library(rgeos)
 library(rgdal)
 library(raster)
 
-sp <- read.csv('sp_export.csv', stringsAsFactors = F) %>%
+sp <- read.csv('../../DHS Processed/sp_export.csv', stringsAsFactors = F) %>%
   dplyr::select(latitude, longitude, code) %>%
   unique
 
@@ -39,19 +39,16 @@ badcoords@data[ , c("DESCRIPTIO", "THEID", "SYSTEM", "ORIG")] <- NULL
 badcoords_df <- merge(badcoords@data, fao@data, all.x=T, all.y=F)
 
 all <- bind_rows(goodcoords@data, badcoords_df) %>%
-  dplyr::select(code, continent=ORIG, farm_system=DESCRIPTIO)
+  dplyr::select(code, continent=ORIG, farm_system=DESCRIPTIO, farm_system_id=ID)
 
-write.csv(all, 'FarmingSystems.csv', row.names = F)
-
-
+write.csv(all, '../../DHS Processed/FarmingSystems.csv', row.names = F)
 
 
+fao <- readOGR('.', 'all_farming_systems', p4s = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+fao@data$ID <- seq(1, nrow(fao@data))
 
+ref <- raster('G://My Drive/CHIRPS/Monthly/chirps-v2.0.1981.01.tif')
 
+rid <- rasterize(fao, ref, field='ID')
 
-
-
-
-
-
-
+writeRaster(rid, 'G://My Drive/DHS Spatial Covars/Farm Systems/farm_system_id.tif', format='GTiff')
