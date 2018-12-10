@@ -23,14 +23,7 @@ sel <- all %>%
   group_by(code, country) %>%
   summarize(residuals=mean(residuals),
             spei24=mean(spei24),
-            ag_pct_gdp=mean(ag_pct_gdp), 
-            market_dist=mean(market_dist), 
-            ndvi=mean(ndvi), 
-            population=mean(population), 
-            builtup=mean(builtup), 
-            irrigation=mean(irrigation),
-            haz=mean(haz_dhs),
-            gdp=mean(gdp)) %>%
+            market_dist=mean(market_dist)) %>%
   filter(!is.infinite(spei24)) %>%
   data.frame
 
@@ -40,19 +33,20 @@ pred <- function(predvar, mod.loess, varname){
   predict(mod.loess, newdata=newdata)
 }
 
-predvar <- seq(min(sel$spei24), max(sel$spei24), len=100)
+predvar <- seq(min(sel$market_dist), max(sel$market_dist), len=100)
 
 data <- data.frame(predvar)
 
-#spei24
-spei24mod <- loess(residuals ~ spei24, data = sel, span = 0.75)
-data$spei24 <- sapply(FUN=pred, X=data$predvar, mod.loess=spei24mod, varname='spei24')
+#market_dist
+market_distmod <- loess(residuals ~ market_dist, data = sel, span = 0.75)
+data$market_dist <- sapply(FUN=pred, X=data$predvar, mod.loess=market_distmod, varname='market_dist')
 
-ggplot(data, aes(x=predvar, y=spei24)) + 
+ggplot(data, aes(x=log(predvar/60), y=market_dist)) + 
   geom_line(size=1.5) +
-  labs(title="Rainfall and Predicted Child Heights",
-       x="24-Month Standardized Precipitation Evapotranspiration Index",
+  scale_x_continuous(labels=function(x){round(exp(x), 2)}) + 
+  labs(title="Market Access and Predicted Child Heights",
+       x="Hours to Travel to A City of > 50,000 (Log Scale)",
        y="Difference from Prediction (Residual)") +
   theme_bw()
 
-ggsave('C://Users/matt/Desktop/gdp and HAZ.png', width=6, height=4.5)
+ggsave('C://Users/matt/Desktop/Markets Distance.png', width=6, height=4.5)

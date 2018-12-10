@@ -75,7 +75,7 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             spei*crop_prod +
             #spei*government_effectiveness +
             spei*irrig_aai +
-            #spei*nutritiondiversity +
+            spei*nutritiondiversity +
             spei*stability_violence
            ,
            data=all)

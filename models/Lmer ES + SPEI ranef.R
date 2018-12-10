@@ -48,7 +48,7 @@ mod <- lmer(haz_dhs ~ age + as.factor(calc_birthmonth) +
               (nat_trees*spei|farm_system_id)
             ,
             data=all %>%
-              filter(market_dist > 24*7))
+              filter(market_dist < 24*7))
 
 summary(mod)
 
