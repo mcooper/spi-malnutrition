@@ -2,13 +2,15 @@ setwd('G://My Drive/DHS Spatial Covars/FAOSTAT/')
 
 library(tidyverse)
 library(countrycode)
+library(zoo)
 
 crops <- read.csv('Production_Crops_E_All_Data.csv') %>%
   filter(Element=="Production" & Item %in% c('Cereals,Total', 'Roots and Tubers,Total')) %>%
-  select(Country=Area, Item, Y1988, Y1989, Y1990, Y1991, Y1992, Y1993, Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, 
+  select(Country=Area, Item, Y1985, Y1986, Y1987, Y1988, Y1989, Y1990, Y1991, Y1992, Y1993, 
+         Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, 
          Y2000, Y2001, Y2002, Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, 
          Y2012, Y2013, Y2014, Y2015, Y2016) %>%
-  mutate(Y2017=NA, Y2018=NA, Y2019=NA, Y2020=NA) %>%
+  mutate(Y2017=NA, Y2018=NA, Y2019=NA, Y2020=NA, Y2021=NA, Y2022=NA, Y2023=NA) %>%
   gather(interview_year, crop_prod, -Country, -Item) %>%
   group_by(Country, interview_year) %>%
   summarize(crop_prod=sum(crop_prod, na.rm=T))
@@ -24,7 +26,10 @@ crops <- crops %>%
   fill(crop_prod) %>%
   arrange(interview_year) %>%
   group_by(Country) %>%
-  fill(crop_prod)
+  fill(crop_prod) %>%
+  #Get 7-year rolling mean
+  mutate(crop_prod=rollapply(crop_prod, 7, function(x){mean(x, na.rm=T)}, fill=c(NA, NA, NA))) %>%
+  na.omit
 
 population <- read.csv('../Population/API_SP.POP.TOTL_DS2_en_csv_v2_9908626.csv', skip = 4) %>%
   dplyr::select(-Country.Code, -Indicator.Name, -Indicator.Code) %>%
@@ -81,7 +86,7 @@ for (year in seq(1990, 2020)){
   spres$imports_percap[spres$ADMIN == 'Siachen Glacier'] <- spres$imports_percap[spres$ADMIN == 'Pakistan']
   
   #Need to decide on scale and make a template raster
-  r <- raster('../Final Rasters/irrigation.tif')
+  r <- raster('../Final Rasters/2020/irrig_aai.tif')
   
   finalrast <- rasterize(spres, r, field="crop_prod", fun='mean', na.rm=TRUE, filename=paste0('../Final Rasters/', year, '/crop_prod.tif'), driver='GTiff', overwrite=T)
   

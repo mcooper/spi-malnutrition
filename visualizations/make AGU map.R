@@ -14,7 +14,7 @@ sp <- readOGR('G://My Drive/DHS Spatial Covars/Global Codes and Shapefile',
 ##################
 #Drought
 ###################
-col.l <- c("#AAAAAA", viridis(20, option = 'plasma')) 
+col.l <- c("#AAAAAA", colorRampPalette(c('#ffffe5','#f7fcb9','#d9f0a3','#addd8e','#78c679','#41ab5d','#238443','#005a32'))(29)) 
 
 rastc <- crop(rast, extent(-18, 100, -35, 45))
 
