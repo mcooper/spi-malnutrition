@@ -8,9 +8,9 @@ hh <- read.csv('HH_data_A.csv')
 lc <- read.csv('landcover_processed.csv')
 spei <- read.csv('PrecipIndices.csv')
 cov <- read.csv('SpatialCovars.csv')
-gl <- read.csv('globeland30_processed.csv')
+forest <- read.csv('forest_cover25000.csv')
 
-all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, lc, spei, cov, gl))
+all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, lc, spei, cov))
 
 #Get Residuals
 mod <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + toilet +
@@ -22,27 +22,28 @@ all$residuals <- residuals(mod)
 grp <- all %>% group_by(code) %>%
   summarize(residuals=median(residuals))
 
-plt <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(grp, lc, spei, cov, gl)) %>%
+plt <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(grp, lc, spei, cov, forest)) %>%
   filter(market_dist > 150)
 
 # plt <- all %>%
 #   filter(market_dist > 150)
 
-mod.urban <- loess(residuals ~ spei24, data = plt %>% filter(Perc_Natural <= median(plt$Perc_Natural)), span = 1)
 
-mod.rural <- loess(residuals ~ spei24, data = plt %>% filter(Perc_Natural > median(plt$Perc_Natural)), span = 1)
+mod.urban <- loess(residuals ~ spei24, data = plt %>% filter(forest_25000 <= median(plt$forest_25000, na.rm=T)), span = 1)
 
-mod <- c('> Median Natural Land Cover', '<= Median Natural Land Cover')
+mod.rural <- loess(residuals ~ spei24, data = plt %>% filter(forest_25000 > median(plt$forest_25000, na.rm=T)), span = 1)
+
+mod <- c('> Median Forest Cover', '<= Median Forest Cover')
 spei24 <- seq(-3, 3, len=100)
 
 data <- expand.grid(mod, spei24)
 names(data) <- c('mod', 'spei24')
 
 pred <- function(spei24, mod){
-  if (mod=='<= Median Natural Land Cover'){
+  if (mod=='<= Median Forest Cover'){
     pred <- predict(mod.urban, newdata=data.frame(spei24=spei24))
   }
-  if (mod=='> Median Natural Land Cover'){
+  if (mod=='> Median Forest Cover'){
     pred <- predict(mod.rural, newdata=data.frame(spei24=spei24))
   }
   pred
@@ -52,7 +53,7 @@ data$prediction <- mapply(pred, mod=data$mod, spei24=data$spei24)
 
 ggplot(data, aes(x=spei24, y=prediction, color=mod)) + 
   geom_line(size=1.5) +
-  labs(title="Rainfall and Predicted Child Heights - GlobeLand30",
+  labs(title="Rainfall and Predicted Child Heights - Hansen Forest Cover",
        subtitle="For Households > 2.5 Hours From A Major City",
        x="24-Month Standardized Precipitation Evapotranspiration Index",
        y="Difference from Prediction (Residual)") +
@@ -62,4 +63,4 @@ ggplot(data, aes(x=spei24, y=prediction, color=mod)) +
         legend.position=c(0.05,0.05),
         legend.justification=c(0,0))
 
-ggsave('C://Users/matt/Desktop/TMP.png', width=6, height=4.5)
+ggsave('C://Users/matt/Desktop/Hansen.png', width=6, height=4.5)

@@ -1,8 +1,7 @@
 library(dplyr)
-library(lme4)
-library(MASS)
 library(broom)
 library(tidyr)
+library(MASS)
 
 setwd('~/dhsprocessed')
 setwd('G://My Drive/DHS Processed')
@@ -15,18 +14,11 @@ all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, spei, cov))
   na.omit
 
 #Try rescaling some geospatial covariates
-all$mean_annual_precip <- (all$mean_annual_precip)/1000
-all$gdp <- all$gdp/1000
-all$grid_gdp <- all$grid_gdp/1000
-all$market_dist <- all$market_dist/(24*7)
+all$mean_annual_precip <- log(all$mean_annual_precip)
 all$population <- all$population/1000
-all$tmax_10yr_mean <- all$tmax_10yr_mean - 273.15
-all$tmin_10yr_mean <- all$tmin_10yr_mean - 273.15
 all$builtup <- all$builtup*100
 all$elevation <- all$elevation/1000
-all$imports_percap <- all$imports_percap/1000
-all$gdp_l <- log(all$gdp)
-all$grid_gdp_l <- log(all$grid_gdp)
+all$imports_percap <- log(all$imports_percap)
 
 source('C://Git/spi-malnutrition/models/mod_utils.R')
 
@@ -37,6 +29,9 @@ all$spei <- ifelse(all$spei > 1.5, "Wet",
                    ifelse(all$spei < -0.4, "Dry", "Normal")) %>%
   as.factor %>%
   relevel(ref = "Normal")
+
+sel <- all %>%
+  filter(builtup < 20)
 
 mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
             birth_order + hhsize + sex + mother_years_ed + toilet +
@@ -53,7 +48,7 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             #spei*enrollment + 
              
             #Pop-Urban vars
-            spei*builtup +
+            spei*population +
             #spei*low_settle + #Slightly colinear with irrigation (0.50) so avoid this one
             #spei*high_settle + 
             #spei*population +
@@ -75,24 +70,33 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             spei*crop_prod +
             #spei*government_effectiveness +
             spei*irrig_aai +
-            spei*nutritiondiversity +
-            spei*stability_violence
+            spei*nutritiondiversity_mfad +
+            spei*stability_violence + 
+            spei*bodycount
            ,
-           data=all)
+           data=sel)
 
 summary(mod)
 
 #Baseline
 #plot(makeRasts(mod, ''))
 
+popfun <- function(x){
+  #x[x < 10] <- NA
+  x/1000
+}
+
 #Dry
 plot(make_rasts_year(mod, "speiDry", 2017,
-                     list(mean_annual_precip=function(x){x/1000},
-                          imports_percap=function(x){x/1000},
-                          builtup=function(x){x*100})))
+                     list(mean_annual_precip=function(x){log(x)},
+                          imports_percap=function(x){log(x)},
+                          population=popfun)))
 
 #Wet
-plot(makeRasts(mod, "speiWet"))
+plot(make_rasts_year(mod, "speiWet", 2017,
+                     list(mean_annual_precip=function(x){log(x)},
+                          imports_percap=function(x){log(x)},
+                          population=popfun)))
 
 for (i in seq(1990, 2020)){
   print(i)

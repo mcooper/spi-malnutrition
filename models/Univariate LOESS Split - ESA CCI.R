@@ -22,15 +22,15 @@ all$residuals <- residuals(mod)
 grp <- all %>% group_by(code) %>%
   summarize(residuals=median(residuals))
 
-plt <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(grp, lc, spei, cov, gl)) %>%
+plt <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(grp, lc, spei, cov)) %>%
   filter(market_dist > 150)
 
 # plt <- all %>%
 #   filter(market_dist > 150)
 
-mod.urban <- loess(residuals ~ spei24, data = plt %>% filter(Perc_Natural <= median(plt$Perc_Natural)), span = 1)
+mod.urban <- loess(residuals ~ spei24, data = plt %>% filter(natural <= median(plt$natural)), span = 1)
 
-mod.rural <- loess(residuals ~ spei24, data = plt %>% filter(Perc_Natural > median(plt$Perc_Natural)), span = 1)
+mod.rural <- loess(residuals ~ spei24, data = plt %>% filter(natural > median(plt$natural)), span = 1)
 
 mod <- c('> Median Natural Land Cover', '<= Median Natural Land Cover')
 spei24 <- seq(-3, 3, len=100)
@@ -52,7 +52,7 @@ data$prediction <- mapply(pred, mod=data$mod, spei24=data$spei24)
 
 ggplot(data, aes(x=spei24, y=prediction, color=mod)) + 
   geom_line(size=1.5) +
-  labs(title="Rainfall and Predicted Child Heights - GlobeLand30",
+  labs(title="Rainfall and Predicted Child Heights - ESA CCI Land Cover",
        subtitle="For Households > 2.5 Hours From A Major City",
        x="24-Month Standardized Precipitation Evapotranspiration Index",
        y="Difference from Prediction (Residual)") +
@@ -62,4 +62,4 @@ ggplot(data, aes(x=spei24, y=prediction, color=mod)) +
         legend.position=c(0.05,0.05),
         legend.justification=c(0,0))
 
-ggsave('C://Users/matt/Desktop/TMP.png', width=6, height=4.5)
+ggsave('C://Users/matt/Desktop/ESA-CCI.png', width=6, height=4.5)

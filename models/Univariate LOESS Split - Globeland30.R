@@ -62,4 +62,4 @@ ggplot(data, aes(x=spei24, y=prediction, color=mod)) +
         legend.position=c(0.05,0.05),
         legend.justification=c(0,0))
 
-ggsave('C://Users/matt/Desktop/TMP.png', width=6, height=4.5)
+ggsave('C://Users/matt/Desktop/Globeland30.png', width=6, height=4.5)

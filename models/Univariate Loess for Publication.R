@@ -23,7 +23,7 @@ sel <- all %>%
   group_by(code, country) %>%
   summarize(residuals=mean(residuals),
             spei24=mean(spei24),
-            market_dist=mean(market_dist)) %>%
+            spei24=mean(spei24)) %>%
   filter(!is.infinite(spei24)) %>%
   data.frame
 
@@ -33,20 +33,16 @@ pred <- function(predvar, mod.loess, varname){
   predict(mod.loess, newdata=newdata)
 }
 
-predvar <- seq(min(sel$market_dist), max(sel$market_dist), len=100)
+predvar <- seq(min(-3), max(3), len=100)
 
 data <- data.frame(predvar)
 
-#market_dist
-market_distmod <- loess(residuals ~ market_dist, data = sel, span = 0.75)
-data$market_dist <- sapply(FUN=pred, X=data$predvar, mod.loess=market_distmod, varname='market_dist')
+#spei24
+spei24mod <- loess(haz_dhs ~ spei24, data = all, span = 0.75)
+data$spei24 <- sapply(FUN=pred, X=data$predvar, mod.loess=spei24mod, varname='spei24')
 
-ggplot(data, aes(x=log(predvar/60), y=market_dist)) + 
+ggplot(data, aes(x=predvar, y=spei24)) + 
   geom_line(size=1.5) +
-  scale_x_continuous(labels=function(x){round(exp(x), 2)}) + 
-  labs(title="Market Access and Predicted Child Heights",
-       x="Hours to Travel to A City of > 50,000 (Log Scale)",
-       y="Difference from Prediction (Residual)") +
   theme_bw()
 
 ggsave('C://Users/matt/Desktop/Markets Distance.png', width=6, height=4.5)
