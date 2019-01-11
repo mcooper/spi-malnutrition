@@ -36,10 +36,12 @@ read_by_year <- function(source, sheets){
         tmp <- read_xlsx(paste0(source, '.xlsx'), sheet, trim_ws=FALSE)
         skip <- min(which(!is.na(tmp$X__1))) - 1
         
-        dat <- read_xlsx(paste0(source, '.xlsx'), sheet, na=c('..', '#N/A'), skip = skip, trim_ws=FALSE) %>%
-          na.omit
+        dat <- read_xlsx(paste0(source, '.xlsx'), sheet, na=c('..', '#N/A'), skip = skip, trim_ws=FALSE) 
+        
+        dat$na_ct <- rowSums(is.na(dat))
         
         dat <- dat %>%
+          filter(na_ct < (ncol(.)-1)) %>%
           select(Code=X__1, Country=X__2, value=contains("PV")) %>%
           mutate(year=yr, Source=source)
         
