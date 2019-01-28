@@ -72,9 +72,13 @@ for (year in seq(1990, 2020)){
   spres$imports_percap[spres$ADMIN == 'Western Sahara'] <- spres$imports_percap[spres$ADMIN == 'Morocco']
   spres$imports_percap[spres$ADMIN == 'Siachen Glacier'] <- spres$imports_percap[spres$ADMIN == 'Pakistan']
   spres$imports_percap[spres$ADMIN == 'North Korea'] <- 0
+  spres$imports_percap[spres$ADMIN == 'Luxembourg'] <- spres$imports_percap[spres$ADMIN == 'Switzerland']
+  spres$imports_percap[spres$ADMIN == 'Andorra'] <- spres$imports_percap[spres$ADMIN == 'France']
+  spres$imports_percap[spres$ADMIN == 'Taiwan'] <- spres$imports_percap[spres$ADMIN == 'China']
+  spres$imports_percap[spres$ADMIN == 'Kosovo'] <- spres$imports_percap[spres$ADMIN == 'Republic of Serbia']
   
   #Need to decide on scale and make a template raster
-  r <- raster('../Final Rasters/irrigation.tif')
+  r <- raster('../Final Rasters/2000/irrig_aai.tif')
   
   finalrast <- rasterize(spres, r, field="imports_percap", fun='mean', na.rm=TRUE, filename=paste0('../Final Rasters/', year, '/imports_percap.tif'), driver='GTiff', overwrite=T)
 

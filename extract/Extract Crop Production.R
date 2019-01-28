@@ -6,7 +6,7 @@ library(zoo)
 
 crops <- read.csv('Production_Crops_E_All_Data.csv') %>%
   filter(Element=="Production" & Item %in% c('Cereals,Total', 'Roots and Tubers,Total')) %>%
-  select(Country=Area, Item, Y1985, Y1986, Y1987, Y1988, Y1989, Y1990, Y1991, Y1992, Y1993, 
+  dplyr::select(Country=Area, Item, Y1985, Y1986, Y1987, Y1988, Y1989, Y1990, Y1991, Y1992, Y1993, 
          Y1994, Y1995, Y1996, Y1997, Y1998, Y1999, 
          Y2000, Y2001, Y2002, Y2003, Y2004, Y2005, Y2006, Y2007, Y2008, Y2009, Y2010, Y2011, 
          Y2012, Y2013, Y2014, Y2015, Y2016) %>%
@@ -82,8 +82,11 @@ for (year in seq(1990, 2020)){
   
   spres <- sp::merge(sp, dat)
   
-  spres$imports_percap[spres$ADMIN == 'Western Sahara'] <- spres$imports_percap[spres$ADMIN == 'Morocco']
-  spres$imports_percap[spres$ADMIN == 'Siachen Glacier'] <- spres$imports_percap[spres$ADMIN == 'Pakistan']
+  spres@data$crop_prod[spres@data$ADMIN == 'Western Sahara'] <- spres@data$crop_prod[spres@data$ADMIN == 'Morocco']
+  spres@data$crop_prod[spres@data$ADMIN == 'Siachen Glacier'] <- spres@data$crop_prod[spres@data$ADMIN == 'Pakistan']
+  spres@data$crop_prod[spres@data$ADMIN == 'Andorra'] <- spres@data$crop_prod[spres@data$ADMIN == 'France']
+  spres@data$crop_prod[spres@data$ADMIN == 'Siachen Glacier'] <- spres@data$crop_prod[spres@data$ADMIN == 'Pakistan']
+  spres@data$crop_prod[spres@data$ADMIN == 'Taiwan'] <- spres@data$crop_prod[spres@data$ADMIN == 'China']
   
   #Need to decide on scale and make a template raster
   r <- raster('../Final Rasters/2020/irrig_aai.tif')

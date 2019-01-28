@@ -53,13 +53,18 @@ sp <- readOGR('../Global Codes and Shapefile', 'ne_50m_admin_0_countries')
 sp$iso3c <- countrycode(sp$SOVEREIGNT, origin='country.name', destination = "iso3c")
 
 #Need to decide on scale and make a template raster
-r <- raster('../Final Rasters/irrigation.tif')
+r <- raster('../Final Rasters/2000/irrig_aai.tif')
 
 for (year in seq(1990, 2020)){
   dat <- ag_pct_gdp %>%
     filter(interview_year==year & !is.na(iso3c))
   
   spres <- sp::merge(sp, dat)
+  
+  spres@data$ag_pct_gdp[spres@data$ADMIN=="Western Sahara"] <- spres@data$ag_pct_gdp[spres@data$ADMIN=="Morocco"]
+  spres@data$ag_pct_gdp[spres@data$ADMIN=="Kosovo"] <- spres@data$ag_pct_gdp[spres@data$ADMIN=="Republic of Serbia"]
+  spres@data$ag_pct_gdp[spres@data$ADMIN=="Siachen Glacier"] <- spres@data$ag_pct_gdp[spres@data$ADMIN=="Pakistan"]
+  spres@data$ag_pct_gdp[spres@data$ADMIN=="Taiwan"] <- 1.6
   
   rasterize(spres, r, field="ag_pct_gdp", fun='mean', na.rm=TRUE, filename=paste0('../Final Rasters/', year, '/ag_pct_gdp.tif'), driver='GTiff', overwrite=T)
   

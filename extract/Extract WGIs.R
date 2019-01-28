@@ -6,7 +6,7 @@ library(readxl)
 
 #Downloaded from http://info.worldbank.org/governance/wgi/#home
 stability <- read_xlsx("wgidataset.xlsx", sheet = "Political StabilityNoViolence", skip=13, na = "#N/A") %>%
-  select(Country=X__1, WBCode=X__2, `1996`,`1998`, `2000`, `2002`, `2003`, 
+  dplyr::select(Country=X__1, WBCode=X__2, `1996`,`1998`, `2000`, `2002`, `2003`, 
          `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, 
          `2015`, `2016`, `2017`) %>%
   filter(Country != 'Country/Territory') %>%
@@ -22,7 +22,7 @@ stability <- read_xlsx("wgidataset.xlsx", sheet = "Political StabilityNoViolence
   mutate(iso3c=countrycode(Country, 'country.name', 'iso3c'))
   
 effectiveness <- read_xlsx("wgidataset.xlsx", sheet = "GovernmentEffectiveness", skip=13, na = "#N/A") %>%
-  select(Country=X__1, WBCode=X__2, `1996`,`1998`, `2000`, `2002`, `2003`, 
+  dplyr::select(Country=X__1, WBCode=X__2, `1996`,`1998`, `2000`, `2002`, `2003`, 
          `2004`, `2005`, `2006`, `2007`, `2008`, `2009`, `2010`, `2011`, `2012`, `2013`, `2014`, 
          `2015`, `2016`, `2017`) %>%
   filter(Country != 'Country/Territory') %>%
@@ -87,6 +87,14 @@ for (year in seq(1990, 2020)){
   
   st_res <- sp::merge(sp, st_sel)
   ef_res <- sp::merge(sp, ef_sel)
+  
+  st_res@data$stability_violence[st_res@data$ADMIN=="Western Sahara"] <- st_res@data$stability_violence[st_res@data$ADMIN=="Morocco"]
+  st_res@data$stability_violence[st_res@data$ADMIN=="Kosovo"] <- st_res@data$stability_violence[st_res@data$ADMIN=="Republic of Serbia"]
+  st_res@data$stability_violence[st_res@data$ADMIN=="Siachen Glacier"] <- st_res@data$stability_violence[st_res@data$ADMIN=="Pakistan"]
+  
+  ef_res@data$government_effectiveness[ef_res@data$ADMIN=="Western Sahara"] <- ef_res@data$government_effectiveness[ef_res@data$ADMIN=="Morocco"]
+  ef_res@data$government_effectiveness[ef_res@data$ADMIN=="Kosovo"] <- ef_res@data$government_effectiveness[ef_res@data$ADMIN=="Republic of Serbia"]
+  ef_res@data$government_effectiveness[ef_res@data$ADMIN=="Siachen Glacier"] <- ef_res@data$government_effectiveness[ef_res@data$ADMIN=="Pakistan"]
   
   rasterize(ef_res, r, field="government_effectiveness", fun='mean', na.rm=T, filename=paste0('../Final Rasters/', year, '/government_effectiveness.tif'), driver='GTiff', overwrite=TRUE)
   rasterize(st_res, r, field="stability_violence", fun='mean', na.rm=T, filename=paste0('../Final Rasters/', year, '/stability_violence.tif'), driver='GTiff', overwrite=TRUE)
