@@ -1,6 +1,6 @@
 library(raster)
 
-make_rasts_year <- function(mod, term, year, transformations, censor=TRUE){
+make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=TRUE){
   #mod is the model that has been fit
   #term can be either 'speiDry', 'speiWet', or ''
   #  'speiDry' and 'speiWet' will map estimated changes in HAZ scores during a wet or dry year
@@ -44,6 +44,22 @@ make_rasts_year <- function(mod, term, year, transformations, censor=TRUE){
   
   if (censor){
     rast[rast > 0] <- 0
+  }
+  
+  if (mask){
+    
+    #Mask Bare areas, similar to https://www.nature.com/articles/nature25760#methods
+    bare <- raster('bare.tif')
+    rast <- rast*(bare < mask)
+    
+    #Mask extremely builtup areas, as they are urban
+    builtup <- raster('builtup.tif')
+    rast <- rast*(builtup < 20)
+    
+    #Mask areas that are neither forest nor bare (great lakes)
+    forest <- raster('forest.tif')
+    rast <- rast*((bare + forest) > 0)
+    
   }
   
   return(rast)
