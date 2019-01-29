@@ -19,21 +19,22 @@ all$population <- all$population/1000
 all$builtup <- all$builtup*100
 all$elevation <- all$elevation/1000
 all$imports_percap <- log(all$imports_percap)
+all$crop_prod <- all$crop_prod
 
 source('C://Git/spi-malnutrition/models/mod_utils.R')
 
 #Make categorical
 all$spei <- all$spei24
 
-all$spei <- ifelse(all$spei > 1.5, "Wet",
+all$spei <- ifelse(all$spei > 1.5, "Normal",
                    ifelse(all$spei < -0.4, "Dry", "Normal")) %>%
   as.factor %>%
   relevel(ref = "Normal")
 
 sel <- all %>%
-  filter(builtup < 20)
+  filter(builtup < 20 & bare < 95 & spei24 <= 1.5)
 
-mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
+mod <- rlm(haz_dhs ~ age + calc_birthmonth + 
             birth_order + hhsize + sex + mother_years_ed + toilet +
             head_age + head_sex + wealth_index + 
             
@@ -51,12 +52,12 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             spei*population +
             #spei*low_settle + #Slightly colinear with irrigation (0.50) so avoid this one
             #spei*high_settle + 
-            #spei*population +
+            #spei*builtup +
             
             #Land Cover Vars
             spei*mean_annual_precip +
+            #spei*forest +
             spei*forest +
-            #spei*ndvi +
             #spei*bare + 
             
             #Topographic Vars
@@ -70,9 +71,8 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
             spei*crop_prod +
             #spei*government_effectiveness +
             spei*irrig_aai +
-            spei*nutritiondiversity_mfad +
-            spei*stability_violence + 
-            spei*bodycount
+            spei*nutritiondiversity_h +
+            spei*stability_violence
            ,
            data=sel)
 
@@ -81,22 +81,14 @@ summary(mod)
 #Baseline
 #plot(makeRasts(mod, ''))
 
-popfun <- function(x){
-  #x[x < 10] <- NA
-  x/1000
-}
 
 #Dry
 plot(make_rasts_year(mod, "speiDry", 2017,
                      list(mean_annual_precip=function(x){log(x)},
                           imports_percap=function(x){log(x)},
-                          population=popfun)))
+                          population=function(x){x/1000}),
+                     mask=95))
 
-#Wet
-plot(make_rasts_year(mod, "speiWet", 2017,
-                     list(mean_annual_precip=function(x){log(x)},
-                          imports_percap=function(x){log(x)},
-                          population=popfun)))
 
 for (i in seq(1990, 2020)){
   print(i)

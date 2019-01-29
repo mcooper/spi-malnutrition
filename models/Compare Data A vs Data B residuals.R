@@ -33,6 +33,9 @@ AIC(mod_all)
 hhb$mod_simp_resid <- residuals(mod_simple)
 hhb$mod_all_resid <- residuals(mod_all)
 
+mean(abs(hhb$mod_simp_resid)) -
+mean(abs(hhb$mod_all_resid))
+
 # > cor(hhb$mod_simp_resid, hhb$mod_all_resid)
 # [1] 0.9966823
 
