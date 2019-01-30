@@ -9,6 +9,8 @@ mfad <- raster('MFAD.asc', crs = CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +n
 h <- raster('H.asc', crs = CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs '))
 s <- raster('S.asc', crs = CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs '))
 
+mfad[mfad < 0.15] <- NA
+
 resamp <- raster('../AVHRR/1982_vi_mn_75_100.tif')
 
 mfad <- resample(mfad, resamp, method="bilinear")
