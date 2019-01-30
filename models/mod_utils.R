@@ -65,18 +65,14 @@ make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=
   return(rast)
 }
 
-getValuesAtPoint <- function(mod, year, transform, x, y){
+getValuesAtPoint <- function(mod, year, transformations, x, y){
   setwd(paste0("G://My Drive/DHS Spatial Covars/Final Rasters/", year))
   
   s <- tidy(mod)
   
   coefs <- s[grepl('spei', s$term), c('term', 'estimate')]
   
-  coefs$extremeType <- ifelse(grepl('Dry', coefs$term), "Dry", "Wet")
-  
   coefs$term <- gsub('spei...:|spei...', '', coefs$term)
-  
-  coefs <- coefs %>% spread(extremeType, estimate)
   
   coefs[1, 'Value'] <- 1
   for (i in 2:nrow(coefs)){
@@ -93,10 +89,7 @@ getValuesAtPoint <- function(mod, year, transform, x, y){
     coefs[i, 'Value'] <- v
   }
   
-  coefs$WetImpact <- coefs$Wet*coefs$Value
-  coefs$DryImpact <- coefs$Dry*coefs$Value
-  
-  cat("Dry:", sum(coefs$DryImpact), "Wet:", sum(coefs$WetImpact), '\n')
+  coefs$Impact <- coefs$estimate*coefs$Value
   
   return(coefs)
 }
