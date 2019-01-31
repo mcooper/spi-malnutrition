@@ -33,6 +33,10 @@ make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=
   for (i in 2:nrow(coefs)){
     rast_name <- coefs$term[i]
     
+    if (substr(rast_name, nchar(rast_name)-1, nchar(rast_name))=="_t"){
+      rast_name <- gsub('_t$', '', rast_name)
+    }
+    
     tmp_rast <- raster(paste0(rast_name, '.tif'))
     
     if (rast_name %in% names(transformations)){
