@@ -2,6 +2,7 @@ library(ggplot2)
 library(dplyr)
 library(lme4)
 library(broom)
+library(stargazer)
 
 setwd('G://My Drive/DHS Processed')
 
@@ -12,17 +13,16 @@ hhb <- read.csv('HH_data_B.csv')
 #Compare A and B.
 ################################
 
-#Create A by subsetting B
-mod_simple <- lm(haz_dhs ~  age + birth_order + hhsize + sex + mother_years_ed + 
-                     toilet + head_age + head_sex + wealth_index + 
-                   as.factor(calc_birthmonth),
-                   data=hhb)
+mod_simple <- lm(haz_dhs ~  age + birth_order + sex + 
+                   as.factor(calc_birthmonth) + mother_years_ed + 
+                   toilet + hhsize + head_age + head_sex + wealth_index,
+                 data=hhb)
 
-mod_all <- lm(haz_dhs ~ age + birth_order + hhsize + sex + mother_years_ed + 
-                  toilet + head_age + head_sex + wealth_index + otherwatersource + 
-                  ever_breastfed + diarrhea + istwin + 
-                  as.factor(calc_birthmonth),
-                data=hhb)
+mod_all <- lm(haz_dhs ~  age + birth_order + sex + 
+                as.factor(calc_birthmonth) + mother_years_ed + 
+                toilet + hhsize + head_age + head_sex + wealth_index + 
+                ever_breastfed + diarrhea + istwin + otherwatersource,
+              data=hhb)
 
 sqrt(mean(residuals(mod_simple)^2))
 sqrt(mean(residuals(mod_all)^2))
@@ -34,53 +34,39 @@ hhb$mod_simp_resid <- residuals(mod_simple)
 hhb$mod_all_resid <- residuals(mod_all)
 
 mean(abs(hhb$mod_simp_resid)) -
-mean(abs(hhb$mod_all_resid))
+  mean(abs(hhb$mod_all_resid))
 
 # > cor(hhb$mod_simp_resid, hhb$mod_all_resid)
 # [1] 0.9966823
 
 #Always use dataset A!
 
-smp <- tidy(mod_simple)
-names(smp)[2:5] <- paste0('simple_', names(smp)[2:5])
-all <- tidy(mod_all)
-names(all)[2:5] <- paste0('all_', names(all)[2:5])
+########################
+#Write Results to Latex
+########################
 
-comb <- merge(smp, all, all=T)
+stg <- stargazer(mod_simple, mod_all, title="Comparison of Model with 10 vs 14 Covariates",
+                 #out = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tables/S1.tex',
+                 column.labels=c("10 Covariates", "14 Covariates"),
+                 dep.var.labels.include=FALSE,
+                 dep.var.caption='',
+                 add.lines=list(c("MAE", round(mean(abs(residuals(mod_simple))), 3), round(mean(abs(residuals(mod_all))), 3)),
+                                c("AIC", AIC(mod_simple), AIC(mod_all))),
+                 covariate.labels=c('Age', "Birth Order", "Child is Male", "Birthmonth - February", "Birthmonth - March",
+                                    "Birthmonth - April", "Birthmonth - May", "Birthmonth - June", "Birthmonth - July", "Birthmonth - August", "Birthmonth - September",
+                                    "Birthmonth - October", "Birthmonth - November", "Birthmonth - December", 
+                                    "Mother's Years of Education",
+                                    "Toilet - No Facility", "Toilet - Other", "Toilet - Pit Latrine", "Household Size", 
+                                    "Household Head Age", "Household Head is Male", 
+                                    "Wealth Index - Poorer", "Wealth Index - Poorest", "Wealth Index - Richer", "Wealth Index - Richest",
+                                    "Child Was Ever Breastfed", "Child Had Diarrhea in Previous Two Weeks", "Child Is Twin",
+                                    "Other Water Source - Purchased", "Other Water Source - Surface Water", "Other Water Source - Tube Well",
+                                    "Intercept"))
 
-write.csv(comb, 'C://Users/matt/Desktop/CompareAvsB.csv', row.names=F)
+#Need to make manual edits to table based on this:
+#https://tex.stackexchange.com/questions/424435/help-with-long-table-from-stargazer
 
-#####################################
-#Lets see if Mother's height matters?
-#####################################
-
-hh <- read.csv('hhvars.csv')
-
-hha_mom <- hh[ , c(names(hha), 'mother_haz', 'latitude', 'longitude')] %>% na.omit
-
-mod_simple1 <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
-                     toilet + head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country),
-                   data=hha_mom)
-
-mod_simple2 <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
-                      toilet + head_age + head_sex + urban_rural + wealth_index + mother_haz + (1|surveycode) + (1|country),
-                    data=hha_mom)
-
-AIC(mod_simple1)
-AIC(mod_simple2)
-
-hha_mom$mod_simp_resid <- residuals(mod_simple1)
-hha_mom$mod_mom_resid <- residuals(mod_simple2)
-
-
-mod1 <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
-                      toilet + head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country),
-                    data=hha)
-
-
-mod2 <- lmer(haz_dhs ~ interview_year + age + birth_order + hhsize + sex + mother_years_ed + 
-               toilet + head_age + head_sex + urban_rural + wealth_index + (1|surveycode) + (1|country) + (1|code),
-             data=hha)
-
-AIC(mod1)
-AIC(mod2)
+stg <- stg[c(1, 2, 3, 7, 5, 6, seq(8, (length(stg) - 1)))]
+stg <- gsub('tabular', 'longtable', stg)
+stg <- paste0(stg, collapse='\n')
+cat(stg, file = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tables/S1.tex')
