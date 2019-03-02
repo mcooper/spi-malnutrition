@@ -76,7 +76,7 @@ sp <- readOGR('../Global Codes and Shapefile', 'ne_50m_admin_0_countries')
 
 sp$iso3c <- countrycode(sp$SOVEREIGNT, origin='country.name', destination = "iso3c")
 
-for (year in seq(1990, 2020)){
+for (year in seq(2020, 1990)){
   dat <- final %>%
     filter(interview_year == year & !is.na(iso3c))
   
@@ -87,6 +87,7 @@ for (year in seq(1990, 2020)){
   spres@data$crop_prod[spres@data$ADMIN == 'Andorra'] <- spres@data$crop_prod[spres@data$ADMIN == 'France']
   spres@data$crop_prod[spres@data$ADMIN == 'Siachen Glacier'] <- spres@data$crop_prod[spres@data$ADMIN == 'Pakistan']
   spres@data$crop_prod[spres@data$ADMIN == 'Taiwan'] <- spres@data$crop_prod[spres@data$ADMIN == 'China']
+  spres@data$crop_prod[spres@data$ADMIN == 'Kosovo'] <- spres@data$crop_prod[spres@data$ADMIN == 'Republic of Serbia']
   
   #Need to decide on scale and make a template raster
   r <- raster('../Final Rasters/2020/irrig_aai.tif')

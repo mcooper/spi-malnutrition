@@ -65,5 +65,8 @@ for (year in seq(1990, 2020)){
   r <- raster(t(slice), xmn=-180, xmx=180, ymn=-90, ymx=90,
               crs='+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
   r <- resample(r, ref)
+  
+  r[r > 40000] <- 40000
+  
   writeRaster(r, paste0('G://My Drive/DHS Spatial Covars/Final Rasters/', year, '/grid_gdp.tif'), format='GTiff', overwrite=T)
 }

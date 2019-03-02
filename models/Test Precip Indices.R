@@ -55,7 +55,7 @@ stg1 <- paste0(stg1, collapse='\n')
 cat(stg1, file = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tables/S2.tex')
 
 
-stg2 <- stargazer(spei36, spei36gs, spei_gs_age, spei_gs_ageutero, title="Modeling Child Nutrition With SPEI Calculated at Various Timeframes (Part 2)",
+stg2 <- stargazer(spei36, spei36gs, spei_gs_ageutero, spei_gs_ageutero, title="Modeling Child Nutrition With SPEI Calculated at Various Timeframes (Part 2)",
                   #out = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tables/S3.tex',
                   column.labels=c("36-Month SPEI", "36-Month Growing Season SPEI",
                                   "Child's Age SPEI", "Child's Age Growing Season SPEI"),

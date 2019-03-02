@@ -33,14 +33,12 @@ make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=
   for (i in 2:nrow(coefs)){
     rast_name <- coefs$term[i]
     
-    if (substr(rast_name, nchar(rast_name)-1, nchar(rast_name))=="_t"){
-      rast_name <- gsub('_t$', '', rast_name)
-    }
+    print(rast_name)
     
-    tmp_rast <- raster(paste0(rast_name, '.tif'))
+    tmp_rast <- raster(paste0(gsub('_t$', '', rast_name), '.tif'))
     
-    if (rast_name %in% names(transformations)){
-      tmp_rast <- transformations[[rast_name]](tmp_rast)
+    if (grepl('_t$', rast_name)){
+      tmp_rast <- transformations[[gsub('_t$', '', rast_name)]](tmp_rast)
     }
 
     suppressWarnings(rast <- rast + tmp_rast*coefs$estimate[i])
@@ -64,6 +62,10 @@ make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=
     forest <- raster('forest.tif')
     rast <- rast*((bare + forest) > 0)
     
+    #Mask populated areas
+    # pop <- raster('population_mask.tif')
+    # rast <- rast*(pop > 0.1)
+    
   }
   
   return(rast)
@@ -82,10 +84,12 @@ getValuesAtPoint <- function(mod, year, transformations, x, y){
   for (i in 2:nrow(coefs)){
     rast_name <- coefs$term[i]
     
-    tmp_rast <- raster(paste0(rast_name, '.tif'))
+    print(rast_name)
     
-    if (rast_name %in% names(transformations)){
-      tmp_rast <- transformations[[rast_name]](tmp_rast)
+    tmp_rast <- raster(paste0(gsub('_t$', '', rast_name), '.tif'))
+    
+    if (grepl('_t$', rast_name)){
+      tmp_rast <- transformations[[gsub('_t$', '', rast_name)]](tmp_rast)
     }
     
     v <- raster::extract(tmp_rast, matrix(c(x, y), nrow = 1))

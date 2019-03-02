@@ -1,10 +1,8 @@
 library(dplyr)
-library(lme4)
-library(MASS)
 library(broom)
 library(tidyr)
+library(MASS)
 
-setwd('~/dhsprocessed')
 setwd('G://My Drive/DHS Processed')
 
 hha <- read.csv('HH_data_A.csv')
@@ -14,55 +12,62 @@ cov <- read.csv('SpatialCovars.csv')
 all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, spei, cov)) %>%
   na.omit
 
-#Try rescaling some geospatial covariates
-all$precip_10yr_mean <- (all$precip_10yr_mean*12)/1000
-all$gdp <- all$gdp/1000
-all$grid_gdp <- all$grid_gdp/1000
-all$market_dist <- all$market_dist/(24*7)
-all$population <- all$population/1000
-all$tmax_10yr_mean <- all$tmax_10yr_mean - 273.15
-all$tmin_10yr_mean <- all$tmin_10yr_mean - 273.15
-all$builtup <- all$builtup*100
-all$elevation <- all$elevation/1000
-all$imports_percap <- all$imports_percap/1000
-
-all$gdp_l <- log(all$gdp)
-all$grid_gdp_l <- log(all$grid_gdp)
-
 #Make categorical
-all$spei <- all$spei12
+all$spei <- all$spei24
 
-all$spei <- ifelse(all$spei > 1, "Wet",
-                   ifelse(all$spei < -1, "Dry", "Normal")) %>%
+all$spei <- ifelse(all$spei > 1.4, "Normal",
+                   ifelse(all$spei < -0.4, "Dry", "Normal")) %>%
   as.factor %>%
   relevel(ref = "Normal")
 
-spcovars <- c("ag_pct_gdp", "bare", "forest", "gdp", 
-"government_effectiveness", "irrig_aai", "irrig_aei", "market_dist", 
-"ndvi", "population", "stability_violence", "crop_prod", "fieldsize", 
-"nutritiondiversity", "builtup", "elevation", "high_settle", 
-"low_settle", "roughness", "imports_percap", "grid_gdp", "grid_hdi", 
-"enrollment", "precip_10yr_mean", "tmax_10yr_mean", "tmin_10yr_mean")
+all$population <- all$population/16 #convert to people per sq km
+
+sel <- all %>%
+  filter(builtup < 20 & bare < 95 & spei24 <= 1.4)
+
+transformations <- list(ndvi=function(x){(trunc(rank(x))/length(x))*10},
+                        government_effectiveness=function(x){(trunc(rank(x))/length(x))*10},
+                        grid_gdp=function(x){(x/1000)},
+                        grid_hdi=function(x){(trunc(rank(x))/length(x))*10},
+                        mean_annual_precip=function(x){x/100},
+                        nutritiondiversity_mfad=function(x){(trunc(rank(x))/length(x))*10},
+                        population=function(x){(x)/1000},
+                        roughness=function(x){(trunc(rank(x))/length(x))*10},
+                        stability_violence=function(x){(trunc(rank(x))/length(x))*10},
+                        irrig_aai=function(x){x*10},
+                        tmax_10yr_mean=function(x){x},
+                        assistance=function(x){x/10}
+                        )
+
+for (n in names(transformations)){
+  sel[ , paste0(n)] <- transformations[[n]](sel[ , n])
+}
+
+spcovars <- c("ndvi", "government_effectiveness", "grid_gdp", "grid_hdi",
+              "mean_annual_precip", "nutritiondiversity_mfad", "population",
+              "roughness", "stability_violence", "irrig_aai", "tmax_10yr_mean",
+              "assistance")
 
 df <- data.frame()
 for (i in spcovars){
-  all$var <- all[ , i]
+  sel$var <- sel[ , i]
   
   mod <- lm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
                birth_order + hhsize + sex + mother_years_ed + toilet +
                head_age + head_sex + wealth_index + spei*var,
-             data=all)
+             data=sel)
   
   coefs <- tidy(mod) %>%
-    filter(term %in% c('var', 'speiDry:var', 'speiWet:var'))
+    filter(term %in% c('var', 'speiDry:var'))
   
   new <- data.frame(Normal=coefs$estimate[coefs$term=='var'],
-             Wet=coefs$estimate[coefs$term=='speiWet:var'],
-             Dry=coefs$estimate[coefs$term=='speiDry:var'],
-             Variable=i)
+                    Normal_SE=coefs$std.error[coefs$term=='var'],
+                    Dry=coefs$estimate[coefs$term=='speiDry:var'],
+                    Dry_SE=coefs$std.error[coefs$term=='speiDry:var'],
+                     Variable=i)
   
   df <- bind_rows(df, new)
   print(i)
 }
 
-write.csv(df, 'C://Users/matt/Desktop/temp.csv', row.names=F)
+write.csv(df, 'G://My Drive/Dissertation/Visualizations/individual_regressors.csv', row.names=F)

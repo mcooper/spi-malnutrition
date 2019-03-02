@@ -6,7 +6,7 @@ library(lme4)
 
 source('C://Git/spi-malnutrition/models/mod_utils.R')
 
-setwd('~/dhsprocessed')
+setwd('~')
 setwd('G://My Drive/DHS Processed')
 
 hha <- read.csv('HH_data_A.csv')
@@ -27,84 +27,44 @@ all$spei <- ifelse(all$spei > 1.4, "Normal",
 sel <- all %>%
   filter(builtup < 20 & bare < 95 & spei24 <= 1.4)
 
-transformations <- list(mean_annual_precip=function(x){log((x + 1)/1000)},
-                        #imports_percap=function(x){log(x)},
-                        population=function(x){log(x + 1)},
-                        elevation=function(x){x/1000},
-                        market_dist=function(x){x/24})
+transformations <- list(grid_gdp=function(x){log(x/1000)}
+                        ,mean_annual_precip=function(x){log((x + 1)/1000)}
+                        ,population=function(x){x/1000}
+                        ,tmax_10yr_mean=function(x){x-273.15}
+                        ,assistance=function(x){log(x+10)}
+                        ,roughness=function(x){log(x+10)}
+                        )
 
-for (n in names(all)){
+
+for (n in names(sel)){
   if (n %in% names(transformations)){
-    all[ , n] <- transformations[[n]](all[ , n])
+    sel[ , paste0(n, '_t')] <- transformations[[n]](sel[ , n])
   }
 }
 
 
-mod <- lmer(haz_dhs ~ age + calc_birthmonth + 
+mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
              birth_order + hhsize + sex + mother_years_ed + toilet +
-             head_age + head_sex + wealth_index 
-           #GDP related vars
-           #+ spei*ag_pct_gdp
-           #+ spei*grid_gdp
-           + spei*grid_hdi
-           + spei*imports_percap
-           # 
-           ## + spei*enrollment
-           #  
-           # #Pop-Urban vars
-           + spei*population
-           #+ spei*low_settle#Slightly colinear with irrigation (0.50) so avoid this one
-           #+ spei*high_settle
-           + spei*builtup
-           # 
-           # #Land Cover Vars
-           #+ spei*ndvi
-           #+ spei*bare
-           + spei*mean_annual_precip
-           # 
-           # #Topographic Vars
-           + spei*elevation
-           #+ spei*roughness
-           #+ spei*tmax_10yr_mean
-           # 
-           # #Totally Independat Vars
-           #+ spei*market_dist#not the same before and after 2000
-           #+ spei*crop_prod
-           + spei*government_effectiveness
-           + spei*irrig_aei
-           + spei*nutritiondiversity_mfad
-           + spei*stability_violence
-           + spei*assistance
-            + (1|country)
-            + (1|surveycode)
-            + (1|interview_year)
-          ,
-           data=sel)
+             head_age + head_sex + wealth_index +
+             spei*ndvi +
+             spei*government_effectiveness +
+             spei*grid_gdp_t +
+             spei*grid_hdi +
+             spei*mean_annual_precip_t +
+             spei*nutritiondiversity_mfad +
+             spei*population_t +
+             spei*roughness_t +
+             spei*stability_violence +
+             spei*irrig_aai + 
+             spei*tmax_10yr_mean_t + 
+             spei*assistance_t
+           , data=sel)
 
 summary(mod)
 
-#Baseline
-#plot(makeRasts(mod, ''))
-
-#Dry
-rast <- make_rasts_year(mod, "speiDry", 2016,
+rast <- make_rasts_year(mod, "speiDry", 2017,
                      transformations,
-                     #censor=F,
-                     mask=95);plot(rast)
+                     mask=93);
 
+writeRaster(rast, 'G://My Drive/DHS Spatial Covars/Final Rasters/Final_Raster.tif', format='GTiff', overwrite=T)
 
-
-for (i in seq(1990, 2020)){
-  print(i)
-  rast <- make_rasts_year(mod, "speiDry", i,
-                          list(mean_annual_precip=function(x){x/1000},
-                               imports_percap=function(x){x/1000},
-                               builtup=function(x){x*100}))
-  writeRaster(rast, paste0('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry', i, '.tif'), format='GTiff', overwrite=T)
-}
-
-for (i in seq(1990, 2020)){
-  print(i)
-  r <- raster(paste0('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry', i, '.tif'))
-  print(minValue(r))
-}
