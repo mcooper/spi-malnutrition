@@ -35,8 +35,12 @@ transformations <- list(ndvi=function(x){(trunc(rank(x))/length(x))*10},
                         roughness=function(x){(trunc(rank(x))/length(x))*10},
                         stability_violence=function(x){(trunc(rank(x))/length(x))*10},
                         irrig_aai=function(x){x*10},
-                        tmax_10yr_mean=function(x){x},
-                        assistance=function(x){x/10}
+                        tmax_10yr_mean=function(x){x - 273.15},
+                        assistance=function(x){x/10},
+                        crop_prod=function(x){x*10},
+                        bare=function(x){x/10},
+                        imports_percap=function(x){x/100},
+                        enrollment=function(x){x/10}
                         )
 
 for (n in names(transformations)){
@@ -46,19 +50,20 @@ for (n in names(transformations)){
 spcovars <- c("ndvi", "government_effectiveness", "grid_gdp", "grid_hdi",
               "mean_annual_precip", "nutritiondiversity_mfad", "population",
               "roughness", "stability_violence", "irrig_aai", "tmax_10yr_mean",
-              "assistance")
+              "assistance", "crop_prod", "imports_percap", "bare", "enrollment")
 
 df <- data.frame()
 for (i in spcovars){
   sel$var <- sel[ , i]
   
   mod <- lm(haz_dhs ~ age + as.factor(calc_birthmonth) + 
-               birth_order + hhsize + sex + mother_years_ed + toilet +
-               head_age + head_sex + wealth_index + spei*var,
-             data=sel)
+             birth_order + hhsize + sex + mother_years_ed + toilet +
+             head_age + head_sex + wealth_index +
+             spei*var - spei - 1,
+           data=sel,
+           offset=((as.numeric(sel$spei) - 1)*0)+1)
   
-  coefs <- tidy(mod) %>%
-    filter(term %in% c('var', 'speiDry:var'))
+  coefs <- tidy(mod)
   
   new <- data.frame(Normal=coefs$estimate[coefs$term=='var'],
                     Normal_SE=coefs$std.error[coefs$term=='var'],

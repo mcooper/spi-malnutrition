@@ -62,7 +62,7 @@ mod <- rlm(haz_dhs ~ age + as.factor(calc_birthmonth) +
 
 summary(mod)
 
-rast <- make_rasts_year(mod, "speiDry", 2017,
+rast <- make_rasts_year(mod, "speiDry", 1990,
                      transformations,
                      mask=93);
 

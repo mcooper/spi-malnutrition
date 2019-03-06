@@ -10,8 +10,11 @@ cov <- read.csv('SpatialCovars.csv')
 spi <- read.csv('PrecipIndices.csv')
 
 all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, cov, spi))
-# 
-# #Get Residuals
+
+all <- all %>%
+  filter(builtup < 20 & bare < 95)
+
+#Get Residuals
 # mod <- lmer(haz_dhs ~ age + birth_order + hhsize + sex + mother_years_ed + toilet +
 #               head_age + head_sex + wealth_index +
 #               as.factor(calc_birthmonth) + (1|country) + (1|surveycode), data=all)
@@ -21,8 +24,8 @@ all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hh, cov, spi))
 # 
 # #spei24
 # spei24mod <- loess(residuals ~ spei24, data = all, span = 0.75)
-# 
-# save("spei24mod", file="LOESSmod.Rdata")
+
+#save("spei24mod", file="LOESSmod.Rdata")
 
 load('LOESSmod.Rdata')
 
@@ -45,12 +48,13 @@ bckgd <- expand.grid(seq(-0.0925, 0.02, len=100), seq(min(-3), max(3), len=100))
 bckgd$Classification <- ifelse(bckgd$Var2 > 1.4, "Excessively Wet", ifelse(bckgd$Var2 < -0.4, "Drought", "Normal")) %>%
   factor(levels = c("Drought", "Normal", "Excessively Wet"))
 
-labs <- data.frame(x=c(-1.7, 0.5, 2.2), y=c(-0.0875, -0.0875, -0.0875), z=c("Dry\nn = 153,067", 
-                                                                            "Normal\nn = 384,199", 
-                                                                            "Wet\nn = 54,160"))
-dry <- "153,067"
-normal <- "384,199"
-wet <- "54,160"
+dry <- prettyNum(sum(all$spei24 < -0.4),big.mark=",")
+normal <- prettyNum(sum(all$spei24 >= -0.4 & all$spei24 <= 1.4),big.mark=",")
+wet <- prettyNum(sum(all$spei24 > 1.4),big.mark=",")
+
+labs <- data.frame(x=c(-1.7, 0.5, 2.2), y=c(-0.0875, -0.0875, -0.0875), z=c(paste0("Dry\nn = ", dry), 
+                                                                            paste0("Normal\nn = ", normal), 
+                                                                            paste0("Wet\nn = ", wet)))
 
 curve <- ggplot() + 
   geom_tile(data=bckgd, aes(x=Var2, y=Var1, fill=Var2), alpha=0.5) + 

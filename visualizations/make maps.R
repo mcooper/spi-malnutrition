@@ -31,10 +31,10 @@ spdat_t <- spTransform(spdat, CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS
 spdat_t@data[ , c('longitude', 'latitude')] <- spdat_t@coords
 
 
-final <- raster('G://My Drive/DHS Spatial Covars/Final Rasters/Final_Raster.tif')
-final[final < -0.4] <- -0.4
+final <- raster('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry2020.tif')
 
 final <- projectRaster(final, crs=CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
+final[final < -0.4] <- -0.4
 
 ####################
 #Make Images
@@ -65,7 +65,7 @@ system("pdfcrop DHSPoints.pdf DHSPoints.pdf")
 #Drought
 ###################
 
-col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500", "#DDDDDD"))(29))
+col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500"))(29), "#DDDDDD")
 
 plt <- levelplot(final, xlim=c(-10900000, 15750000), ylim=c(-5351704, 5353646), col.regions=col.l,
           xlab='', ylab='', 
@@ -73,7 +73,7 @@ plt <- levelplot(final, xlim=c(-10900000, 15750000), ylim=c(-5351704, 5353646), 
           #main=list(label="Expected Change in Mean HAZ Scores Under Drought (SPEI < -0.4)", cex=3),
           maxpixels=1.5e6,
           scales=list(draw=FALSE),
-          colorkey=list(labels=list(cex=2), space="bottom", height=0.5)) + 
+          colorkey=list(labels=list(cex=1), space="bottom", height=0.5)) + 
   layer(sp.polygons(spt, col="#444444"))
 
 pdf("DroughtVulnerability.pdf", width=12, height=9)

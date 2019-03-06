@@ -1,6 +1,6 @@
 library(raster)
 
-make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=TRUE){
+make_rasts_year <- function(mod, term, year, transformations, centerdf=NULL, censor=TRUE, mask=TRUE){
   #mod is the model that has been fit
   #term can be either 'speiDry', 'speiWet', or ''
   #  'speiDry' and 'speiWet' will map estimated changes in HAZ scores during a wet or dry year
@@ -12,7 +12,11 @@ make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=
   
   setwd(paste0("G://My Drive/DHS Spatial Covars/Final Rasters/", year))
   
-  s <- tidy(mod)
+  if (class(mod) != 'data.frame'){
+    s <- tidy(mod)
+  } else{
+    s <- mod
+  }
   
   coefs <- s[grepl(term, s$term), c('term', 'estimate')]
   
@@ -39,6 +43,10 @@ make_rasts_year <- function(mod, term, year, transformations, censor=TRUE, mask=
     
     if (grepl('_t$', rast_name)){
       tmp_rast <- transformations[[gsub('_t$', '', rast_name)]](tmp_rast)
+    }
+    
+    if (!is.null(centerdf)){
+      tmp_rast <- centerfun(tmp_rast, rast_name)
     }
 
     suppressWarnings(rast <- rast + tmp_rast*coefs$estimate[i])

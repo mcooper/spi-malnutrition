@@ -8,9 +8,11 @@ setwd('G://My Drive/DHS Processed')
 
 hha <- read.csv('HH_data_A.csv')
 spei <- read.csv('PrecipIndices.csv')
+cov <- read.csv('SpatialCovars.csv')
 spei_age <- read.csv('PrecipIndices_Individual.csv')
 
-all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, spei, spei_age)) %>%
+all <- Reduce(function(x, y){merge(x,y,all.x=T, all.y=F)}, list(hha, spei, cov, spei_age)) %>%
+  filter(builtup < 20 & bare < 95) %>%
   na.omit
 
 for (i in c("spei12", "spei24", "spei36", "spei12gs", "spei24gs", "spei36gs", 
@@ -27,13 +29,13 @@ for (i in c("spei12", "spei24", "spei36", "spei12gs", "spei24gs", "spei36gs",
   assign(i, lmer(haz_dhs ~ age + birth_order + sex + as.factor(calc_birthmonth) + 
                    mother_years_ed + toilet + hhsize + 
          head_age + head_sex + wealth_index + (1|country) + (1|surveycode) + (1|interview_year) + 
-         spei, data=all))
+         spei + spei^2, data=all))
 }
 
 stg1 <- stargazer(spei12, spei12gs, spei24, spei24gs, title="Modeling Child Nutrition With SPEI Calculated at Various Timeframes (Part 1)",
                  #out = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tables/S2.tex',
-                 column.labels=c("12-Month SPEI", "12-Month Growing Season SPEI",
-                                 "24-Month SPEI", "24-Month Growing Season SPEI"),
+                 column.labels=c("12-Month", "12-Month Growing Season",
+                                 "24-Month", "24-Month Growing Season"),
                  dep.var.labels.include=FALSE,
                  dep.var.caption='',
                  covariate.labels=c('Age', "Birth Order", "Child is Male", "Birthmonth - February", "Birthmonth - March",
@@ -57,8 +59,8 @@ cat(stg1, file = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tab
 
 stg2 <- stargazer(spei36, spei36gs, spei_gs_ageutero, spei_gs_ageutero, title="Modeling Child Nutrition With SPEI Calculated at Various Timeframes (Part 2)",
                   #out = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tables/S3.tex',
-                  column.labels=c("36-Month SPEI", "36-Month Growing Season SPEI",
-                                  "Child's Age SPEI", "Child's Age Growing Season SPEI"),
+                  column.labels=c("36-Month", "36-Month Growing Season",
+                                  "Child's Age", "Child's Age Growing Season"),
                   dep.var.labels.include=FALSE,
                   dep.var.caption='',
                   covariate.labels=c('Age', "Birth Order", "Child is Male", "Birthmonth - February", "Birthmonth - March",
