@@ -79,10 +79,14 @@ make_rasts_year <- function(mod, term, year, transformations, centerdf=NULL, cen
   return(rast)
 }
 
-getValuesAtPoint <- function(mod, year, transformations, x, y){
+getValuesAtPoint <- function(mod, year, transformations, centerdf, x, y){
   setwd(paste0("G://My Drive/DHS Spatial Covars/Final Rasters/", year))
   
-  s <- tidy(mod)
+  if (class(mod) != 'data.frame'){
+    s <- tidy(mod)
+  } else{
+    s <- mod
+  }
   
   coefs <- s[grepl('spei', s$term), c('term', 'estimate')]
   
@@ -98,6 +102,10 @@ getValuesAtPoint <- function(mod, year, transformations, x, y){
     
     if (grepl('_t$', rast_name)){
       tmp_rast <- transformations[[gsub('_t$', '', rast_name)]](tmp_rast)
+    }
+    
+    if (!is.null(centerdf)){
+      tmp_rast <- centerfun(tmp_rast, rast_name)
     }
     
     v <- raster::extract(tmp_rast, matrix(c(x, y), nrow = 1))

@@ -81,3 +81,56 @@ plot(plt)
 dev.off()
 
 system("pdfcrop DroughtVulnerability.pdf DroughtVulnerability.pdf")
+
+
+#####################################
+#Drought Vulnerability Historically
+#########################################
+
+final2000 <- raster('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry2000.tif')
+
+final2000 <- projectRaster(final200, crs=CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
+final2000[final2000 < -0.4] <- -0.4
+
+col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500"))(29), "#DDDDDD")
+
+plt <- levelplot(final2000, xlim=c(-10900000, 15750000), ylim=c(-5351704, 5353646), col.regions=col.l,
+                 xlab='', ylab='', 
+                 margin=F, 
+                 #main=list(label="Expected Change in Mean HAZ Scores Under Drought (SPEI < -0.4)", cex=3),
+                 maxpixels=1.5e6,
+                 scales=list(draw=FALSE),
+                 colorkey=list(labels=list(cex=1), space="bottom", height=0.5)) + 
+  layer(sp.polygons(spt, col="#444444"))
+
+pdf("DroughtVulnerability2000.pdf", width=12, height=9)
+plot(plt)
+dev.off()
+
+system("pdfcrop DroughtVulnerability2000.pdf DroughtVulnerability2000.pdf")
+
+
+
+
+final1990 <- raster('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry1990.tif')
+
+final1990 <- projectRaster(final1990, crs=CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
+final1990[final1990 < -0.4] <- -0.4
+
+
+col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500"))(29), "#DDDDDD")
+
+plt <- levelplot(final1990, xlim=c(-10900000, 15750000), ylim=c(-5351704, 5353646), col.regions=col.l,
+                 xlab='', ylab='', 
+                 margin=F, 
+                 #main=list(label="Expected Change in Mean HAZ Scores Under Drought (SPEI < -0.4)", cex=3),
+                 maxpixels=1.5e6,
+                 scales=list(draw=FALSE),
+                 colorkey=list(labels=list(cex=1), space="bottom", height=0.5)) + 
+  layer(sp.polygons(spt, col="#444444"))
+
+pdf("DroughtVulnerability1990.pdf", width=12, height=9)
+plot(plt)
+dev.off()
+
+system("pdfcrop DroughtVulnerability1990.pdf DroughtVulnerability1990.pdf")

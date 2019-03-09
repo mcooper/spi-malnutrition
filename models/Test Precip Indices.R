@@ -24,12 +24,14 @@ for (i in c("spei12", "spei24", "spei36", "spei12gs", "spei24gs", "spei36gs",
             "spei_ageutero", "spei_gs_ageutero")){
   all$spei <- all[ , i]
   
+  all$speisq <- all[ , i]^2
+  
   print(i)
   
   assign(i, lmer(haz_dhs ~ age + birth_order + sex + as.factor(calc_birthmonth) + 
                    mother_years_ed + toilet + hhsize + 
          head_age + head_sex + wealth_index + (1|country) + (1|surveycode) + (1|interview_year) + 
-         spei + spei^2, data=all))
+         spei + speisq, data=all))
 }
 
 stg1 <- stargazer(spei12, spei12gs, spei24, spei24gs, title="Modeling Child Nutrition With SPEI Calculated at Various Timeframes (Part 1)",
@@ -45,7 +47,7 @@ stg1 <- stargazer(spei12, spei12gs, spei24, spei24gs, title="Modeling Child Nutr
                                     "Toilet - No Facility", "Toilet - Other", "Toilet - Pit Latrine", "Household Size", 
                                     "Household Head Age", "Household Head is Male", 
                                     "Wealth Index - Poorer", "Wealth Index - Poorest", "Wealth Index - Richer", "Wealth Index - Richest",
-                                    "SPEI",
+                                    "SPEI", "SPEI Squared", 
                                     "Intercept"))
 
 #Need to make manual edits to table based on this:
@@ -70,7 +72,7 @@ stg2 <- stargazer(spei36, spei36gs, spei_gs_ageutero, spei_gs_ageutero, title="M
                                      "Toilet - No Facility", "Toilet - Other", "Toilet - Pit Latrine", "Household Size", 
                                      "Household Head Age", "Household Head is Male", 
                                      "Wealth Index - Poorer", "Wealth Index - Poorest", "Wealth Index - Richer", "Wealth Index - Richest",
-                                     "SPEI",
+                                     "SPEI", "SPEI Squared", 
                                      "Intercept"))
 
 #Need to make manual edits to table based on this:

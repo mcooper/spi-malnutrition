@@ -123,7 +123,7 @@ rast <- make_rasts_year(df, "speiDry", 2020,
                         centerdf, 
                         mask=93);plot(rast)
 
-for (year in c(1990, 2000, 2016, 2017, 2018, 2020)){
+for (year in c(1990, 2000, 2020)){
   rast <- make_rasts_year(df, "speiDry", year, 
                           transformations,
                           centerdf, 
