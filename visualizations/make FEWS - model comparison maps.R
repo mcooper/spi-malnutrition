@@ -1,8 +1,10 @@
 library(rasterVis)
 library(rgdal)
 library(dplyr)
+library(grid)
+library(cowplot)
 library(gridExtra)
-
+library(ggplotify)
 
 sp <- readOGR('G://My Drive/DHS Spatial Covars/Global Codes and Shapefile',
               'ne_50m_admin_0_countries')
@@ -27,7 +29,7 @@ col.fews <- c("#DDDDDD", "#fd8c00", "#dc0000", "#780000")
 drycrop_ea <- crop(dry_ea, sp[sp$SOVEREIGNT %in% countries_ea, ])
 difcrop_ea <- crop(dif_ea, sp[sp$SOVEREIGNT %in% countries_ea, ])
 
-modpred_ea <- levelplot(drycrop_ea, xlim=c(21, 52), ylim=c(-5, 24),
+modpred_ea <- rasterVis::levelplot(drycrop_ea, xlim=c(21.7, 52), ylim=c(-5, 22.1),
                  at=seq(-0.36, 0.02, length.out = 38),
                  col.regions=col.mod,
                  xlab='', ylab='', 
@@ -36,10 +38,10 @@ modpred_ea <- levelplot(drycrop_ea, xlim=c(21, 52), ylim=c(-5, 24),
                  maxpixels=1.5e5,
                  scales=list(draw=FALSE),
                  colorkey=list(labels=list(cex=1), space="bottom", height=0.75)) + 
-  layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
-  layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
+  latticeExtra::layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
+  latticeExtra::layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
 
-fewspred_ea <- levelplot(difcrop_ea, xlim=c(21, 52), ylim=c(-5, 24),
+fewspred_ea <- rasterVis::levelplot(difcrop_ea, xlim=c(21.7, 52), ylim=c(-5, 22.1),
                       at=c(-0.5, 0.5, 1.5, 2.5, 3.5),
                       col.regions=col.fews,
                       xlab='', ylab='', 
@@ -48,8 +50,8 @@ fewspred_ea <- levelplot(difcrop_ea, xlim=c(21, 52), ylim=c(-5, 24),
                       maxpixels=1.5e5,
                       scales=list(draw=FALSE),
                       colorkey=list(labels=list(cex=1, labels=c("", '0', "", '1', "", '2', "", '3')), space="bottom", height=0.75)) + 
-  layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
-  layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
+  latticeExtra::layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
+  latticeExtra::layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
 
 ########################################
 #South Africa Drought 2016
@@ -63,7 +65,7 @@ dif_sa <- resample(dif_sa, dry_sa)
 drycrop_sa <- crop(dry_sa, sp[sp$SOVEREIGNT %in% countries_sa, ])
 difcrop_sa <- crop(dif_sa, sp[sp$SOVEREIGNT %in% countries_sa, ])
 
-modpred_sa <- levelplot(drycrop_sa, xlim=c(21, 41), ylim=c(-27, -8),
+modpred_sa <- rasterVis::levelplot(drycrop_sa, xlim=c(21.84, 41), ylim=c(-27, -8),
                      at=seq(-0.4, 0, length.out = 30),
                      col.regions=col.mod,
                      xlab='', ylab='', 
@@ -72,10 +74,10 @@ modpred_sa <- levelplot(drycrop_sa, xlim=c(21, 41), ylim=c(-27, -8),
                      maxpixels=1.5e5,
                      scales=list(draw=FALSE),
                      colorkey=FALSE) + 
-  layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
-  layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
+  latticeExtra::layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
+  latticeExtra::layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
 
-fewspred_sa <- levelplot(difcrop_sa, xlim=c(21, 41), ylim=c(-27, -8),
+fewspred_sa <- rasterVis::levelplot(difcrop_sa, xlim=c(21.84, 41), ylim=c(-27, -8),
                       at=c( -0.5, 0.5, 1.5, 2.5, 3.5),
                       col.regions=col.fews,
                       xlab='', ylab='', 
@@ -84,8 +86,8 @@ fewspred_sa <- levelplot(difcrop_sa, xlim=c(21, 41), ylim=c(-27, -8),
                       maxpixels=1.5e5,
                       scales=list(draw=FALSE),
                       colorkey=FALSE) + 
-  layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
-  layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
+  latticeExtra::layer(sp.polygons(sp[sp$SOVEREIGNT %in% countries, ], col="#444444", fill='transparent')) + 
+  latticeExtra::layer(sp.polygons(sp[!sp$SOVEREIGNT %in% countries, ], col="#444444", fill='#BBBBBB'))
 
 
 ########################################
@@ -125,5 +127,8 @@ fewspred_sa <- levelplot(difcrop_sa, xlim=c(21, 41), ylim=c(-27, -8),
 
 pdf('G:/My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/figures/FEWSCompare.pdf', 
     width=10, height=11)
-grid.arrange(modpred_sa, fewspred_sa, modpred_ea, fewspred_ea, ncol=2)
+plot_grid(as.grob(modpred_sa), as.grob(fewspred_sa), 
+          as.grob(modpred_ea), as.grob(fewspred_ea), 
+          ncol=2, labels='AUTO', label_x=c(0.04, 0.04, 0.04, 0.04), label_y=c(0.93, 0.93, 0.93, 0.93))
 dev.off()
+

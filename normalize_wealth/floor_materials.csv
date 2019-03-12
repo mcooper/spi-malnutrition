@@ -1,0 +1,269 @@
+floor_materials,inadequate_floor
+NA,NA
+21,FALSE
+22,FALSE
+23,FALSE
+24,FALSE
+31,FALSE
+32,FALSE
+33,FALSE
+34,FALSE
+35,FALSE
+36,FALSE
+37,FALSE
+38,FALSE
+39,FALSE
+41,FALSE
+96,FALSE
+99,FALSE
+....carpet,FALSE
+"....cement, concrete",FALSE
+....ceramic,FALSE
+"....palm, bamboo",FALSE
+"....parquet, polished wood",FALSE
+....tiles,FALSE
+....wood planks,FALSE
+..carpet,FALSE
+..cement,FALSE
+..cement tiles,FALSE
+..ceramic tiles,FALSE
+"..parquet, polished wood",FALSE
+..vinyl,FALSE
+..wood planks,FALSE
+adobe,FALSE
+Adobe,FALSE
+alphalt strips,FALSE
+Asphlat tiles/vynil,FALSE
+bamboo,FALSE
+bare wood planks,FALSE
+brick,FALSE
+brick tiles,FALSE
+bricks,FALSE
+broken bricks,FALSE
+cane,FALSE
+carpet,FALSE
+Carpet,FALSE
+cement,FALSE
+Cement,FALSE
+cement bricks,FALSE
+cement tiles,FALSE
+cement tiles (mosaic),FALSE
+cement tiles/brick,FALSE
+"cement, concrete",FALSE
+"cement, maconery",FALSE
+"cement, tiles",FALSE
+cement/ tile,FALSE
+Cement/brick,FALSE
+cement/brick,FALSE
+cement/concrete,FALSE
+cement/gravel,FALSE
+cement/stone,FALSE
+Cements,FALSE
+ceramic,FALSE
+ceramic / mosaic / tiles,FALSE
+ceramic mosaics,FALSE
+ceramic tiles,FALSE
+Ceramic tiles,FALSE
+"ceramic tiles, marble chips",FALSE
+"ceramic tiles, vinyl, bricks",FALSE
+ceramic tiles/ marble,FALSE
+Ceramic tiles/Terazzo,FALSE
+ceramic tyles,FALSE
+"ceramic, marble, ...",FALSE
+ceramic/ marmol,FALSE
+ceramic/marble tiles,FALSE
+ceramic/marble tiles tiles,FALSE
+ceramic/marble/granite,FALSE
+ceramic/marble/porcelain tiles / terrazo,FALSE
+ceramic/marble/porcelain tiles/terrazo,FALSE
+ceramic/terrazzo tiles,FALSE
+clay,FALSE
+clay / sand,FALSE
+"clay bricks, uncooked",FALSE
+"concrete, brick",FALSE
+"concrete, cement",FALSE
+"Concrete, cement",FALSE
+finished - carpet,FALSE
+finished - cement,FALSE
+finished - ceramic tiles,FALSE
+finished - parquet or polished wood,FALSE
+finished - vinyl or asphalt strips,FALSE
+finished floor - carpeted,FALSE
+finished floor - cement,FALSE
+finished floor - ceramic or marble tiles,FALSE
+finished floor - parquet or polished wood or laminate,FALSE
+finished floor - vinyl or linoleum,FALSE
+finished floor parquet or polished wood,FALSE
+floating house,FALSE
+"floor mat, linoleum, vinyl",FALSE
+"Floor mat, linoleum, vinyl",FALSE
+granite / marble / ceramic,FALSE
+"Granite, ceramic tiles",FALSE
+"granite,marble,mosai",FALSE
+house boat,FALSE
+"lino, gerflex",FALSE
+linoleum,FALSE
+linoleum or asphalt,FALSE
+"linoleum, carpet",FALSE
+linoleum/rubber carpet,FALSE
+marble,FALSE
+"marble, ceramic tile",FALSE
+marble/ceramic tiles,FALSE
+marble/granite,FALSE
+"marmoble, ceramic tile",FALSE
+"marmol, parquet, polished wood",FALSE
+mat,FALSE
+Mat,FALSE
+mosaic or tile,FALSE
+mosaic or tiles,FALSE
+"mosaic, ceramic",FALSE
+mosaic/ cement,FALSE
+mud bricks,FALSE
+mud stones,FALSE
+other,FALSE
+OTHER,FALSE
+Other,FALSE
+other finished,FALSE
+other_(41),FALSE
+palm / bamboo,FALSE
+"palm, bamboo",FALSE
+"Palm, bamboo",FALSE
+"palm, bamboo, leeds",FALSE
+palm/bamboo,FALSE
+Palm/bamboo,FALSE
+palm/bambou,FALSE
+palms,FALSE
+Parket,FALSE
+parquet,FALSE
+parquet / wood polished,FALSE
+parquet or polished,FALSE
+parquet or polished wood,FALSE
+Parquet or polished wood,FALSE
+parquet or tiles,FALSE
+parquet or wooden floor,FALSE
+"parquet, polished wd",FALSE
+"parquet, polished wood",FALSE
+"Parquet, polished wood",FALSE
+"parquet,polished wd",FALSE
+parquet/polished wood,FALSE
+planks,FALSE
+polished wood,FALSE
+"polished wood, parquet",FALSE
+polished wood/vinyl/tiles,FALSE
+"reed, bamboo",FALSE
+rubber/vinil,FALSE
+rudimentary - wood planks,FALSE
+rudimentary floor - wood planks,FALSE
+rudimentary floor wood planks,FALSE
+rudimentary wood,FALSE
+rudimentary wood planks,FALSE
+"rug, carpet",FALSE
+"rustic, wood planks",FALSE
+"stone, brick",FALSE
+stones,FALSE
+straw/sawdust,FALSE
+tablets / wood planks,FALSE
+terrazo,FALSE
+tezek,FALSE
+tierra,FALSE
+tile,FALSE
+tile/ cement,FALSE
+tiled floor,FALSE
+tiles,FALSE
+Tiles/ bricks,FALSE
+tiles/terrazzo,FALSE
+vinyl,FALSE
+vinyl or alphalt strips,FALSE
+vinyl or aspalt strips,FALSE
+Vinyl or aspalt strips,FALSE
+vinyl or asphalt,FALSE
+vinyl or asphalt strips,FALSE
+vinyl sheets/tiles,FALSE
+vinyl tile/vinyl carpet,FALSE
+"vinyl,  linoleum",FALSE
+"vinyl, asphalt strip",FALSE
+"vinyl, asphalt strips",FALSE
+"Vinyl, asphalt strips",FALSE
+"vinyl, linoleum",FALSE
+"vinyl, linoleum, ceramic",FALSE
+"vinyl,asphalt strips",FALSE
+vinyl/pvc or asphalt strips,FALSE
+vynil or asphalt strips,FALSE
+wall to wall carpet,FALSE
+wood,FALSE
+Wood,FALSE
+"wood bats (""tacos de madeira"")",FALSE
+Wood plank,FALSE
+wood planks,FALSE
+Wood planks,FALSE
+"wood planks, bamboo",FALSE
+"wood planks, palm, bamboo",FALSE
+wood planks/boards,FALSE
+wood polished,FALSE
+"wood, planks",FALSE
+wood/plank,FALSE
+wooden tile,FALSE
+woolen carpet/synthetic carpet,FALSE
+woolen carpets/ synthetic carpet,FALSE
+ÿcement,FALSE
+ÿother finished,FALSE
+ÿtiles,FALSE
+ÿû adobe,FALSE
+ÿû cement,FALSE
+ÿû earth,FALSE
+"ÿû parquet, polished wood",FALSE
+ÿû rudimentary wood,FALSE
+"ÿû tiles, brick",FALSE
+ÿwood/palm/bamboo,FALSE
+11,TRUE
+12,TRUE
+13,TRUE
+....dung,TRUE
+"....earth, sand",TRUE
+"..earth, sand",TRUE
+dirt,TRUE
+"dirt, earth",TRUE
+dirt/sand,TRUE
+dk,TRUE
+dung,TRUE
+Dung,TRUE
+earth,TRUE
+"earth (""terra batida"")/sand",TRUE
+Earth (terra batida),TRUE
+Earth (terra n?o batida),TRUE
+earth / sand,TRUE
+earth and dung,TRUE
+"earth, dung",TRUE
+"earth, mud, dung",TRUE
+"earth, sand",TRUE
+"Earth, sand",TRUE
+"earth, sand, dung",TRUE
+"earth, sand, mud",TRUE
+"earth, sand/dung",TRUE
+"earth,sand",TRUE
+earth/bamboo,TRUE
+earth/bamboo (katcha),TRUE
+earth/dung,TRUE
+earth/mud,TRUE
+earth/mud/dung,TRUE
+earth/sand,TRUE
+Earth/sand,TRUE
+earth/sand floor,TRUE
+earth/sand/clay,TRUE
+Earth/Sand/Mud,TRUE
+manure,TRUE
+mud mixed with dung,TRUE
+"mud, dung, sand",TRUE
+mud/clay,TRUE
+mud/earth,TRUE
+mud/earth/dung,TRUE
+natural - dung,TRUE
+natural - earth / sand,TRUE
+natural floor - earth/sand,TRUE
+natural floor mud/earth,TRUE
+Natural floor mud/earth,TRUE
+sand,TRUE
+sand and dung,TRUE
+"sand, soil, mud floor",TRUE
+"soil, sand",TRUE
+ÿearth/sand,TRUE
