@@ -4,6 +4,10 @@ library(foreign)
 library(dplyr)
 library(readstata13)
 
+##############################
+#Scope Available Datasets
+#################################
+
 kr <- list.files(pattern='^..(KR|kr).....(DTA|dta)$')
 pr <- list.files(pattern='^..(PR|pr).....(DTA|dta)$')
 wi <- list.files(pattern='^..(WI|wi).....(DTA|dta)$')
@@ -36,7 +40,7 @@ vardat <- read.csv('C://Git/spi-malnutrition/normalize_wealth/WealthVars.csv',
                    stringsAsFactors=F)
 
 alldata <- data.frame()
-for (i in 150:170){
+for (i in 1:nrow(scope)){
   print(i/nrow(scope))
   
   if (!is.na(scope$pr[i])){
@@ -100,11 +104,17 @@ for (i in 150:170){
     mutate_if(is.integer, as.character)
   
   if ('wealth_factor' %in% names(dat)){
-    dat$wealth_factor <- as.integer(dat$wealth_factor)
-    
-    alldata <- bind_rows(alldata, dat)
+    if (sum(dat[ , 'wealth_factor']) < nrow(dat)){
+      dat$wealth_factor <- as.integer(dat$wealth_factor)
+      
+      alldata <- bind_rows(alldata, unique(dat))
+    }
   }
 }
+
+###############################
+#Calculate Cutpoints
+###############################
 
 #High end anchoring cutpoints
 alldata$telephone <- alldata$telephone %in% c('1', 'yes', 'Yes')
@@ -129,94 +139,127 @@ alldata$inadequate_housing <- alldata$inadequate_floor | alldata$inadequate_wall
 alldata$inadequate_sanitation <- alldata$inadequate_toilet | (alldata$inadequate_water_urban & alldata$urban) | (alldata$inadequate_water_urban & !alldata$urban)
 alldata$crowding <- (as.numeric(alldata$hhsize)/as.numeric(alldata$sleeping_rooms)) > 3
 
-hh <- alldata %>% group_by(hhid, householdno, cluserid, cc, num, subversion, television, refrigerator, car_truck, wealth_factor,
+getHHheadPrimary <- function(unfinished_primary, individual_number, household_head){
+  unfinished <- unfinished_primary[individual_number==unique(household_head)]
+  if (length(unfinished) > 1){
+    return(NA)
+  } else{
+    return(unfinished)
+  }
+}
+
+hh <- alldata %>% unique %>%
+  group_by(hhid, householdno, cluserid, cc, num, subversion, television, refrigerator, car_truck, wealth_factor,
                            telephone, inadequate_housing, inadequate_sanitation, crowding) %>%
   #Need to fix this later
-  summarize(head_noprimary = unfinished_primary[individual_number==household_head[1]][1]) %>%
+  summarize(head_noprimary=getHHheadPrimary(unfinished_primary, individual_number, household_head)) %>%
+  #summarize(head_noprimary = unfinished_primary[individual_number==household_head[1]][1]) %>%
   data.frame
 
 #Calculate Cutpoints
-cutpoints <- data.frame()
-
 sdf <- hh %>% select(cc, num, subversion) %>% unique
 
-for (i in 1:nrow(sdf)){
-  sel <- hh %>% filter(cc==sdf$cc[i] & num==sdf$num[i] & subversion==sdf$subversion[i])
+baseline <- hh %>% filter(cc=='NG' & num=="5" & subversion==1)
+
+others <- sdf %>% filter(!(cc=='NG' & num=="5" & subversion==1))
+
+for (i in 1:nrow(others)){
+  sel <- hh %>% filter(cc==others$cc[i] & num==others$num[i] & subversion==others$subversion[i])
   
-  if (sum(is.na(sel$inadequate_housing)) < nrow(sel)){
-    modhouse <- glm(inadequate_housing ~ wealth_factor, data = sel, family = "binomial")
-    house <- modhouse$coefficients[1]/modhouse$coefficients[2]
-  } else{
-    house <- NA
+  #Drop columns that are greater than half NA
+  for (col in c("inadequate_housing", "inadequate_sanitation", "crowding", "head_noprimary",
+              "television", "refrigerator", "car_truck", "wealth_factor", "telephone")){
+    if (sum(is.na(sel[ , col])) > nrow(sel)/2){
+      sel[ , col] <- NULL
+    }
   }
-  if (sum(is.na(sel$crowding)) < nrow(sel)){
-    modcrowding <- glm(crowding ~ wealth_factor, data = sel, family = "binomial")
-    crowding <- modcrowding$coefficients[1]/modcrowding$coefficients[2]
+  
+  bsl <- baseline
+  
+  needs <- c("inadequate_housing", "inadequate_sanitation", "crowding", "head_noprimary")
+
+  needs <- needs[needs %in% names(sel)]
+  
+  if (length(needs) > 1){
+    bsl$deprivation <- rowSums(bsl[ , needs])
+    sel$deprivation <- rowSums(sel[ , needs])
   } else{
-    crowding <- NA
+    bsl$deprivation <- bsl[ , needs]
+    sel$deprivation <- sel[ , needs]
   }
-  if (sum(is.na(sel$head_noprimary)) < nrow(sel)){
-    modhead_noprimary <- glm(head_noprimary ~ wealth_factor, data = sel, family = "binomial")
-    head_noprimary <- modhead_noprimary$coefficients[1]/modhead_noprimary$coefficients[2]
-  } else{
-    head_noprimary <- NA
+  
+  bsl_anchors <- NULL
+  sel_anchors <- NULL
+  
+  #First do deprivation, depending on the number of indicators of deprivation available
+  if (length(needs) > 1){
+    for (j in 1:length(needs)){
+      bsl$depcut <- bsl$deprivation >= j
+      sel$depcut <- sel$deprivation >= j
+      
+      moddep_sel <- glm(depcut ~ wealth_factor, data = sel, family = "binomial")
+      moddep_bsl <- glm(depcut ~ wealth_factor, data = bsl, family = "binomial")
+      
+      bsl_anchors <- c(bsl_anchors, moddep_bsl$coefficients[1]/moddep_bsl$coefficients[2])
+      sel_anchors <- c(sel_anchors, moddep_sel$coefficients[1]/moddep_sel$coefficients[2])
+    }
   }
-  if (sum(is.na(sel$inadequate_sanitation)) < nrow(sel)){
-    modsani <- glm(inadequate_sanitation ~ wealth_factor, data = sel, family = "binomial")
-    sani <- modsani$coefficients[1]/modsani$coefficients[2]
-  } else{
-    sani <- NA
+  
+  #Then do Wealth Anchors
+  #Television
+  if ("television" %in% names(sel)){
+    modtv_sel <- glm(television ~ wealth_factor, data = sel, family = "binomial")
+    modtv_bsl <- glm(television ~ wealth_factor, data = bsl, family = "binomial")
+    
+    bsl_anchors <- c(bsl_anchors, modtv_bsl$coefficients[1]/modtv_bsl$coefficients[2])
+    sel_anchors <- c(sel_anchors, modtv_sel$coefficients[1]/modtv_sel$coefficients[2])
   }
-  if (sum(is.na(sel$television)) < nrow(sel)){
-    modtv <- glm(television ~ wealth_factor, data = sel, family = "binomial")
-    tv <- modtv$coefficients[1]/modtv$coefficients[2]
-  } else{
-    tv <- NA
+  
+  #Telephone
+  if ("telephone" %in% names(sel)){
+    modphone_sel <- glm(telephone ~ wealth_factor, data = sel, family = "binomial")
+    modphone_bsl <- glm(telephone ~ wealth_factor, data = bsl, family = "binomial")
+    
+    bsl_anchors <- c(bsl_anchors, modphone_bsl$coefficients[1]/modphone_bsl$coefficients[2])
+    sel_anchors <- c(sel_anchors, modphone_sel$coefficients[1]/modphone_sel$coefficients[2])
   }
-  if (sum(is.na(sel$telephone)) < nrow(sel)){
-    modphone <- glm(telephone ~ wealth_factor, data = sel, family = "binomial")
-    phone <- modphone$coefficients[1]/modphone$coefficients[2]
-  } else{
-    phone <- NA
+  
+  #Car or Truck
+  if ("car_truck" %in% names(sel)){
+    modcar_sel <- glm(car_truck ~ wealth_factor, data = sel, family = "binomial")
+    modcar_bsl <- glm(car_truck ~ wealth_factor, data = bsl, family = "binomial")
+    
+    bsl_anchors <- c(bsl_anchors, modcar_bsl$coefficients[1]/modcar_bsl$coefficients[2])
+    sel_anchors <- c(sel_anchors, modcar_sel$coefficients[1]/modcar_sel$coefficients[2])
   }
-  if (sum(is.na(sel$car_truck)) < nrow(sel)){
-    modcar <- glm(car_truck ~ wealth_factor, data = sel, family = "binomial")
-    car <- modcar$coefficients[1]/modcar$coefficients[2]
-  } else{
-    car <- NA
-  }
-  if (sum(is.na(sel$refrigerator)) < nrow(sel)){
-    modfridge <- glm(refrigerator ~ wealth_factor, data = sel, family = "binomial")
-    fridge <- modfridge$coefficients[1]/modfridge$coefficients[2]
-  } else{
-    fridge <- NA
+  
+  #Refrigerator
+  if ("refrigerator" %in% names(sel)){
+    modref_sel <- glm(refrigerator ~ wealth_factor, data = sel, family = "binomial")
+    modref_bsl <- glm(refrigerator ~ wealth_factor, data = bsl, family = "binomial")
+    
+    bsl_anchors <- c(bsl_anchors, modref_bsl$coefficients[1]/modref_bsl$coefficients[2])
+    sel_anchors <- c(sel_anchors, modref_sel$coefficients[1]/modref_sel$coefficients[2])
   }
 
-  df <- data.frame(cc=sdf$cc[i], num=sdf$num[i], subversion=sdf$subversion[i],
-                   sani, house, head_noprimary, crowding, tv, phone, car, fridge)
+  anchormod <- lm(bsl_anchors ~ sel_anchors)
   
-  cutpoints <- bind_rows(df, cutpoints)
+  others[i, 'intercept'] <- anchormod$coefficients[1]
+  others[i, 'slope'] <- anchormod$coefficients[2]
   
+  print(i/nrow(others))
 }
 
+##########################################
+#Model Cutputs in relation to Baseline
+##########################################
 
 #Baseline is Nigeria 5 1 from 2008.  Large sample size, complete records, wide variety of income levels
-baseline <- cutpoints %>% filter(cc=='NG' & num=="5" & subversion==1)
-for (i in 1:nrow(sdf)){
-  sel <- cutpoints %>% filter(cc==sdf$cc[i] & num==sdf$num[i] & subversion==sdf$subversion[i])
-  
-  df <- data.frame(baseline=unlist(baseline[4:11]), sel=unlist(sel[4:11]))
-  
-  mod <- lm(baseline~sel, data=df)
-  
-  cutpoints$b[cutpoints$cc==sdf$cc[i] & cutpoints$num==sdf$num[i] & cutpoints$subversion==sdf$subversion[i]] <- mod$coefficients[2]
-  cutpoints$a[cutpoints$cc==sdf$cc[i] & cutpoints$num==sdf$num[i] & cutpoints$subversion==sdf$subversion[i]] <- mod$coefficients[1]
-}
 
-for (i in 1:nrow(cutpoints)){
-  hh_ix <- hh$cc == cutpoints$cc[i] & hh$num == cutpoints$num[i] & hh$subversion == cutpoints$subversion[i]
+for (i in 1:nrow(others)){
+  hh_ix <- hh$cc == others$cc[i] & hh$num == others$num[i] & hh$subversion == others$subversion[i]
   
-  hh$wealth_factor <- hh$wealth_factor*cutpoints$b[i] + cutpoints$a[i]
+  hh$wealth_factor[hh_ix] <- hh$wealth_factor[hh_ix]*others$slope[i] + others$aintercept[i]
   
 }
 
