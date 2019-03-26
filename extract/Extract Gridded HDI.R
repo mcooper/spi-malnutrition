@@ -54,6 +54,8 @@ newdata$grid_hdi[is.na(newdata$grid_hdi)] <- 0.62
 write.csv(newdata, 'G://My Drive/DHS Spatial Covars/Gridded GDP and HDI/grid_hdi.csv', row.names=F)
 
 for (year in seq(1990, 2020)){
+  print(y)
+  
   y <- year - 1989
   
   if (y > 26){
@@ -65,5 +67,8 @@ for (year in seq(1990, 2020)){
   r <- raster(t(slice), xmn=-180, xmx=180, ymn=-90, ymx=90,
               crs='+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
   r <- resample(r, ref)
+  
+  r[is.na(r)] <- 0.7 #For some reason, macedonia is missing.  This will deal with that
+  
   writeRaster(r, paste0('G://My Drive/DHS Spatial Covars/Final Rasters/', year, '/grid_hdi.tif'), format='GTiff', overwrite=T)
 }

@@ -21,6 +21,7 @@ dat$term <- factor(dat$term, levels=rank$term[order(rank$estimate)], ordered=T)
 tex <- c('assistance'='Official Development Assistance Per Capita',
          'grid_hdi'='Human Development Index',
          'grid_gdp'='GDP (PPP) Per Capita',
+         'market_dist'="Distance from A City of > 50,000",
          'government_effectiveness'='Government Effectiveness',
          'stability_violence'='Political Stability and Absence of Violence',
          'population'='Population Density',

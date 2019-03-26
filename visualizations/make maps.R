@@ -40,7 +40,7 @@ final[final < -0.4] <- -0.4
 #Make Images
 ####################
 
-setwd('G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/figures')
+setwd('G://My Drive/Papers/SPEI-Malnutrition/spi-malnutrition-tex/figures')
 
 ##################
 #DHS Points
@@ -67,7 +67,7 @@ system("pdfcrop DHSPoints.pdf DHSPoints.pdf")
 
 col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500"))(29), "#DDDDDD")
 
-plt <- levelplot(final, xlim=c(-10900000, 15750000), ylim=c(-5351704, 5353646), col.regions=col.l,
+plt <- levelplot(final, xlim=c(-10500000, 14852149), ylim=c(-3680000, 5040000), col.regions=col.l,
           xlab='', ylab='', 
           margin=F, 
           #main=list(label="Expected Change in Mean HAZ Scores Under Drought (SPEI < -0.4)", cex=3),
@@ -76,11 +76,11 @@ plt <- levelplot(final, xlim=c(-10900000, 15750000), ylim=c(-5351704, 5353646), 
           colorkey=list(labels=list(cex=1), space="bottom", height=0.5)) + 
   layer(sp.polygons(spt, col="#444444"))
 
-pdf("DroughtVulnerability.pdf", width=12, height=9)
+png("DroughtVulnerability.png", width=12, height=7.5, units='in', res = 500)
 plot(plt)
 dev.off()
 
-system("pdfcrop DroughtVulnerability.pdf DroughtVulnerability.pdf")
+#system("convert -trim DroughtVulnerability.png DroughtVulnerability.png")
 
 
 #####################################
@@ -89,7 +89,7 @@ system("pdfcrop DroughtVulnerability.pdf DroughtVulnerability.pdf")
 
 final2000 <- raster('G://My Drive/DHS Spatial Covars/Final Rasters/Predictions/Dry2000.tif')
 
-final2000 <- projectRaster(final200, crs=CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
+final2000 <- projectRaster(final2000, crs=CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"))
 final2000[final2000 < -0.4] <- -0.4
 
 col.l <- c(colorRampPalette(c("#780000", "#dc0000", "#fd8c00", "#fdc500"))(29), "#DDDDDD")
@@ -103,11 +103,11 @@ plt <- levelplot(final2000, xlim=c(-10900000, 15750000), ylim=c(-5351704, 535364
                  colorkey=list(labels=list(cex=1), space="bottom", height=0.5)) + 
   layer(sp.polygons(spt, col="#444444"))
 
-pdf("DroughtVulnerability2000.pdf", width=12, height=9)
+png("DroughtVulnerability2000.png", width=12, height=9, units='in', res = 500)
 plot(plt)
 dev.off()
 
-system("pdfcrop DroughtVulnerability2000.pdf DroughtVulnerability2000.pdf")
+#system("convert -trim DroughtVulnerability2000.png DroughtVulnerability2000.png")
 
 
 
@@ -129,8 +129,8 @@ plt <- levelplot(final1990, xlim=c(-10900000, 15750000), ylim=c(-5351704, 535364
                  colorkey=list(labels=list(cex=1), space="bottom", height=0.5)) + 
   layer(sp.polygons(spt, col="#444444"))
 
-pdf("DroughtVulnerability1990.pdf", width=12, height=9)
+png("DroughtVulnerability1990.png", width=12, height=9, units='in', res = 500)
 plot(plt)
 dev.off()
 
-system("pdfcrop DroughtVulnerability1990.pdf DroughtVulnerability1990.pdf")
+#system("convert -trim DroughtVulnerability1990.png DroughtVulnerability1990.png")

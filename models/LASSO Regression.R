@@ -113,17 +113,12 @@ sum_table <- sum_table %>% dplyr::select(-term, -order) %>%
   rename(`Coefficient Estimate`=estimate)
 
 tab <- print(xtable(sum_table, 
-              caption="Predicting HAZ Scores, with Geographic Factors Moderating the Effects of Drought.  Note: Model was estimated using the LASSO method, which does not give SE estiamtes.",
-              digits = 3,
-              alight = "ll"), include.rownames=FALSE)
+                    caption="Predicting HAZ Scores, with Geographic Factors Moderating the Effects of Drought.  Note: Model was estimated using the LASSO method, which does not give SE estiamtes.",
+                    digits = 3,
+                    alight = "ll"), include.rownames=FALSE)
 cat(tab, file = 'G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/tables/S5.tex')
 
-rast <- make_rasts_year(df, "speiDry", 2020, 
-                        transformations,
-                        centerdf, 
-                        mask=93);plot(rast)
-
-for (year in c(1990, 2000, 2020)){
+for (year in c(2020, 2017, 2016, 1990, 2000)){
   rast <- make_rasts_year(df, "speiDry", year, 
                           transformations,
                           centerdf, 

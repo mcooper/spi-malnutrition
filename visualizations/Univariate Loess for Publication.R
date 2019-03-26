@@ -66,7 +66,7 @@ curve <- ggplot() +
   scale_y_continuous(expand = c(0, 0), breaks=c(-0.08, -0.06, -0.04, -0.02, 0, 0.02)) +
   #xlab('24-Month Standardized Precipitation Evapotranspiration Index (SPEI)') + 
   xlab(NULL) + 
-  ylab('Difference in HAZ Score from Prediction (Resiudal)') + 
+  ylab('Difference in HAZ Score from Prediction\n(Resiudal)') + 
   geom_hline(aes(yintercept=0), linetype=2, color="#202020") + 
   geom_vline(aes(xintercept=-0.4), color="#202020", linetype=3) + 
   geom_vline(aes(xintercept=1.4), color="#202020", linetype=3) +
@@ -106,10 +106,10 @@ hist <- ggplot() +
   theme(plot.margin = unit(c(0, 0.25, 0.25, 0.25), "cm"))
 hist
 
-plot_grid(plotlist=list(curve, hist), align='v', ncol=1, nrow=2, label_x=c(0.145, 0.145), label_y=c(0.99, 1), labels='AUTO', rel_heights=c(1, 0.33))
+plot_grid(plotlist=list(curve, hist), align='v', ncol=1, nrow=2, label_x=c(0.145, 0.145), label_y=c(0.99, 1), labels='AUTO', rel_heights=c(1, 0.4))
 
-setwd('G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/figures/')
+setwd('G://My Drive/Papers/SPEI-Malnutrition/spi-malnutrition-tex/figures/')
 
-ggsave('RainfallHeights.pdf', width = 6, height = 7, units="in")
+ggsave('RainfallHeights.png', width = 6, height = 5, units="in")
 
-system("pdfcrop RainfallHeights.pdf RainfallHeights.pdf")
+#system("pdfcrop RainfallHeights.pdf RainfallHeights.pdf")
