@@ -71,14 +71,16 @@ curve <- ggplot() +
   geom_vline(aes(xintercept=-0.4), color="#202020", linetype=3) + 
   geom_vline(aes(xintercept=1.4), color="#202020", linetype=3) +
   geom_line(data=data, aes(x=predvar, y=spei24), size=1.5) +
-  annotate('text', x=-1.7, y=-0.085, label="bold(Dry)", parse=T) + 
-  annotate('text', x=-1.7, y=-0.09, label=paste('italic(n) == ', deparse(dry)), parse=T) + 
-  annotate('text', x=0.5, y=-0.085, label="bold(Normal)", parse=T) + 
-  annotate('text', x=0.5, y=-0.09, label=paste('italic(n) == ', deparse(normal)), parse=T) + 
-  annotate('text', x=2.2, y=-0.085, label="bold(Wet)", parse=T) + 
-  annotate('text', x=2.2, y=-0.09, label=paste('italic(n) == ', deparse(wet)), parse=T) + 
+  annotate('text', x=-1.7, y=-0.0825, label="bold(Dry)", parse=T, size=5) + 
+  annotate('text', x=-1.7, y=-0.09, label=paste('italic(n) == ', deparse(dry)), parse=T, size=5) + 
+  annotate('text', x=0.5, y=-0.0825, label="bold(Normal)", parse=T, size=5) + 
+  annotate('text', x=0.5, y=-0.09, label=paste('italic(n) == ', deparse(normal)), parse=T, size=5) + 
+  annotate('text', x=2.2, y=-0.0825, label="bold(Wet)", parse=T, size=5) + 
+  annotate('text', x=2.2, y=-0.09, label=paste('italic(n) == ', deparse(wet)), parse=T, size=5) + 
   #geom_text(data=labs, aes(x=x, y=y, label=z)) +
-  theme_classic() #+ 
+  theme_classic() + 
+  theme(axis.text = element_text(size=13.9),
+        axis.title = element_text(size=13.9)) #+ 
   #theme(plot.margin = unit(c(0.25, 0.25, 0.1, 0.25), "cm"))
 curve
 
@@ -97,19 +99,28 @@ hist <- ggplot() +
                      labels=c("-3", "-2", "-1", "-0.4", "0", "1", "1.4", "2", "3")) +
   scale_y_continuous(expand = c(0, 0),
                      breaks=c(0, 10000)) +
-  xlab('24-Month Standardized Precipitation Evapotranspiration Index (SPEI)') + 
+  xlab('24 Month SPEI') + 
   ylab('Count of HAZ\nObservations') + 
   geom_vline(aes(xintercept=-0.4), color="#202020", linetype=3) + 
   geom_vline(aes(xintercept=1.4), color="#202020", linetype=3) +
   geom_histogram(data=all, aes(x=spei24), alpha=0.75, binwidth=0.05) +
   theme_classic() + 
-  theme(plot.margin = unit(c(0, 0.25, 0.25, 0.25), "cm"))
+  theme(plot.margin = unit(c(0, 0.25, 0.25, 0.25), "cm"),
+        axis.text = element_text(size=13.9),
+        axis.title = element_text(size=13.9))
 hist
 
-plot_grid(plotlist=list(curve, hist), align='v', ncol=1, nrow=2, label_x=c(0.145, 0.145), label_y=c(0.99, 1), labels='AUTO', rel_heights=c(1, 0.4))
+plot_grid(plotlist=list(curve, hist), align='v', ncol=1, nrow=2, label_x=c(0.155, 0.155), label_y=c(0.99, 1), labels='AUTO', rel_heights=c(1, 0.4))
 
-setwd('G://My Drive/Papers/SPEI-Malnutrition/spi-malnutrition-tex/figures/')
 
-ggsave('RainfallHeights.png', width = 6, height = 5, units="in")
+#Width of actual latex document
+w <- 3.41801194445
 
-#system("pdfcrop RainfallHeights.pdf RainfallHeights.pdf")
+#Scale by two
+w <- w*2
+
+setwd("C://Users/matt/spi-malnutrition-tex/")
+
+ggsave("RainfallHeights.png", width = w, height = w*(5/6), units="in")
+
+system("convert RainfallHeights.png RainfallHeights.pdf")

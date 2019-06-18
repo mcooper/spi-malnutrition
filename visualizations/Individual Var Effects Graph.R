@@ -46,7 +46,15 @@ ggplot(dat) +
   xlab('') + 
   ylab('') + 
   theme(plot.margin = unit(c(0.1, 0.1, 0.7, -0.45), "cm"), 
-        legend.position = c(0.1,-0.1), legend.direction = "horizontal",
-        legend.title=element_blank())
+        legend.position = c(-0.2,-0.1), legend.direction = "horizontal",
+        legend.text=element_text(size=14),
+        legend.title=element_blank(),
+        axis.text.y = element_text(size=14))
 
-ggsave("G://My Drive/Papers/SPEI-Malnutrition/SPEI-MalnutritionTex/figures/EffectSizes.pdf", width=5, height=4.5)
+#Width of actual latex document
+w <- 3.41801194445
+
+#Scale by two
+w <- w*2
+
+ggsave("C://Users/matt/spi-malnutrition-tex/EffectSizes.pdf", width=w, height=w*0.8)
